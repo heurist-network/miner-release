@@ -1,0 +1,9 @@
+[general]
+base_url = "http://70.23.102.189:3030"
+miner_id = "sd-miner-v0.0.1"
+s3_bucket = 'heurist-images'
+model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models.json"
+vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
+base_dir = "~/.cache/heurist"
+log_filename = "app.log"
+min_deadline = 1

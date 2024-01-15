@@ -58,7 +58,10 @@ conda activate pytorch-gpu-python-3-10.
 - `Run the command pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
 
 ### Step 8. Configure your Miner ID
-1. Locate `config.toml` in `miner-release` folder. Change `miner_id` field to a unique ID like your Discord user name or Ethereum wallet address. This will help to identify your early contribution and give you rewards.
+1. Locate `config.toml` in `miner-release` folder. Change `miner_id_0` field to a unique ID like your Discord user name or Ethereum wallet address. This will help to identify your early contribution and give you rewards.
+2. If you have multiple GPUs, you must set `num_cuda_devices` to be the number of your NVIDIA cards, and set a unique miner_id for EACH GPU. Use `miner_id_0` for the first GPU, `miner_id_1` for the second, and so on.
+
+If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
 
 ### Step 9. Run the miner program
 1. Run `python3 sd-miner-v0.0.1.py` (select the latest version of file) in Conda environment command prompt.

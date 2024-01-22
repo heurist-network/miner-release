@@ -155,7 +155,7 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
         "min_deadline": min_deadline,
         "current_model_id": current_model_id
     }
-    if time.time() - config.last_heartbeat >= 300: # 5 minutes
+    if time.time() - config.last_heartbeat >= 60:
         request_data['hardware'] = get_hardware_description(config)
         config.last_heartbeat = time.time()
     try:

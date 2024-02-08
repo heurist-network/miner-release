@@ -1,7 +1,7 @@
 [general]
-base_url = "http://70.23.102.189:3030"
+base_url = "http://sequencer.heurist.xyz"
 num_cuda_devices = 1
-miner_id_0 = "sd-miner-v0.0.2"
+miner_id_0 = "sd-miner-v0.0.3"
 log_filename = "sd-miner.log"
 
 s3_bucket = 'heurist-images'

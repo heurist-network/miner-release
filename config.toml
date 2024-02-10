@@ -9,3 +9,7 @@ model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-mo
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
 base_dir = "~/.cache/heurist"
 min_deadline = 1
+
+max_iterations = 50
+max_width = 1024
+max_height = 1024

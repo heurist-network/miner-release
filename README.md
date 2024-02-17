@@ -1,11 +1,13 @@
 # Heurist Miner
 
-## Windows Setup Guide
-
-You can skip any of these steps if you already have the toolkits installed. 
+For GPU Ninjas: You can skip any of these steps if you already have the toolkits installed. 
 
 - If you have installed Python 3.x, you possibly don't need to install Miniconda and latest Python again if you can handle the dependency installation in Step 5 and 7, but it's recommended that you still go through Step 2 and 3 to manage Python dependencies with Conda environment. 
 - If you have installed CUDA before, you need to install the matching PyTorch version in Step 5 to work with your CUDA version.
+
+**This is a preview version of testnet mining program. You may meet some unexpected problems when setting it up. Heurist team can help answer your questions in [Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)**
+
+## Windows Setup Guide
 
 ### Step 1. (Optional) Update GPU drivers
 

@@ -319,8 +319,8 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         config.loaded_models[model_id] = current_model
 
     kwargs = {
-        'height': min(height, config.config['general']['max_height'] - config.config['general']['max_height'] % 8),
-        'width': min(width, config.config['general']['max_width'] - config.config['general']['max_width'] % 8),
+        'height': min(height, config.config['general']['max_height']),
+        'width': min(width, config.config['general']['max_width']),
         'num_inference_steps': min(num_iterations, config.config['general']['max_iterations']),
         'guidance_scale': guidance_scale,
         'negative_prompt': neg_prompt,

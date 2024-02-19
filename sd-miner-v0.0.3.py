@@ -214,7 +214,7 @@ def fetch_and_download_config_files(config):
         print(f"Need to download {len(files_to_download)} files, total size: {total_size_gb:.2f} GB")
         confirm = input("Do you want to proceed with the download? (yes/no): ")
 
-        if confirm.lower() == 'yes':
+        if confirm.strip().lower() in ['yes', 'y']:
             for i, model in enumerate(files_to_download, 1):
                 print(f"Downloading file {i}/{len(files_to_download)}")
                 download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors", model['size_mb'] * 1024 * 1024)

@@ -214,7 +214,7 @@ def fetch_and_download_config_files(config):
         print(f"Need to download {len(files_to_download)} files, total size: {total_size_gb:.2f} GB")
         confirm = input("Do you want to proceed with the download? (yes/no): ")
 
-        if confirm.lower() == 'yes':
+        if confirm.strip().lower() in ['yes', 'y']:
             for i, model in enumerate(files_to_download, 1):
                 print(f"Downloading file {i}/{len(files_to_download)}")
                 download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors", model['size_mb'] * 1024 * 1024)
@@ -319,8 +319,8 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         config.loaded_models[model_id] = current_model
 
     kwargs = {
-        'height': min(height, config.config['general']['max_height']),
-        'width': min(width, config.config['general']['max_width']),
+        'height': min(height - height % 8, config.config['general']['max_height']),
+        'width': min(width - width % 8, config.config['general']['max_width']),
         'num_inference_steps': min(num_iterations, config.config['general']['max_iterations']),
         'guidance_scale': guidance_scale,
         'negative_prompt': neg_prompt,

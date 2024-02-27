@@ -16,7 +16,7 @@ from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, Autoen
 from multiprocessing import Process, set_start_method
 import signal
 import threading
-
+import argparse
 
 class Config:
     def __init__(self, config_file, cuda_device_id=0):
@@ -211,8 +211,19 @@ def fetch_and_download_config_files(config):
             print("All model files are up to date.")
             return
         total_size_gb = total_size / 1024
+        # Create the parser
+        parser = argparse.ArgumentParser(description="Download files")
+
+        # Add the arguments
+        parser.add_argument('-y', '--yes', action='store_true', help="Automatically proceed with the download")
+
+        # Parse the arguments
+        args = parser.parse_args()
         print(f"Need to download {len(files_to_download)} files, total size: {total_size_gb:.2f} GB")
-        confirm = input("Do you want to proceed with the download? (yes/no): ")
+        if args.yes:
+            confirm = 'yes'
+        else:
+            confirm = input("Do you want to proceed with the download? (yes/no): ")
 
         if confirm.strip().lower() in ['yes', 'y']:
             for i, model in enumerate(files_to_download, 1):

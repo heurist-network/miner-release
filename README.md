@@ -7,14 +7,6 @@ For GPU Ninjas: You can skip any of these steps if you already have the toolkits
 
 **This is a preview version of testnet mining program. You may meet some unexpected problems when setting it up. Heurist team can help answer your questions in [Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)**
 
-## Setup Environment
-
-Before you start mining, it's important to configure your environment to ensure the mining script operates correctly. This involves setting the `PYTHONPATH` to include the directory where the mining code resides. To do this, source the `setenv.sh` script from your terminal:
-
-```bash
-source setenv.sh
-```
-
 ## Windows Setup Guide
 
 ### Step 1. (Optional) Update GPU drivers

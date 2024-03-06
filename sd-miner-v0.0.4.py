@@ -32,7 +32,7 @@ class MinerConfig(BaseConfig):
                 print("miner_id not found in config. Exiting...")
                 sys.exit(1)
 
-def load_config(filename='config.toml', cuda_device_id=None):
+def load_config(filename='config.toml', cuda_device_id=0):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, filename)
     return MinerConfig(config_path, cuda_device_id)

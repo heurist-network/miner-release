@@ -4,6 +4,7 @@ import io
 from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, AutoencoderKL, DPMSolverMultistepScheduler
 import gc
 import logging
+from mining_core.base import ModelUpdater
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
@@ -25,11 +26,23 @@ def load_model(config, model_id):
     pipe.safety_checker = None
     # TODO: Add support for other schedulers
 
-    if 'vae' in model_config:
-        vae_name = model_config['vae']
-        vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
-        vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
-        pipe.vae = vae
+    try:
+        if 'vae' in model_config:
+            vae_name = model_config['vae']
+            vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
+            vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
+            pipe.vae = vae
+
+    #if it catches this error safetensors_rust.SafetensorError: Error while deserializing header: MetadataIncompleteBuffer
+    #then it downloads the model again
+    except Exception as e:
+        if "Error while deserializing header: MetadataIncompleteBuffer" in str(e):
+            logging.error(f"Error while deserializing header: {e}")
+            updater = ModelUpdater(config)
+            updater.update_models()
+        
+        #raise the error again
+        raise
 
     return pipe
 

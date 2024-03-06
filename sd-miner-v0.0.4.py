@@ -53,7 +53,6 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
 def main(cuda_device_id):
     torch.cuda.set_device(cuda_device_id)
     config = load_config(cuda_device_id=cuda_device_id)
-    print(config.__dict__)
     
     # The parent process should have already downloaded the model files
     # Now we just need to load them into memory

@@ -54,10 +54,7 @@ class ModelUpdater:
   
         return False  # No update required if all models are present
 
-    def download_new_models(self, remote_model_list):
-        """Download new models from the remote list that are not present in the local directory."""
-        for model_info in remote_model_list:
-            # Using 'name' and 'file_url' keys to identify and download models
+    def download_single_model(self, model_info):
             model_name = model_info['name']
             model_url = model_info['file_url']
             model_size_mb = model_info['size_mb']
@@ -70,21 +67,29 @@ class ModelUpdater:
             if not os.path.exists(model_path):
                 print(f"Downloading new model: {model_name}")
                 download_file(self.models_directory, model_url, file_name, model_size_mb * 1024 * 1024)
+
+    def update_config_single_model(self, model_info):
+        model_name = model_info['name']
+            # Check if it's a model or a VAE based on some criteria, for example, the presence of a specific key
+        if 'vae' in model_info:
+            # It's a VAE, update vae_configs
+            if model_name not in self.config['vae_configs']:
+                self.config['vae_configs'][model_name] = model_info
+        else:
+            # It's a regular model, update model_configs
+            if model_name not in self.config['model_configs']:
+                self.config['model_configs'][model_name] = model_info
+
+    def download_new_models(self, remote_model_list):
+        """Download new models from the remote list that are not present in the local directory."""
+        for model_info in remote_model_list:
+            self.download_single_model(model_info)
     
     def update_configs(self, remote_model_list):
         """Update local configuration with new models from the remote list."""
       # Iterate through the remote model list and update config.model_configs
         for model_info in remote_model_list:
-            model_name = model_info['name']
-            # Check if it's a model or a VAE based on some criteria, for example, the presence of a specific key
-            if 'vae' in model_info:
-                # It's a VAE, update vae_configs
-                if model_name not in self.config['vae_configs']:
-                    self.config['vae_configs'][model_name] = model_info
-            else:
-                # It's a regular model, update model_configs
-                if model_name not in self.config['model_configs']:
-                    self.config['model_configs'][model_name] = model_info
+            self.update_config_single_model(model_info)
 
     def update_models(self):
         """Update models by checking for new models and downloading them if necessary."""
@@ -107,3 +112,19 @@ class ModelUpdater:
         while True:
             schedule.run_pending()
             time.sleep(1)
+    
+    def update_single_model(self, model_id):
+        """Update a single model by name."""
+        remote_model_list = self.fetch_remote_model_list()
+        if not remote_model_list:
+            print("Could not fetch remote model list. Skipping update.")
+            return
+        
+        model_info = next((model for model in remote_model_list if model['name'] == model_id), None)
+
+        if model_info:
+            self.download_single_model(model_info)
+            self.update_config_single_model(model_info)
+            print(f"Model update completed for {model_info['name']}.")
+        else:
+            print(f"Model {model_id} not found in the remote list.")

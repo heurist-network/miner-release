@@ -32,7 +32,7 @@ class MinerConfig(BaseConfig):
                 print("miner_id not found in config. Exiting...")
                 sys.exit(1)
 
-def load_config(filename='config.toml', cuda_device_id=None):
+def load_config(filename='config.toml', cuda_device_id=0):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, filename)
     return MinerConfig(config_path, cuda_device_id)
@@ -53,6 +53,7 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
 def main(cuda_device_id):
     torch.cuda.set_device(cuda_device_id)
     config = load_config(cuda_device_id=cuda_device_id)
+    print(config.__dict__)
     
     # The parent process should have already downloaded the model files
     # Now we just need to load them into memory

@@ -127,7 +127,7 @@ This guide assumes you're familiar with the terminal and basic Linux commands. M
 - Install dependencies with `pip install -r requirements.txt`.
 
 ### Step 8. Configure your Miner ID
-Edit `config.toml` in the miner-release folder to set a unique miner_id for each GPU. (Same as Windows guide above. This is important for our protocol to track your contribution.)
+Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (Same as Windows guide above. This is very important for tracking your contribution!)
 
 ### Step 9. Run the miner program
 - Execute the miner script with `python3 sd-miner-v0.0.x.py` (select the latest version) in your terminal. Agree to download model files when prompted.

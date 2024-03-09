@@ -7,6 +7,21 @@ For GPU Ninjas: You can skip any of these steps if you already have the toolkits
 
 **This is a preview version of testnet mining program. You may meet some unexpected problems when setting it up. Heurist team can help answer your questions in [Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)**
 
+## Configure Miner ID(s)
+1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
+2. **Define Unique Miner IDs:** In the `.env` file, you will assign a unique Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately.
+
+    Use the following format to define each miner ID in the `.env` file, ensuring that each Ethereum address starts with `0x` and is unique to each GPU:
+
+    ```plaintext
+    MINER_ID_0=0xYourFirstWalletAddressHere
+    MINER_ID_1=0xYourSecondWalletAddressHere
+    ```
+
+    Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
+
+3. **Configure Multiple GPUs:** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
+
 ## Windows Setup Guide
 
 ### Step 1. (Optional) Update GPU drivers
@@ -60,19 +75,7 @@ conda activate pytorch-gpu-python-3-10.
 - `Run the command pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
 
 ### Step 8. Configuring Your Miner ID with a .env File
-1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation.
-2. **Define Unique Miner IDs:** In the `.env` file, you will assign a unique Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately.
-
-    Use the following format to define each miner ID in the `.env` file, ensuring that each Ethereum address starts with `0x` and is unique to each GPU:
-
-    ```plaintext
-    MINER_ID_0=0xYourFirstWalletAddressHere
-    MINER_ID_1=0xYourSecondWalletAddressHere
-    ```
-
-    Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
-
-3. **Configure Multiple GPUs:** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
+See the top of this guide.
 
 ### Step 9. Run the miner program
 1. Run `python3 sd-miner-v0.0.x.py` (select the latest version of file) in Conda environment command prompt.
@@ -127,7 +130,7 @@ This guide assumes you're familiar with the terminal and basic Linux commands. M
 - Install dependencies with `pip install -r requirements.txt`.
 
 ### Step 8. Configure your Miner ID
-Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (Same as Windows guide above. This is very important for tracking your contribution!)
+Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (See the top of this guide. This is very important for tracking your contribution!)
 
 ### Step 9. Run the miner program
 - Execute the miner script with `python3 sd-miner-v0.0.x.py` (select the latest version) in your terminal. Agree to download model files when prompted.

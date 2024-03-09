@@ -8,14 +8,13 @@ import time
 from ..utils.file_utils import download_file
 
 class ModelUpdater:
-    def __init__(self, config, update_interval_seconds=60):
+    def __init__(self, config, update_interval_seconds=5):
         self.config = config
         self.models_directory = Path(self.config['base_dir'])
         self.model_config_url = self.config['model_config_url']
         self.vae_config_url = self.config['vae_config_url']
         self.update_interval_seconds = update_interval_seconds
         self.session = requests.Session()  # Use a session for connection pooling
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') # Configure logging
 
     def fetch_remote_model_list(self):
         """Fetch the combined list of models and VAEs from the configured URLs."""
@@ -98,7 +97,7 @@ class ModelUpdater:
             self.update_configs(remote_model_list)
             print("Model updates completed.")
         else:
-            print("No model updates required.")
+            logging.debug("No model updates required.")
 
     def start_scheduled_updates(self):
         """Start periodic model updates based on the specified interval."""

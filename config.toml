@@ -1,7 +1,7 @@
 [general]
 base_url = "http://sequencer.heurist.xyz"
 num_cuda_devices = 1
-miner_id_0 = "sd-miner-v0.0.4"
+miner_id_0 = "sd-miner-v0.0.5"
 log_filename = "sd-miner.log"
 
 s3_bucket = 'heurist-images'
@@ -9,6 +9,7 @@ model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-mo
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
 base_dir = "~/.cache/heurist"
 min_deadline = 1
+sleep_duration = 2
 
 max_iterations = 50
 max_width = 1024

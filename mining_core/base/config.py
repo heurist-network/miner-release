@@ -4,7 +4,7 @@ import toml
 import time
 
 class BaseConfig:
-    def __init__(self, config_file, cuda_device_id=0):
+    def __init__(self, config_file, cuda_device_id=0, log_level="INFO", auto_confirm=False):
         self.config = toml.load(config_file)
         self.cuda_device_id = cuda_device_id
         self.num_cuda_devices = int(self.config['general'].get('num_cuda_devices', 1))
@@ -20,3 +20,6 @@ class BaseConfig:
         self.loaded_models = {}
         self.model_configs = {}
         self.vae_configs = {}
+        self.log_level = log_level
+        self.auto_confirm = auto_confirm
+        self.sleep_duration = self.config['general']['sleep_duration']    

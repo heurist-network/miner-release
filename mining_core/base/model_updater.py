@@ -8,7 +8,7 @@ import time
 from ..utils.file_utils import download_file
 
 class ModelUpdater:
-    def __init__(self, config, update_interval_seconds=5):
+    def __init__(self, config, update_interval_seconds=60):
         self.config = config
         self.models_directory = Path(self.config['base_dir'])
         self.model_config_url = self.config['model_config_url']

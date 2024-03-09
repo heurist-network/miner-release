@@ -7,6 +7,7 @@ from .model_utils import execute_model
 def post_request(url, data, miner_id=None):
     try:
         response = requests.post(url, json=data)
+        logging.debug(f"Request sent to {url} with data {data} received response: {response.status_code}")
         # Directly return the response object
         return response
     except ValueError as ve:
@@ -29,28 +30,82 @@ def log_response(response, miner_id=None):
                 return None
         except ValueError as ve:
             logging.error(f"Failed to parse JSON response{miner_id_info}: {ve}")
+    else:
+        logging.warning(f"No response received{miner_id_info}")
     return None
 
+def upload_image_to_s3(s3_client, image_data, bucket, key):
+    """Uploads the generated image to S3."""
+    try:
+        s3_client.put_object(Body=image_data.getvalue(), Bucket=bucket, Key=key)
+        logging.debug(f"Image uploaded to S3 bucket {bucket} with key {key}.")
+    except Exception as e:
+        logging.error(f"Failed to upload image to S3: {e}")
 
-def submit_job_result(config, miner_id, job, temp_credentials):
-    url = config.base_url + "/miner_submit"
-    
-    # Create an S3 client with the temporary credentials
+def execute_inference_and_upload(config, job, temp_credentials):
+    """Executes model inference and uploads the result to S3, returning inference time."""
     s3 = boto3.client('s3', 
                       aws_access_key_id=temp_credentials[0], 
                       aws_secret_access_key=temp_credentials[1], 
                       aws_session_token=temp_credentials[2])
 
-    image_data = execute_model(config, job['model_id'], job['model_input']['SD']['prompt'], job['model_input']['SD']['neg_prompt'], job['model_input']['SD']['height'], job['model_input']['SD']['width'], job['model_input']['SD']['num_iterations'], job['model_input']['SD']['guidance_scale'], job['model_input']['SD']['seed'])
-
-    # Upload the image to S3
+    image_data, inference_latency, loading_latency = execute_model(config, job['model_id'], job['model_input']['SD']['prompt'], job['model_input']['SD']['neg_prompt'], job['model_input']['SD']['height'], job['model_input']['SD']['width'], job['model_input']['SD']['num_iterations'], job['model_input']['SD']['guidance_scale'], job['model_input']['SD']['seed'])
+    
     s3_key = f"{job['job_id']}.png"
-    s3.put_object(Body=image_data.getvalue(), Bucket=config.s3_bucket, Key=s3_key)
+    start_time = time.time() 
+    upload_image_to_s3(s3, image_data, config.s3_bucket, s3_key)
+    end_time = time.time()
+    upload_latency = end_time - start_time
 
+    return s3_key, inference_latency, loading_latency, upload_latency
+
+def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, request_latency):
+    """Submits the job result after processing and logs the total and inference times."""
+    s3_key, inference_latency, loading_latency, upload_latency = execute_inference_and_upload(config, job, temp_credentials)
+
+    # Construct result payload with latency data
     result = {
-        "miner_id": miner_id,  # Use the provided miner_id for the submission
+        "miner_id": miner_id,
         "job_id": job['job_id'],
-        "result": {"S3Key": s3_key},
+        "result": {
+            "S3Key": s3_key,
+        },
+        "request_latency": request_latency,
+        "loading_latency": loading_latency,
+        "inference_latency": inference_latency,
+        "upload_latency": upload_latency
     }
-    response = requests.post(url, json=result)
-    logging.info(f"miner_submit response from server for {miner_id}: {response.text}")
+
+    try:
+        start_time = time.time()  # Start measuring time for miner_submit call
+        response = requests.post(config.base_url + "/miner_submit", json=result)
+        response.raise_for_status()
+        end_time = time.time()  # End measuring time
+
+        submit_latency = end_time - start_time
+
+        job_end_time = time.time()
+        total_time = job_end_time - job_start_time
+        
+        # Log job completion
+        logging.info(f"Request ID {job['job_id']} completed. Total time: {total_time:.2f} s")
+        
+        # Log latencies
+        latency_descriptions = [
+            f"Request: {request_latency:.3f} s",
+            f"Loading: {loading_latency:.3f} s" if loading_latency is not None else "Loading: N/A",
+            f"Inference: {inference_latency:.3f} s",
+            f"Upload: {upload_latency:.3f} s",
+            f"Submit: {submit_latency:.3f} s"
+        ]
+
+        # Join the latency descriptions with commas and prepend the label
+        latencies_log = "Latencies - " + ", ".join(latency_descriptions)
+
+        # Log the compiled message
+        logging.info(latencies_log)
+        
+    except requests.exceptions.RequestException as err:
+        logging.error(f"Error occurred during job submission: {err}")
+
+

@@ -2,8 +2,6 @@ import os
 from tqdm import tqdm
 import requests
 import logging
-import json
-import argparse
 
 def download_file(base_dir, file_url, file_name, total_size):
     try:
@@ -14,8 +12,11 @@ def download_file(base_dir, file_url, file_name, total_size):
             for data in response.iter_content(chunk_size=1024):
                 size = f.write(data)
                 bar.update(size)
+        logging.info(f"Successfully downloaded {file_name}")
     except requests.exceptions.ConnectionError as ce:
         logging.error(f"Failed to connect to server: {ce}")
+    except Exception as e:
+        logging.error(f"Error downloading file {file_name}: {e}")
 
 def fetch_and_download_config_files(config):
     try:
@@ -23,9 +24,9 @@ def fetch_and_download_config_files(config):
         vaes = requests.get(config.vae_config_url).json()
         config.model_configs = {model['name']: model for model in models}
         config.vae_configs = {vae['name']: vae for vae in vaes}
+
         total_size = 0
         files_to_download = []
-
         for model in models:
             file_path = os.path.join(config.base_dir, model['name'] + ".safetensors")
             if not os.path.exists(file_path):
@@ -45,27 +46,22 @@ def fetch_and_download_config_files(config):
                         logging.error(f"VAE config for {vae_name} not found.")
 
         if len(files_to_download) == 0:
-            print("All model files are up to date.")
+            print("All model files are up to date. Miner is ready.")
             return
-        total_size_gb = total_size / 1024
-
-        # Create the parser
-        parser = argparse.ArgumentParser(description="Download files")
-        # Add the arguments
-        parser.add_argument('-y', '--yes', action='store_true', help="Automatically proceed with the download")
-        # Parse the arguments
-        args = parser.parse_args()
-
-        print(f"Need to download {len(files_to_download)} files, total size: {total_size_gb:.2f} GB")
         
-        if args.yes:
-            confirm = 'yes'
-        else:
-            confirm = input("Do you want to proceed with the download? (yes/no): ")
+        total_size_gb = total_size / 1024
+        print(f"Need to download {len(files_to_download)} files, total size: {total_size_gb:.2f} GB")
 
-        if confirm.strip().lower() in ['yes', 'y']:
-            for i, model in enumerate(files_to_download, 1):
-                print(f"Downloading file {i}/{len(files_to_download)}")
-                download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors", model['size_mb'] * 1024 * 1024)
+        confirm = 'yes' if config.auto_confirm else input("Do you want to proceed with the download? (yes/no): ")
+        if confirm.strip().lower() not in ['yes', 'y']:
+            print("Download canceled.")
+            return
+
+        for i, model in enumerate(files_to_download, 1):
+            print(f"Downloading file {i}/{len(files_to_download)}")
+            download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors", model['size_mb'] * 1024 * 1024)
+            
     except requests.exceptions.ConnectionError as ce:
         logging.error(f"Failed to connect to server: {ce}")
+    except Exception as e:
+        logging.error(f"Error fetching and downloading config files: {e}")

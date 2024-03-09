@@ -6,7 +6,6 @@ from tqdm import tqdm
 import schedule
 import time
 from ..utils.file_utils import download_file
-from ..utils.logging_utils import configure_logging
 
 class ModelUpdater:
     def __init__(self, config, update_interval_seconds=5):

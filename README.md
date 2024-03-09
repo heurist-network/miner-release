@@ -59,17 +59,38 @@ conda activate pytorch-gpu-python-3-10.
 3. Install Dependencies:
 - `Run the command pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
 
-### Step 8. Configure your Miner ID
-1. Locate `config.toml` in `miner-release` folder. Change `miner_id_0` field to a unique ID like your Discord user name or Ethereum wallet address. This will help to identify your early contribution and give you rewards.
-2. If you have multiple GPUs, you must set `num_cuda_devices` to be the number of your NVIDIA cards, and set a unique miner_id for EACH GPU. Use `miner_id_0` for the first GPU, `miner_id_1` for the second, and so on.
+### Step 8. Configuring Your Miner ID with a .env File
+1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation.
+2. **Define Unique Miner IDs:** In the `.env` file, you will assign a unique Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately.
 
-If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
+    Use the following format to define each miner ID in the `.env` file, ensuring that each Ethereum address starts with `0x` and is unique to each GPU:
+
+    ```plaintext
+    MINER_ID_0=0xYourFirstWalletAddressHere
+    MINER_ID_1=0xYourSecondWalletAddressHere
+    ```
+
+    Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
+
+3. **Configure Multiple GPUs:** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
 
 ### Step 9. Run the miner program
 1. Run `python3 sd-miner-v0.0.x.py` (select the latest version of file) in Conda environment command prompt.
 
 2. Type `yes` when the program prompts you to download model files. It will take a while to download all models. The program will start processing automatically once it completes downloading.
 
+### Step 10. (Optional) Enhancing Your Mining Experience with CLI Options
+To optimize and customize your mining operations, you can utilize the following command line interface (CLI) options when starting the miner:
+
+#### `--log-level`
+Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
+#### `--auto-confirm`
+Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
+
+**Usage Example:**
+```bash
+python sd-miner.py --log-level DEBUG --auto-confirm yes
+```
 Congratulations! 🌟 You're now set to serve image generation requests. You don't need to keep it up 24/7. Feel free to close the program whenever you need your GPU like playing video games or streaming videos.
 
 ## Linux Setup Guide

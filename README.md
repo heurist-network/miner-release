@@ -139,3 +139,21 @@ Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (S
 - Use `screen` or `tmux` to keep the miner running in the background, especially when connected via SSH.
 
 Follow these steps to set up the Heurist Miner on a Linux system, adjusting commands and procedures as necessary for your specific Linux distribution and setup.
+
+
+## The updated model now supports Long Prompt Weighting(LPW) Stable Diffusion
+
+### Features of this custom pipeline:
+
+- Input a prompt without the 77 token length limit.
+- Includes tx2img, img2img, and inpainting pipelines.
+- Emphasize/weigh part of your prompt with parentheses as so: `a baby deer with (big eyes)`
+- De-emphasize part of your prompt as so: `a [baby] deer with big eyes`
+- Precisely weigh part of your prompt as so: `a baby deer with (big eyes:1.3)`
+
+### Prompt weighting equivalents:
+
+- `a baby deer with` == `(a baby deer with:1.0)`
+- `(big eyes)` == `(big eyes:1.1)`
+- `((big eyes))` == `(big eyes:1.21)`
+- `[big eyes]` == `(big eyes:0.91)`

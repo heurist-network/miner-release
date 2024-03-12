@@ -42,7 +42,7 @@ def upload_image_to_s3(s3_client, image_data, bucket, key):
     except Exception as e:
         logging.error(f"Failed to upload image to S3: {e}")
 
-def execute_inference_and_upload(config, job, temp_credentials):
+def execute_inference_and_upload(config, miner_id, job, temp_credentials):
     """Executes model inference and uploads the result to S3, returning inference time."""
     s3 = boto3.client('s3', 
                       aws_access_key_id=temp_credentials[0], 
@@ -51,7 +51,7 @@ def execute_inference_and_upload(config, job, temp_credentials):
 
     image_data, inference_latency, loading_latency = execute_model(config, job['model_id'], job['model_input']['SD']['prompt'], job['model_input']['SD']['neg_prompt'], job['model_input']['SD']['height'], job['model_input']['SD']['width'], job['model_input']['SD']['num_iterations'], job['model_input']['SD']['guidance_scale'], job['model_input']['SD']['seed'])
     
-    s3_key = f"{job['job_id']}.png"
+    s3_key = f"{job['job_id']}-{miner_id}.png"
     start_time = time.time() 
     upload_image_to_s3(s3, image_data, config.s3_bucket, s3_key)
     end_time = time.time()
@@ -61,7 +61,7 @@ def execute_inference_and_upload(config, job, temp_credentials):
 
 def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, request_latency):
     """Submits the job result after processing and logs the total and inference times."""
-    s3_key, inference_latency, loading_latency, upload_latency = execute_inference_and_upload(config, job, temp_credentials)
+    s3_key, inference_latency, loading_latency, upload_latency = execute_inference_and_upload(config, miner_id, job, temp_credentials)
 
     # Construct result payload with latency data
     result = {
@@ -107,5 +107,3 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
         
     except requests.exceptions.RequestException as err:
         logging.error(f"Error occurred during job submission: {err}")
-
-

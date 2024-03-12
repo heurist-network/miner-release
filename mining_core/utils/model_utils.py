@@ -1,10 +1,12 @@
 import os
 import torch
 import io
-from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, AutoencoderKL, DPMSolverMultistepScheduler
 import gc
 import logging
 import time
+from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
+from vendor.lpw_stable_diffusion_xl import SDXLLongPromptWeightingPipeline
+from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
@@ -12,7 +14,7 @@ def get_local_model_ids(config):
     return local_model_ids
 
 def load_model(config, model_id):
-    start_time = time.time()  # Start measuring time
+    start_time = time.time()
     model_config = config.model_configs.get(model_id, None)
     if model_config is None:
         raise Exception(f"Model configuration for {model_id} not found.")
@@ -21,11 +23,12 @@ def load_model(config, model_id):
 
     # Load the main model
     if model_config['type'] == "sd15":
-        pipe = StableDiffusionPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
+        pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++")
     else:
-        pipe = StableDiffusionXLPipeline.from_single_file(model_file_path, torch_dtype=torch.float16, variant="fp16").to('cuda:' + str(config.cuda_device_id))
+        pipe = SDXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
     pipe.safety_checker = None
+    
     # TODO: Add support for other schedulers
 
     if 'vae' in model_config:
@@ -46,7 +49,7 @@ def unload_model(config, model_id):
         torch.cuda.empty_cache()
         gc.collect()
 
-def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed):
+def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed=93174771):
     try:
         current_model = config.loaded_models.get(model_id, None)
         model_config = config.model_configs.get(model_id, {})
@@ -70,11 +73,7 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
             'num_inference_steps': min(num_iterations, config.config['general']['max_iterations']),
             'guidance_scale': guidance_scale,
             'negative_prompt': neg_prompt,
-            'add_watermarker': False
         }
-
-        if 'clip_skip' in model_config:
-            kwargs['clip_skip'] = model_config['clip_skip']
 
         if seed is not None and seed >= 0:
             kwargs['generator'] = torch.Generator().manual_seed(seed)

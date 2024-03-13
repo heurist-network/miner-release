@@ -70,7 +70,7 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
 
     # Assuming response.text contains the full text response from the server
     warning_indicator = "Warning:"
-    if warning_indicator in response.text:
+    if response and warning_indicator in response.text:
         # Extract the warning message and use strip() to remove any trailing quotation marks
         warning_message = response.text.split(warning_indicator)[1].strip('"')
         print(f"WARNING: {warning_message}")

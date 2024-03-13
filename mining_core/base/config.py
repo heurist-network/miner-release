@@ -22,4 +22,5 @@ class BaseConfig:
         self.vae_configs = {}
         self.log_level = log_level
         self.auto_confirm = auto_confirm
-        self.sleep_duration = self.config['general']['sleep_duration']    
+        self.sleep_duration = self.config['general']['sleep_duration']
+        self.version = self.config['general']['version']    

@@ -59,13 +59,22 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
     }
     if time.time() - config.last_heartbeat >= 60:
         request_data['hardware'] = get_hardware_description(config)
+        request_data['version'] = config.version  # Include the version in the request data
         config.last_heartbeat = time.time()
-        logging.debug(f"Heartbeat updated at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(config.last_heartbeat))} with hardware '{request_data['hardware']}' for miner ID {config.miner_id}.")
+        logging.debug(f"Heartbeat updated at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(config.last_heartbeat))} with hardware '{request_data['hardware']}' and version {config.version} for miner ID {config.miner_id}.")
     
     start_time = time.time()
     response = post_request(config.base_url + "/miner_request", request_data, config.miner_id)
     end_time = time.time()
     request_latency = end_time - start_time
+
+    # Assuming response.text contains the full text response from the server
+    warning_indicator = "Warning:"
+    if warning_indicator in response.text:
+        # Extract the warning message and use strip() to remove any trailing quotation marks
+        warning_message = response.text.split(warning_indicator)[1].strip('"')
+        print(f"WARNING: {warning_message}")
+
 
     response_data = log_response(response, config.miner_id)
 

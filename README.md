@@ -11,18 +11,18 @@ For GPU Ninjas: You can skip any of these steps if you already have the toolkits
 1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
 2. **Define Unique Miner IDs:** In the `.env` file, you will assign a unique Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately.
 
-    Use the following format to define each miner ID in the `.env` file, ensuring that each Ethereum address starts with `0x` and is unique to each GPU:
+Use the following format to define each miner ID in the `.env` file, ensuring that each Ethereum address starts with `0x` and is unique to each GPU:
 
-    ```plaintext
-    MINER_ID_0=0xYourFirstWalletAddressHere
-    MINER_ID_1=0xYourSecondWalletAddressHere
-    ```
+```plaintext
+MINER_ID_0=0xYourFirstWalletAddressHere
+MINER_ID_1=0xYourSecondWalletAddressHere
+```
 
-    Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
+Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
 
-3. **Configure Multiple GPUs:** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. Make sure you set unique miner_id for each GPU to receive rewards correctly.
+3. **Configure Multiple GPUs:** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. We recommend setting a unique miner_id for each GPU. This does not affect your rewards but helps the protocol track the number of GPU nodes in the network correctly.
 
-## Windows Setup Guide
+## Stable Diffusion Miner Guide (Windows)
 
 ### Step 1. (Optional) Update GPU drivers
 
@@ -96,14 +96,14 @@ python sd-miner.py --log-level DEBUG --auto-confirm yes
 ```
 Congratulations! 🌟 You're now set to serve image generation requests. You don't need to keep it up 24/7. Feel free to close the program whenever you need your GPU like playing video games or streaming videos.
 
-## Linux Setup Guide
+## Stable Diffusion Miner Guide (Linux)
 This guide assumes you're familiar with the terminal and basic Linux commands. Most steps are similar to the Windows setup, with adjustments for Linux-specific commands and environments.
 
 - Python Installation: If Python 3.x is already installed, you can skip the Miniconda installation. However, using Miniconda or Conda to manage dependencies is still recommended.
 - CUDA: If CUDA is previously installed, ensure the PyTorch installation matches your CUDA version.
 
 ### Step 1. Update GPU drivers (Optional)
-- Use your Linux distribution's package manager or download drivers directly from the NVIDIA website. For Ubuntu, you might use commands like `sudo apt update` and `sudo ubuntu-drivers autoinstall`.
+- Use your Linux distribution's package manager or download drivers directly from the [NVIDIA Driver Downloads](https://www.nvidia.com/Download/index.aspx). For Ubuntu, you might use commands like `sudo apt update` and `sudo ubuntu-drivers autoinstall`.
 
 ### Step 2. Install Miniconda or Conda (Optional)
 - Download the Miniconda installer for Linux from the [Miniconda Downloads page](https://docs.anaconda.com/free/miniconda/).
@@ -141,7 +141,7 @@ Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (S
 Follow these steps to set up the Heurist Miner on a Linux system, adjusting commands and procedures as necessary for your specific Linux distribution and setup.
 
 
-## The updated model now supports Long Prompt Weighting(LPW) Stable Diffusion
+## The updated miner now supports Long Prompt Weighting(LPW) Stable Diffusion
 
 ### Features of this custom pipeline:
 
@@ -157,3 +157,25 @@ Follow these steps to set up the Heurist Miner on a Linux system, adjusting comm
 - `(big eyes)` == `(big eyes:1.1)`
 - `((big eyes))` == `(big eyes:1.21)`
 - `[big eyes]` == `(big eyes:0.91)`
+
+## LLM Miner Guide (Linux)
+
+We use a Docker container to run a Large Language Model (LLM) with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference). We don't recommend running the LLM miner on Windows because of the difficulties in setting up Docker on Windows. 
+
+Make sure you have CUDA driver installed. We recommend using NVIDIA drivers with CUDA version 12.2 or higher, but other versions should probably work fine. Proceed with the following steps.
+
+Note: for LLM miner, only `MINER_ID_0` in `.env` file is used. Multi-GPU support will be added in the future.
+
+### Step 1. Install Docker Engine
+Choose your OS in [Docker Engine Installation Guide](https://docs.docker.com/engine/install/) and follow the instructions.
+
+### Step 2. Install NVIDIA Container Toolkit
+[NVIDIA Container Toolkit Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+
+### Step 3. Run the Setup Script
+```bash
+chmod +x llm-miner-starter.sh
+./llm-miner-starter.sh
+```
+
+The first time that the container starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/heurist` by default. You can change the directory by specifying a different one in docker command argument `-v $HOME/.cache/heurist:/data` in `llm-miner-starter.sh`

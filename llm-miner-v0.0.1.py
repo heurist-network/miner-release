@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import sys
 import time
@@ -16,6 +17,20 @@ def load_config(filename='config.toml'):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, filename)
     return BaseConfig(config_path)
+
+def load_miner_ids():
+    pattern = re.compile(r'MINER_ID_\d+')
+    
+    # Find all environment variables that match the pattern
+    matching_env_vars = [var for var in os.environ if pattern.match(var)]
+    
+    # Extract the highest index from the matching environment variables
+    highest_index = max(int(var.split('_')[-1]) for var in matching_env_vars) if matching_env_vars else 0
+    
+    # Use the highest index to dynamically generate the list of miner IDs
+    miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(0, highest_index + 1)]
+
+    return miner_ids
 
 def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
     print(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
@@ -181,14 +196,16 @@ def main_loop():
     set_start_method('spawn', force=True)
 
     config = load_config()
+    miner_ids = load_miner_ids()
+    print("miner_ids", miner_ids)
 
     try:
         # Explicitly use only the first miner_id; ensure config.miner_ids[0] exists
-        if not config.miner_ids:
-            print("No miner_ids provided in config.")
+        if not miner_ids:
+            print("No miner_ids provided in .env file")
             sys.exit(1)
         
-        miner_id = config.miner_ids[0]  # Only the first miner_id is used for processing
+        miner_id = miner_ids[0]  # Only the first miner_id is used for processing
         if miner_id is None or not miner_id.startswith("0x"):
             print("Warning: Configure your ETH address correctly.")
             #sys.exit(1) 

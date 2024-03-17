@@ -28,6 +28,11 @@ def fetch_and_download_config_files(config):
         total_size = 0
         files_to_download = []
         for model in models:
+            if not 'type' in model or ('sd' not in model['type'] and 'vae' not in model['type']):
+                continue
+            if not 'size_mb' in model:
+                print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
+                continue
             file_path = os.path.join(config.base_dir, model['name'] + ".safetensors")
             if not os.path.exists(file_path):
                 size_mb = model['size_mb']

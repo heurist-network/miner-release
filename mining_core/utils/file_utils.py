@@ -22,7 +22,7 @@ def fetch_and_download_config_files(config):
     try:
         models = requests.get(config.model_config_url).json()
         vaes = requests.get(config.vae_config_url).json()
-        config.model_configs = {model['name']: model for model in models}
+        config.model_configs = {model['name']: model for model in models if 'type' in model and 'sd' in model['type']}
         config.vae_configs = {vae['name']: vae for vae in vaes}
 
         total_size = 0

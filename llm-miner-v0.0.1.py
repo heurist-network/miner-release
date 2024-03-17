@@ -155,6 +155,26 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
             "inference_latency": inference_latency
         }
         requests.post(url, json=result)
+        
+def health_check(config, model_id):
+    try:
+        client = initialize_client(config, model_id)
+        start_time = time.time()
+        response = client.chat.completions.create(
+            messages=[{"role": "user", "content": "write a 200-word essay on the topic of the future of Ethereum"}],
+            model=model_id,
+            max_tokens=200,
+        )
+        end_time = time.time()
+        inference_latency = end_time - start_time
+        total_tokens = response.usage.total_tokens
+        print(f"Test prompt with {model_id}. Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
+        if total_tokens / inference_latency < 5:
+            print(f"Warning: Inference speed is too slow for model {model_id}.")
+        return True
+    except Exception as e:
+        print(f"Model {model_id} is not ready. Waiting for TGI process to finish loading the model.")
+        return False
 
 def worker(miner_id):
     config = load_config()
@@ -198,6 +218,11 @@ def main_loop():
     config = load_config()
     miner_ids = load_miner_ids()
     print("miner_ids", miner_ids)
+    
+    # Do health check every 10 seconds, until it returns true
+    # TODO: refactor: model_id should be a config.toml item or .env item
+    while not health_check(config, config.SUPPORTED_MODEL_IDS[0]):
+        time.sleep(10)
 
     try:
         # Explicitly use only the first miner_id; ensure config.miner_ids[0] exists

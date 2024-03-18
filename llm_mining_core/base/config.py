@@ -37,8 +37,6 @@ class BaseConfig:
         self.stop_words = [
             "[End]",
             "[end]",
-            "\nReferences:\n",
-            "\nSources:\n",
             "<|im_start|>",
             "<|im_end|>",
         ]

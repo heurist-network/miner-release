@@ -17,10 +17,12 @@ class BaseConfig:
 
     def __init__(self, config_file):
         self.config = toml.load(config_file)
-        self.miner_ids = [id.strip() for id in os.getenv('MINER_IDS', '').split(',')]
+        self.num_cuda_devices = int(self.config['general'].get('num_cuda_devices', 1))
+        self.miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
         self.miner_ids_cycle = itertools.cycle(self.miner_ids)  # Create an iterator that cycles through the miner IDs
 
         self.base_url = self.config['general']['base_url']
+        self.log_filename = self.config['general']['llm_log_filename']
 
         self.last_heartbeat = time.time() - 10000
         # Initialize a dictionary to track the last heartbeat for each miner_id

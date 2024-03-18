@@ -2,6 +2,7 @@
 base_url = "http://sequencer.heurist.xyz"
 num_cuda_devices = 1
 log_filename = "sd-miner.log"
+llm_log_filename = "llm-miner.log"
 version = "sd-v1.0.0"
 llm_version = "llm-v0.0.1"
 

@@ -1,5 +1,7 @@
 import os
+import logging
 from openai import OpenAI
+
 
 def initialize_client(config, model_id):
     """
@@ -16,7 +18,7 @@ def initialize_client(config, model_id):
     """
     api_base_url = config.MODEL_TO_API_BASE_URL.get(model_id, None)
     if api_base_url is None:
-        print(f"API base URL not found for model ID: {model_id}")
+        logging.warning(f"API base URL not found for model ID: {model_id}")
         return None
 
     return OpenAI(base_url=api_base_url, api_key="N/A")

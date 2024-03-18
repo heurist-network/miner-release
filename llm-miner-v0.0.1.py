@@ -5,12 +5,14 @@ import sys
 import time
 from multiprocessing import Process, set_start_method
 import signal
+import logging
 
 from llm_mining_core.base import BaseConfig
 from llm_mining_core.utils import (
     initialize_client,
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
-    send_miner_request
+    send_miner_request,
+    configure_logging
 )
 
 def load_config(filename='config.toml'):
@@ -18,26 +20,12 @@ def load_config(filename='config.toml'):
     config_path = os.path.join(base_dir, filename)
     return BaseConfig(config_path)
 
-def load_miner_ids():
-    pattern = re.compile(r'MINER_ID_\d+')
-    
-    # Find all environment variables that match the pattern
-    matching_env_vars = [var for var in os.environ if pattern.match(var)]
-    
-    # Extract the highest index from the matching environment variables
-    highest_index = max(int(var.split('_')[-1]) for var in matching_env_vars) if matching_env_vars else 0
-    
-    # Use the highest index to dynamically generate the list of miner IDs
-    miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(0, highest_index + 1)]
-
-    return miner_ids
-
 def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
-    print(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
+    logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
 
     client = initialize_client(config, model_id)
     if client is None:
-        print(f"Failed to initialize API client for model {model_id}.")
+        logging.error(f"Failed to initialize API client for model {model_id}.")
         return
     
     decoded_prompt = None
@@ -48,7 +36,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
     elif "mistral" in model_id:
         decoded_prompt = decode_prompt_mistral(prompt)
     else:
-        print(f"Model {model_id} not supported.")
+        logging.error(f"Model {model_id} not supported.")
         return
 
     if use_stream_flag:
@@ -69,7 +57,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
                 initial_data = first_chunk.choices[0].delta.content
                 
         if not initial_data:
-            print("No initial data received from the stream. Exiting...")
+            logging.error("No initial data received from the stream. Exiting...")
             return
 
         def generate_data(stream):
@@ -122,7 +110,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
                 )
                 response.raise_for_status()
             except requests.RequestException as e:
-                print(f"Failed to submit stream: {e}")
+                logging.error(f"Failed to submit stream: {e}")
 
     else:
         print("Non-streaming mode")
@@ -139,8 +127,11 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
         end_time = time.time()
         inference_latency = end_time - start_time
         res = response.choices[0].message.content
+        # Log the content of res with additional text
+        logging.info(f"Processing prompt:{decoded_prompt}")
+        logging.info(f"Response received: {res}")
         total_tokens = response.usage.total_tokens
-        print(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
+        logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
         # if the words is in stop_words, truncate the result
         for word in stop:
             if word in res:
@@ -178,6 +169,7 @@ def health_check(config, model_id):
 
 def worker(miner_id):
     config = load_config()
+    configure_logging(config, miner_id)
     while True:
         try:
             job, request_latency = send_miner_request(config, miner_id)
@@ -195,7 +187,7 @@ def worker(miner_id):
                 # Process the job with the miner
                 generate(config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
             else:
-                #print(f"No job received for miner {miner_id}. Waiting for the next round...")
+                logging.info(f"No job received for miner {miner_id}. Waiting for the next round...")
                 pass
         except Exception as e:
             print(f"Error occurred for miner {miner_id}: {e}")
@@ -216,8 +208,6 @@ def main_loop():
     set_start_method('spawn', force=True)
 
     config = load_config()
-    miner_ids = load_miner_ids()
-    print("miner_ids", miner_ids)
     
     # Do health check every 10 seconds, until it returns true
     # TODO: refactor: model_id should be a config.toml item or .env item
@@ -226,14 +216,16 @@ def main_loop():
 
     try:
         # Explicitly use only the first miner_id; ensure config.miner_ids[0] exists
-        if not miner_ids:
-            print("No miner_ids provided in .env file")
+        if not config.miner_ids:
+            logging.error("No miner_ids provided in .env file")
             sys.exit(1)
-        
-        miner_id = miner_ids[0]  # Only the first miner_id is used for processing
+    
+        miner_id = config.miner_ids[0]  # Only the first miner_id is used for processing
+
+        configure_logging(config, miner_id)
+
         if miner_id is None or not miner_id.startswith("0x"):
-            print("Warning: Configure your ETH address correctly.")
-            #sys.exit(1) 
+            logging.warning("Warning: Configure your ETH address correctly.")
 
         for _ in range(config.num_child_process):
             process = Process(target=worker, args=(miner_id,))

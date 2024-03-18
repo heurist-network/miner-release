@@ -1,12 +1,12 @@
-# Heurist Miner Setup Guide
+# ⚙️ Heurist Miner Setup Guide
 
 Welcome to the Heurist Miner setup guide. This document is designed to help you get started with the Heurist Miner, a tool for participating in the Heurist testnet mining program. Whether you're a seasoned miner or new to cryptocurrency mining, we've structured this guide to make the setup process as straightforward as possible.
 
-## Introduction
+## 📖 Introduction
 
 The Heurist Miner allows users to contribute to the Heurist network by performing computational tasks in exchange for rewards. This guide will take you through the necessary steps to set up your mining operation, from configuring your miner IDs to installing the required software.
 
-## Quick Start Guide
+## 🚀 Quick Start Guide
 
 For those eager to dive in, here's a quick overview of the setup process:
 
@@ -17,13 +17,13 @@ For those eager to dive in, here's a quick overview of the setup process:
 5. Install miner scripts and dependencies.
 6. Run the miner program.
 
-## Important Notices
+## ⚠️ Important Notices
 
 - **Preview Version**: You're working with a preview version of the Heurist Miner. Expect some bumps along the way. For assistance, join [Heurist Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)
 - **System Requirements**: Advanced users may skip steps they've already completed, but compatibility checks are recommended.
 - **CUDA Compatibility**: CUDA versions 12.1 or 12.2 are advised for compatibility with PyTorch.
 
-## Detailed Setup Guides
+## 🛠️ Detailed Setup Guides
 
 ### Pre-setup Recommendations
 
@@ -189,7 +189,7 @@ chmod +x llm-miner-starter.sh
 The first time that the container starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/heurist` by default. You can change the directory by specifying a different one in docker command argument `-v $HOME/.cache/heurist:/data` in `llm-miner-starter.sh`
 </details>
 
-## Features and Advanced Configuration
+## ✨ Features and Advanced Configuration
 The updated stable diffusion miner now supports Long Prompt Weighting(LPW) Stable Diffusion
 
 - Input a prompt without the 77 token length limit.
@@ -204,7 +204,7 @@ The updated stable diffusion miner now supports Long Prompt Weighting(LPW) Stabl
 - `((big eyes))` == `(big eyes:1.21)`
 - `[big eyes]` == `(big eyes:0.91)`
 
-# Troubleshooting and FAQs
+## ❓ Troubleshooting and FAQs
 
 In this section, you'll find common questions and troubleshooting tips related to running LLM miner, including issues with GPU machines, operating system compatibility, and handling specific error messages.
 

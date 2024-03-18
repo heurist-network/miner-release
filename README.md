@@ -27,7 +27,9 @@ For those eager to dive in, here's a quick overview of the setup process:
 
 ### Pre-setup Recommendations
 
-Before diving into the miner setup, ensure your system is prepared. This includes having Python installed and checking your CUDA version for compatibility.
+- Python Installation: If Python 3.x is already installed on your system, you may not need to reinstall Miniconda and Python. However, managing dependencies via a Conda environment is recommended.
+- CUDA Installation: For those with CUDA pre-installed, ensure that the PyTorch version (`pytorch-cuda`) installed matches your CUDA version.
+
 
 ### Configuring Your Miner ID
 
@@ -39,7 +41,7 @@ MINER_ID_0=0xYourFirstWalletAddressHere
 MINER_ID_1=0xYourSecondWalletAddressHere
 ```
 <details>
-<summary style="font-weight: bold; font-size: 12pt;">Stable Diffusion Miner Guide (Windows)</summary>
+<summary style="font-weight: bold; font-size: 13pt;">Stable Diffusion Miner Guide (Windows)</summary>
 
 #### Step 1. (Optional) Update GPU drivers
 
@@ -116,7 +118,7 @@ Congratulations! 🌟 You're now set to serve image generation requests. You don
 </details>
 
 <details>
-<summary style="font-weight: bold; font-size: 12pt;">Stable Diffusion Miner Guide (Linux)</summary>
+<summary style="font-weight: bold; font-size: 13pt;">Stable Diffusion Miner Guide (Linux)</summary>
 This guide assumes you're familiar with the terminal and basic Linux commands. Most steps are similar to the Windows setup, with adjustments for Linux-specific commands and environments.
 
 - Python Installation: If Python 3.x is already installed, you can skip the Miniconda installation. However, using Miniconda or Conda to manage dependencies is still recommended.
@@ -161,7 +163,7 @@ Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (S
 </details>
 
 <details>
-<summary style="font-weight: bold; font-size: 12pt;">Large Language Model Miner Guide (Linux)</summary>
+<summary style="font-weight: bold; font-size: 1pt;">Large Language Model Miner Guide (Linux)</summary>
 
 For LLM mining, we utilize a Docker container running a Large Language Model with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference) Due to challenges in setting up Docker on Windows, LLM mining is recommended primarily for Linux systems.
 

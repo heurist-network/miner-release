@@ -1,12 +1,9 @@
 # Heurist Miner
 
-For GPU Ninjas: You can skip any of these steps if you already have the toolkits installed. 
-
-- If you have installed Python 3.x, you possibly don't need to install Miniconda and latest Python again if you can handle the dependency installation in Step 5 and 7, but it's recommended that you still go through Step 2 and 3 to manage Python dependencies with Conda environment. 
-- If you have installed CUDA before, you need to install the matching PyTorch version in Step 5 to work with your CUDA version.
-- **Important: It's recommended to use CUDA 12.1 and 12.2. Higher versions may be incompatible with PyTorch.**
-
-**This is a preview version of testnet mining program. You may meet some unexpected problems when setting it up. Heurist team can help answer your questions in [Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)**
+## Important Notices
+- **Preview Version**: This guide pertains to a preview version of the Heurist testnet mining program. You may encounter unexpected issues during setup. For assistance, join [Heurist Discord #miner-chat channel]( https://discord.gg/bmdfAgufFa)
+- **System Requirements**: For advanced users, you may skip certain steps if you already have the required toolkits installed. However, please review the compatibility notes below.
+- **CUDA Compatibility**: It is recommended to use CUDA versions 12.1 or 12.2. Higher versions may not be compatible with PyTorch.
 
 ## Configure Miner ID(s)
 1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
@@ -22,6 +19,10 @@ MINER_ID_1=0xYourSecondWalletAddressHere
 Continue this pattern for as many GPUs as you have, assigning a unique wallet address to each one. For instance, if you have three GPUs, you would define `MINER_ID_0`, `MINER_ID_1`, and `MINER_ID_2`, each with a different Ethereum wallet address.
 
 3. **Configure Multiple GPUs (Stable Diffusion only):** If your mining setup includes multiple GPUs, ensure that you've created a line in the `.env` file for each one, following the pattern described above. If you use the same miner_id for multiple GPUs, the protocol will recognize you as one GPU. We recommend setting a unique miner_id for each GPU. This does not affect your rewards but helps the protocol track the number of GPU nodes in the network correctly.
+
+## Pre-setup Recommendations
+- Python Installation: If Python 3.x is already installed on your system, you may not need to reinstall Miniconda and Python. However, managing dependencies via a Conda environment is recommended.
+- CUDA Installation: For those with CUDA pre-installed, ensure that the PyTorch version (`pytorch-cuda`) installed matches your CUDA version.
 
 ## Stable Diffusion Miner Guide (Windows)
 
@@ -161,7 +162,7 @@ change
 
 ## LLM Miner Guide (Linux)
 
-We use a Docker container to run a Large Language Model (LLM) with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference). We don't recommend running the LLM miner on Windows because of the difficulties in setting up Docker on Windows. 
+For LLM mining, we utilize a Docker container running a Large Language Model with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference) Due to challenges in setting up Docker on Windows, LLM mining is recommended primarily for Linux systems.
 
 ### Prerequisites
 - Make sure you have CUDA driver installed. We recommend using NVIDIA drivers with CUDA version 12.1 or 12.2. Other versions may probably work fine. Use `nvidia-smi` command to check CUDA version.
@@ -185,7 +186,7 @@ chmod +x llm-miner-starter.sh
 The first time that the container starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/heurist` by default. You can change the directory by specifying a different one in docker command argument `-v $HOME/.cache/heurist:/data` in `llm-miner-starter.sh`
 
 ## LLM Mining FAQ
-- Q: I rent GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining? (A: No. These environments cannot host Docker containers. You must use a bare metal machine or a vGPU environment with Docker support.)
+- Q: I rent a GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining? (A: No. These services cannot host Docker containers because the rented virtual machine itself is inside a docker. You must use a bare metal machine or a vGPU environment with Docker support.)
 - Q: Can I run LLM miner on Windows? (A: You may set up Docker engine on Windows but it's error-prone. We don't recommend running LLM miner on Windows, but you can run Stable Diffusion. We may add support for Windows in the future.)
 - Q: Why do I see "Model is not ready. Waiting for TGI process to finish loading the model"? (A: It takes some time for the TGI service in the Docker container to download and load model files before it starts serving requests. And you can use `sudo docker ps` to confirm that the docker is running.)
-- Q: Why do I see "CUDA out of memory error"? (A: Use `nvidia-smi` to see available memory. Are there any other processes using the GPU?)
+- Q: Why do I see "CUDA out of memory error"? (A: Use `nvidia-smi` to see available memory. Are there any other processes using the GPU? Confirm that your available GPU memory satisfies the minimum requirement for the model.)

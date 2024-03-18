@@ -201,3 +201,25 @@ The updated stable diffusion miner now supports Long Prompt Weighting(LPW) Stabl
 - `(big eyes)` == `(big eyes:1.1)`
 - `((big eyes))` == `(big eyes:1.21)`
 - `[big eyes]` == `(big eyes:0.91)`
+
+# Troubleshooting and FAQs
+
+In this section, you'll find common questions and troubleshooting tips related to running LLM miner, including issues with GPU machines, operating system compatibility, and handling specific error messages.
+
+## GPU Machine Compatibility
+
+### Q: I rent a GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining?
+**A:** No. These services cannot host Docker containers because the rented virtual machine itself is inside a Docker. You must use a bare metal machine or a vGPU environment with Docker support.
+
+## Operating System Compatibility
+
+### Q: Can I run LLM miner on Windows?
+**A:** You may set up the Docker engine on Windows, but it's error-prone. We don't recommend running LLM miner on Windows, but you can run Stable Diffusion. We may add support for Windows in the future.
+
+## Error Messages and Fixes
+
+### Q: Why do I see "Model is not ready. Waiting for TGI process to finish loading the model"?
+**A:** It takes some time for the TGI service in the Docker container to download and load model files before it starts serving requests. You can use `sudo docker ps` to confirm that the docker is running.
+
+### Q: Why do I see "CUDA out of memory error"?
+**A:** Use `nvidia-smi` to see available memory. Check if there are any other processes using the GPU. Confirm that your available GPU memory satisfies the minimum requirement for the model.

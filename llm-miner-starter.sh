@@ -13,7 +13,7 @@ fi
 echo "Starting Docker container for LLM server..."
 
 # Run Docker command with a label
-sudo docker run --net=host --gpus all --shm-size 1g -p 8081:80 -v $HOME/.cache/heurist:/data -v $PWD/config:/config --label started_by=llm-miner-starter ghcr.io/huggingface/text-generation-inference:1.4 --model-id TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ --revision gptq-8bit-32g-actorder_True --quantize gptq --max-input-length 2048 --max-total-tokens 4096 --max-batch-prefill-tokens 4096 --tokenizer-config-path /config/openhermes_2.5_mistral_7b_tokenizer_config.json &
+sudo docker run --net=host --gpus all --shm-size 1g -v $HOME/.cache/heurist:/data -v $PWD/config:/config --label started_by=llm-miner-starter ghcr.io/huggingface/text-generation-inference:1.4 --port 8081 --model-id TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ --revision gptq-8bit-32g-actorder_True --quantize gptq --max-input-length 2048 --max-total-tokens 4096 --max-batch-prefill-tokens 4096 --tokenizer-config-path /config/openhermes_2.5_mistral_7b_tokenizer_config.json &
 
 while true; do
     # Get the container ID

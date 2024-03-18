@@ -41,7 +41,7 @@ MINER_ID_0=0xYourFirstWalletAddressHere
 MINER_ID_1=0xYourSecondWalletAddressHere
 ```
 <details>
-<summary style="font-weight: bold; font-size: 15pt;">Stable Diffusion Miner Guide (Windows)</summary>
+<summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>
 
 #### Step 1. (Optional) Update GPU drivers
 
@@ -118,7 +118,7 @@ Congratulations! 🌟 You're now set to serve image generation requests. You don
 </details>
 
 <details>
-<summary style="font-weight: bold; font-size: 15pt;">Stable Diffusion Miner Guide (Linux)</summary>
+<summary><b>Stable Diffusion Miner Guide (Linux)</b></summary>
 This guide assumes you're familiar with the terminal and basic Linux commands. Most steps are similar to the Windows setup, with adjustments for Linux-specific commands and environments.
 
 - Python Installation: If Python 3.x is already installed, you can skip the Miniconda installation. However, using Miniconda or Conda to manage dependencies is still recommended.
@@ -163,7 +163,7 @@ Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (S
 </details>
 
 <details>
-<summary style="font-weight: bold; font-size: 15pt;">Large Language Model Miner Guide (Linux)</summary>
+<summary><b>Large Language Model Miner Guide (Linux)</b></summary>
 
 For LLM mining, we utilize a Docker container running a Large Language Model with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference) Due to challenges in setting up Docker on Windows, LLM mining is recommended primarily for Linux systems.
 
@@ -208,20 +208,22 @@ The updated stable diffusion miner now supports Long Prompt Weighting(LPW) Stabl
 
 In this section, you'll find common questions and troubleshooting tips related to running LLM miner, including issues with GPU machines, operating system compatibility, and handling specific error messages.
 
-## GPU Machine Compatibility
+## General Questions
 
-### Q: I rent a GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining?
+**Q: I rent a GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining?**  
+
 **A:** No. These services cannot host Docker containers because the rented virtual machine itself is inside a Docker. You must use a bare metal machine or a vGPU environment with Docker support.
 
-## Operating System Compatibility
+**Q: Can I run LLM miner on Windows?** 
 
-### Q: Can I run LLM miner on Windows?
 **A:** You may set up the Docker engine on Windows, but it's error-prone. We don't recommend running LLM miner on Windows, but you can run Stable Diffusion. We may add support for Windows in the future.
 
-## Error Messages and Fixes
+## Technical Issues
 
-### Q: Why do I see "Model is not ready. Waiting for TGI process to finish loading the model"?
+**Q: Why do I see "Model is not ready. Waiting for TGI process to finish loading the model"?**  
+
 **A:** It takes some time for the TGI service in the Docker container to download and load model files before it starts serving requests. You can use `sudo docker ps` to confirm that the docker is running.
 
-### Q: Why do I see "CUDA out of memory error"?
+**Q: Why do I see "CUDA out of memory error"?**  
+
 **A:** Use `nvidia-smi` to see available memory. Check if there are any other processes using the GPU. Confirm that your available GPU memory satisfies the minimum requirement for the model.

@@ -37,5 +37,5 @@ def send_miner_request(config, miner_id):
         else:
             return None, None
     except Exception as e:
-        logging.error(f"Error parsing response: {e}")
+        print(f"Error parsing response: {e}")
         return None, None

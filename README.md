@@ -163,9 +163,9 @@ Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (S
 </details>
 
 <details>
-<summary><b>Large Language Model Miner Guide (Linux)</b></summary>
+<summary><b>Large Language Model Miner Guide</b></summary>
 
-For LLM mining, we utilize a Docker container running a Large Language Model with [Huggingface Text Generation Inference](https://github.com/huggingface/text-generation-inference) Due to challenges in setting up Docker on Windows, LLM mining is recommended primarily for Linux systems.
+We use [vLLM](https://docs.vllm.ai/en/latest/), a fast and easy-to-use library for LLM inference and serving. We have only tested the miner program on Linux.
 
 ### Prerequisites
 - Make sure you have CUDA driver installed. We recommend using NVIDIA drivers with CUDA version 12.1 or 12.2. Other versions may probably work fine. Use `nvidia-smi` command to check CUDA version.
@@ -174,35 +174,14 @@ For LLM mining, we utilize a Docker container running a Large Language Model wit
 
 Note: for LLM miner, only `MINER_ID_0` in `.env` file is used. Multi-GPU support will be added in the future.
 
-### Step 1. Install Docker Engine
-Choose your OS in [Docker Engine Installation Guide](https://docs.docker.com/engine/install/) and follow the instructions.
-
-### Step 2. Install NVIDIA Container Toolkit
-[NVIDIA Container Toolkit Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-
-### Step 3. Run the Setup Script
+### Run the Setup Script
 ```bash
 chmod +x llm-miner-starter.sh
 ./llm-miner-starter.sh
 ```
 
-The first time that the container starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/heurist` by default. You can change the directory by specifying a different one in docker command argument `-v $HOME/.cache/heurist:/data` in `llm-miner-starter.sh`
+The first time that the miner program starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/huggingface` by default. 
 </details>
-
-## ✨ Features and Advanced Configuration
-The updated stable diffusion miner now supports Long Prompt Weighting(LPW) Stable Diffusion
-
-- Input a prompt without the 77 token length limit.
-- Includes tx2img, img2img, and inpainting pipelines.
-- Emphasize/weigh part of your prompt with parentheses as so: `a baby deer with (big eyes)`
-- De-emphasize part of your prompt as so: `a [baby] deer with big eyes`
-- Precisely weigh part of your prompt as so: `a baby deer with (big eyes:1.3)`
-
-### Prompt weighting equivalents:
-- `a baby deer with` == `(a baby deer with:1.0)`
-- `(big eyes)` == `(big eyes:1.1)`
-- `((big eyes))` == `(big eyes:1.21)`
-- `[big eyes]` == `(big eyes:0.91)`
 
 ## ❓ Troubleshooting and FAQs
 
@@ -210,19 +189,15 @@ In this section, you'll find common questions and troubleshooting tips related t
 
 ## General Questions
 
-**Q: I rent a GPU machine from runpod.io/vast.ai/Akash/io.net, can I run LLM mining?**  
-
-**A:** No. These services cannot host Docker containers because the rented virtual machine itself is inside a Docker. You must use a bare metal machine or a vGPU environment with Docker support.
-
 **Q: Can I run LLM miner on Windows?** 
 
-**A:** You may set up the Docker engine on Windows, but it's error-prone. We don't recommend running LLM miner on Windows, but you can run Stable Diffusion. We may add support for Windows in the future.
+**A:** You may set up the miner program with WSL, but there may be unexpected issues.
 
 ## Technical Issues
 
-**Q: Why do I see "Model is not ready. Waiting for TGI process to finish loading the model"?**  
+**Q: Why do I see "Model is not ready. Waiting for LLM Server to finish loading the model to start."?**  
 
-**A:** It takes some time for the TGI service in the Docker container to download and load model files before it starts serving requests. You can use `sudo docker ps` to confirm that the docker is running.
+**A:** It takes some time to download and load model files before it starts serving requests. 
 
 **Q: Why do I see "CUDA out of memory error"?**  
 

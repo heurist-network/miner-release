@@ -1,66 +1,45 @@
 #!/bin/bash
 
-# Check and stop any running Docker containers started by this script
-echo "Checking for any running Docker containers started by this script..."
-running_containers=$(sudo docker ps -q -f label=started_by=llm-miner-starter)
-if [ -n "$running_containers" ]; then
-    echo "Stopping running Docker containers started by this script..."
-    sudo docker stop $running_containers
-else
-    echo "No Docker containers started by this script are currently running."
-fi
-
-echo "Starting Docker container for LLM server..."
-
-# Run Docker command with a label
-sudo docker run --net=host --gpus all --shm-size 1g -v $HOME/.cache/heurist:/data -v $PWD/config:/config --label started_by=llm-miner-starter ghcr.io/huggingface/text-generation-inference:1.4 --port 8081 --model-id TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ --revision gptq-8bit-32g-actorder_True --quantize gptq --max-input-length 2048 --max-total-tokens 4096 --max-batch-prefill-tokens 4096 --tokenizer-config-path /config/openhermes_2.5_mistral_7b_tokenizer_config.json &
-
-while true; do
-    # Get the container ID
-    container_id=$(sudo docker ps -q -f label=started_by=llm-miner-starter)
-    
-    # Check if the container ID is not empty
-    if [ -n "$container_id" ]; then
-        echo "Docker container started with ID: $container_id"
-        break
-    else
-        echo "Waiting for Docker container to start..."
-        sleep 5
-    fi
-done
-
-while true; do
-    # Check if the container is running
-    if [ "$(sudo docker inspect -f '{{.State.Running}}' $container_id)" == "true" ]; then
-        echo "Docker container is running."
-        break
-    else
-        echo "Waiting for Docker container to be fully initialized..."
-        sleep 5
-    fi
-done
-
-# Continue with the rest of the script...
-echo "Initializing docker container..."
-sleep 10
-
 echo "Setting up Python virtual environment and installing dependencies..."
 
-# Create a virtual environment
-python3 -m venv llm-venv
+# Check if Python 3.8 to 3.11 is already installed
+if ! python3 --version | grep -E '3\.[89]|3\.[1-9][0-9]|3\.1[0-1]' >/dev/null 2>&1; then
+    # Update package lists
+    echo "Updating package lists..."
+    sudo apt update
 
-# Activate the virtual environment
-source llm-venv/bin/activate
+    # Install Miniconda
+    echo "Installing Miniconda..."
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    bash ~/miniconda.sh -b -p $HOME/miniconda
+    export PATH="$HOME/miniconda/bin:$PATH"
+    rm ~/miniconda.sh
+
+    # Install Python 3.9 using Conda
+    echo "Installing Python 3.9..."
+    conda install python=3.9 -y
+
+    # Create a virtual environment
+    echo "Creating a virtual environment..."
+    conda create -n llm-venv python=3.9 -y
+    conda activate llm-venv
+else
+    echo "Python 3.8 to 3.11 is already installed. Skipping installation."
+    # Assuming Python 3.9 is installed, create a virtual environment
+    python3 -m venv llm-venv
+    source llm-venv/bin/activate
+fi
 
 # Install dependencies
-pip3 install requests torch python-dotenv toml openai numpy
+pip install vllm python-dotenv toml openai triton==2.1.0
 
 # Verify installation
 echo "Dependencies installed: $(pip freeze)"
 
 echo "Running Python miner program..."
 
-python3 llm-miner-v0.0.1.py
+# Find one Python file starting with "llm-miner-*.py" and execute it
+python $(ls llm-miner-*.py)
 
 deactivate
 

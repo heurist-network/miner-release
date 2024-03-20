@@ -12,14 +12,11 @@ class BaseConfig:
     ]
 
     MODEL_TO_API_BASE_URL = {
-        "openhermes-2.5-mistral-7b-gptq": "http://localhost:8081/v1",
+        "openhermes-2.5-mistral-7b-gptq": "http://localhost:8000/v1",
     }
 
     def __init__(self, config_file):
         self.config = toml.load(config_file)
-        self.num_cuda_devices = int(self.config['general'].get('num_cuda_devices', 1))
-        self.miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
-        self.miner_ids_cycle = itertools.cycle(self.miner_ids)  # Create an iterator that cycles through the miner IDs
 
         self.base_url = self.config['general']['base_url']
         self.log_filename = self.config['general']['llm_log_filename']

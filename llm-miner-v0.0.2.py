@@ -5,27 +5,96 @@ import sys
 import time
 from multiprocessing import Process, set_start_method
 import signal
-import logging
+import subprocess
+import atexit
 
 from llm_mining_core.base import BaseConfig
 from llm_mining_core.utils import (
     initialize_client,
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
-    send_miner_request,
-    configure_logging
+    send_miner_request
 )
+
+MODEL_ID = "TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ"
+MODEL_REVISION = "gptq-8bit-32g-actorder_True"
+MODEL_QUANTIZATION = "gptq"
+MAX_MODEL_LEN = 18000
+SERVED_MODEL_NAME= "openhermes-2.5-mistral-7b-gptq"
+CHAT_TEMPLATE = "{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+
+# Function to start the LLM server
+def start_llm_server():
+    # Note: for option "max-model-len", if not specified, it may resulte in error below
+    # "ValueError: The model's max seq len (32768) is larger than the maximum number of tokens 
+    # that can be stored in KV cache (18336). Try increasing `gpu_memory_utilization` or decreasing `max_model_len` 
+    # when initializing the engine.""
+
+    cmd = [
+        "python", "-m", "vllm.entrypoints.openai.api_server",
+        "--model", MODEL_ID,
+        "--served-model-name", SERVED_MODEL_NAME,
+        "--revision", MODEL_REVISION,
+        "--quantization", MODEL_QUANTIZATION,
+        "--max-model-len", str(MAX_MODEL_LEN),
+        "--chat-template", CHAT_TEMPLATE,
+        "--disable-log-requests"
+    ]
+    
+    # Start the server in the background and return the process referenced
+    process = subprocess.Popen(cmd)
+    return process
+
+# Function to terminate the LLM server process
+def terminate_llm_server(process):
+    if process:
+        print("Terminating LLM server process...")
+        process.terminate()
+        try:
+            process.wait(timeout=10)  # Wait for the process to terminate
+        except subprocess.TimeoutExpired:
+            process.kill()  # Force kill if not terminated within timeout
+        print("LLM server process terminated.")
+
+# Function to wait for the LLM server to be ready
+def wait_for_server_ready(config, timeout=120, interval=10):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if health_check(config, MODEL_ID):
+            print("Server is ready.")
+            return True
+        else:
+            print("Server not ready yet, waiting...")
+            time.sleep(interval)
+    print("Timeout waiting for server to be ready.")
+    return False
+
+
 
 def load_config(filename='config.toml'):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, filename)
     return BaseConfig(config_path)
 
+def load_miner_ids():
+    pattern = re.compile(r'MINER_ID_\d+')
+    
+    # Find all environment variables that match the pattern
+    matching_env_vars = [var for var in os.environ if pattern.match(var)]
+    
+    # Extract the highest index from the matching environment variables
+    highest_index = max(int(var.split('_')[-1]) for var in matching_env_vars) if matching_env_vars else 0
+    
+    # Use the highest index to dynamically generate the list of miner IDs
+    miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(0, highest_index + 1)]
+
+    return miner_ids
+
 def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
-    logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
+    print(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
 
     client = initialize_client(config, model_id)
     if client is None:
-        logging.error(f"Failed to initialize API client for model {model_id}.")
+        print(f"Failed to initialize API client for model {model_id}.")
         return
     
     decoded_prompt = None
@@ -36,7 +105,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
     elif "mistral" in model_id:
         decoded_prompt = decode_prompt_mistral(prompt)
     else:
-        logging.error(f"Model {model_id} not supported.")
+        print(f"Model {model_id} not supported.")
         return
 
     if use_stream_flag:
@@ -57,7 +126,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
                 initial_data = first_chunk.choices[0].delta.content
                 
         if not initial_data:
-            logging.error("No initial data received from the stream. Exiting...")
+            print("No initial data received from the stream. Exiting...")
             return
 
         def generate_data(stream):
@@ -110,7 +179,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
                 )
                 response.raise_for_status()
             except requests.RequestException as e:
-                logging.error(f"Failed to submit stream: {e}")
+                print(f"Failed to submit stream: {e}")
 
     else:
         print("Non-streaming mode")
@@ -127,11 +196,8 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
         end_time = time.time()
         inference_latency = end_time - start_time
         res = response.choices[0].message.content
-        # Log the content of res with additional text
-        logging.info(f"Processing prompt:{decoded_prompt}")
-        logging.info(f"Response received: {res}")
         total_tokens = response.usage.total_tokens
-        logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
+        print(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
         # if the words is in stop_words, truncate the result
         for word in stop:
             if word in res:
@@ -150,6 +216,9 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
 def health_check(config, model_id):
     try:
         client = initialize_client(config, model_id)
+
+        print("Initialized client for model:", model_id)
+
         start_time = time.time()
         response = client.chat.completions.create(
             messages=[{"role": "user", "content": "write a 200-word essay on the topic of the future of Ethereum"}],
@@ -164,12 +233,11 @@ def health_check(config, model_id):
             print(f"Warning: Inference speed is too slow for model {model_id}.")
         return True
     except Exception as e:
-        print(f"Model {model_id} is not ready. Waiting for TGI process to finish loading the model.")
+        print(f"Model {model_id} is not ready. Waiting for LLM Server to finish loading the model to start.")
         return False
 
 def worker(miner_id):
     config = load_config()
-    configure_logging(config, miner_id)
     while True:
         try:
             job, request_latency = send_miner_request(config, miner_id)
@@ -187,7 +255,7 @@ def worker(miner_id):
                 # Process the job with the miner
                 generate(config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
             else:
-                logging.info(f"No job received for miner {miner_id}. Waiting for the next round...")
+                #print(f"No job received for miner {miner_id}. Waiting for the next round...")
                 pass
         except Exception as e:
             print(f"Error occurred for miner {miner_id}: {e}")
@@ -208,6 +276,7 @@ def main_loop():
     set_start_method('spawn', force=True)
 
     config = load_config()
+    miner_ids = load_miner_ids()
     
     # Do health check every 10 seconds, until it returns true
     # TODO: refactor: model_id should be a config.toml item or .env item
@@ -216,16 +285,14 @@ def main_loop():
 
     try:
         # Explicitly use only the first miner_id; ensure config.miner_ids[0] exists
-        if not config.miner_ids:
-            logging.error("No miner_ids provided in .env file")
+        if not miner_ids:
+            print("No miner_ids provided in .env file")
             sys.exit(1)
-    
-        miner_id = config.miner_ids[0]  # Only the first miner_id is used for processing
-
-        configure_logging(config, miner_id)
-
+        
+        miner_id = miner_ids[0]  # Only the first miner_id is used for processing
         if miner_id is None or not miner_id.startswith("0x"):
-            logging.warning("Warning: Configure your ETH address correctly.")
+            print("Warning: Configure your ETH address correctly.")
+            #sys.exit(1) 
 
         for _ in range(config.num_child_process):
             process = Process(target=worker, args=(miner_id,))
@@ -244,4 +311,16 @@ def main_loop():
             p.join()
 
 if __name__ == "__main__":
+    llm_server_process = start_llm_server()
+    atexit.register(terminate_llm_server, llm_server_process)
+
+    def signal_handler(signum, frame):
+        terminate_llm_server(llm_server_process)
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Give the server some time to start
+    time.sleep(10)  # Consider using wait_for_server_ready here instead to ensure the server is ready
     main_loop()

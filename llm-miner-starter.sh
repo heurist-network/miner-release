@@ -25,7 +25,12 @@ if ! python3 --version | grep -E '3\.[89]|3\.[1-9][0-9]|3\.1[0-1]' >/dev/null 2>
     conda activate llm-venv
 else
     echo "Python 3.8 to 3.11 is already installed. Skipping installation."
-    # Assuming Python 3.9 is installed, create a virtual environment
+    # Check if python3-venv is installed
+    if ! dpkg -l | grep -q python3-venv; then
+        echo "Installing python3-venv package..."
+        sudo apt install python3-venv -y
+    fi
+    # Create a virtual environment
     python3 -m venv llm-venv
     source llm-venv/bin/activate
 fi
@@ -39,7 +44,7 @@ echo "Dependencies installed: $(pip freeze)"
 echo "Running Python miner program..."
 
 # Find one Python file starting with "llm-miner-*.py" and execute it
-python $(ls llm-miner-*.py)
+python3 $(ls llm-miner-*.py)
 
 deactivate
 

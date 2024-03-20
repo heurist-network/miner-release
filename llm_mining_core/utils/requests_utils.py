@@ -2,6 +2,8 @@ import time
 import requests
 from .cuda_utils import get_hardware_description
 
+DEFAULT_MINER_ID = "default_miner_id"
+
 def send_miner_request(config, miner_id):
     """
     Sends a request for a new mining job to the server using the given configuration.
@@ -14,6 +16,8 @@ def send_miner_request(config, miner_id):
         dict or None: The job details as a dictionary if available, otherwise None.
     """
     url = f"{config.base_url}/miner_request"
+    if miner_id is None:
+        miner_id = DEFAULT_MINER_ID
     request_data = {
         "miner_id": miner_id,
         "model_ids": config.SUPPORTED_MODEL_IDS,

@@ -291,7 +291,7 @@ def main_loop():
         
         miner_id = miner_ids[0]  # Only the first miner_id is used for processing
         if miner_id is None or not miner_id.startswith("0x"):
-            print("Warning: Configure your ETH address correctly.")
+            print("Warning: Configure your ETH address correctly in the .env file. Current value:", miner_id)
             #sys.exit(1) 
 
         for _ in range(config.num_child_process):

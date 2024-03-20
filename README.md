@@ -197,7 +197,7 @@ In this section, you'll find common questions and troubleshooting tips related t
 
 **Q: Why do I see "Model is not ready. Waiting for LLM Server to finish loading the model to start."?**  
 
-**A:** It takes some time to download and load model files before it starts serving requests. 
+**A:** It takes some time to download and load model files before it starts serving requests. Please confirm the downloading progress bar is showing up. Otherwise, it may indicate that your internet is having issues connecting to HuggingFace where the model files are stored. We plan to host the model at a different location soon.
 
 **Q: Why do I see "CUDA out of memory error"?**  
 

@@ -4,7 +4,7 @@ Welcome to the Heurist Miner setup guide. This document is designed to help you 
 
 ## 📖 Introduction
 
-The Heurist Miner allows users to contribute to the Heurist network by performing computational tasks in exchange for rewards. This guide will take you through the necessary steps to set up your mining operation, from configuring your miner IDs to installing the required software.
+Heurist Miner allows users to contribute to the Heurist network by performing AI inference tasks in exchange for rewards. This guide will take you through the necessary steps to set up your mining operation.
 
 ## 🚀 Quick Start Guide
 
@@ -185,13 +185,11 @@ The first time that the miner program starts up will take a long time because it
 
 ## ❓ Troubleshooting and FAQs
 
-In this section, you'll find common questions and troubleshooting tips related to running LLM miner, including issues with GPU machines, operating system compatibility, and handling specific error messages.
-
 ## General Questions
 
 **Q: Can I run LLM miner on Windows?** 
 
-**A:** You may set up the miner program with WSL, but there may be unexpected issues.
+**A:** You may run the miner program with WSL, but we haven't tested it yet. There may be unexpected issues.
 
 ## Technical Issues
 

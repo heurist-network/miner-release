@@ -148,12 +148,17 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
                                 yield complete_word
                             buffer = words[-1]  # Keep the last item as the start of the next word
 
-                        # Check for stop words in the buffer. If any, break the loop.
+                        # Check for stop words in the buffer. If any, remove the stop word and any texts after the stop word.
                         if any(word in buffer for word in stop):
-                            if buffer:
-                                yield buffer  # Ensure the last partial word is sent
-                            yield config.eos  # Ensure EOS is sent when the stream ends
-                            break
+                            for word in stop:
+                                if word in buffer:
+                                    stop_index = buffer.index(word)
+                                    buffer = buffer[:stop_index]
+                                    # If the buffer is not empty, yield it
+                                    if buffer:
+                                        yield buffer
+                                    yield config.eos # Ensure EOS is sent when the stream ends
+                                    break
 
                 if buffer:  # If there's anything left in the buffer, yield it as well
                     yield buffer

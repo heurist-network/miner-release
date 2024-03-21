@@ -123,7 +123,7 @@ def generate(config, miner_id, job_id, prompt, temperature, max_tokens, seed, st
         first_chunk = next(stream)
         initial_data = None
         if first_chunk.choices[0].delta is not None:
-                initial_data = first_chunk.choices[0].delta.content
+            initial_data = first_chunk.choices[0].delta.content
                 
         if not initial_data:
             print("No initial data received from the stream. Exiting...")

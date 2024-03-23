@@ -1,0 +1,47 @@
+License for Heurist AI's Mining Programs
+
+Version 1.0
+
+1. Definitions
+
+"The Software" refers collectively to Heurist AI's LLM-Miner and Stable-Diffusion-Miner programs, including all their components, documentation, subsequent updates, or modifications made available under this License. This License applies equally to both programs, treating them as a unified suite for licensing purposes.
+"Commercial Use" is strictly prohibited under this License. This includes any activity intending direct or indirect financial gain through the use of The Software, such as selling The Software, making copies for sale, integrating it into a product or service for profit, or using it in the operation of a business.
+"Contributor" refers to any individual employed by Heurist who contributes code, documentation, or other forms of work to The Software.
+
+2. Grant of License
+
+Contributors grant you a worldwide, royalty-free, non-exclusive, perpetual license to use The Software for personal, non-commercial purposes only. This License expressly forbids any form of Commercial Use and unauthorized distribution of copies.
+
+3. Restrictions
+
+Commercial Use and Copying: The use of The Software for commercial purposes and the making of unauthorized copies are strictly prohibited. Violation of these terms will result in immediate termination of this License.
+
+Modification: Modifications to The Software are not allowed. If The Software is distributed in a modified form, it must explicitly state the changes and the nature of such changes. However, the primary directive is to distribute The Software without modifications.
+
+Distribution: You are allowed to distribute The Software, provided there is no change to the code. Any distributed version that includes changes must clearly document those changes, including the nature and reason for such changes.
+
+4. Contributions
+
+Contributions by any Contributor to The Software are licensed under this License without additional terms or conditions. Contributors agree to ensure that their contributions do not infringe on the intellectual property rights of others.
+
+5. Disclaimer of Warranty
+
+The Software is provided "as is", without warranty of any kind. The authors or copyright holders shall not be liable for any claim, damages, or other liability arising from the use or inability to use The Software.
+
+6. Limitation of Liability
+
+No Contributor will be liable for any direct, indirect, incidental, or consequential damages arising out of the use or inability to use The Software, even if advised of the possibility of such damage.
+
+7. Termination
+
+This License and the rights granted hereunder will terminate automatically without notice if you fail to comply with any term or condition of this License.
+
+8. Contact Information
+
+For questions, concerns, or clarifications regarding this License, please contact the team at team@heurist.xyz.
+
+This document is subject to be changed at the discretion of Heurist.
+
+9. Amendments
+
+Heurist AI reserves the right to modify or amend the terms of this License at any time and at its sole discretion. The most current version of this License will always be available in the GitHub repository hosting The Software. By continuing to access or use The Software after any revisions become effective, you agree to be bound by the updated License. It is your responsibility to check the GitHub repository regularly for changes.

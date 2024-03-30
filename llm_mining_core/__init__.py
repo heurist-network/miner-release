@@ -1,15 +1,15 @@
-from .base import BaseConfig
+from .config import BaseConfig, LLMServerConfig
 from .utils import (
     get_hardware_description,
-    initialize_client,
     decode_prompt_llama, decode_prompt_mistral,
-    send_miner_request
+    send_miner_request,
+    configure_logging,
 )
 
 __all__ = [
-    'BaseConfig',
+    'BaseConfig', 'LLMServerConfig'
     'get_hardware_description',
-    'initialize_client',
     'decode_prompt_llama', 'decode_prompt_mistral',
-    'send_miner_request'
+    'send_miner_request',
+    'configure_logging',
 ]

@@ -10,12 +10,13 @@ import signal
 import threading
 from dotenv import load_dotenv
 
-from mining_core.base import BaseConfig, ModelUpdater
-from mining_core.utils import (
+from sd_mining_core.base import BaseConfig, ModelUpdater
+from sd_mining_core.utils import (
     check_cuda, get_hardware_description,
     fetch_and_download_config_files, get_local_model_ids,
     post_request, log_response, submit_job_result,
-    initialize_logging_and_args
+    initialize_logging_and_args,
+    load_default_model, reload_model,
 )
 
 class MinerConfig(BaseConfig):
@@ -59,7 +60,7 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
     }
     if time.time() - config.last_heartbeat >= 60:
         request_data['hardware'] = get_hardware_description(config)
-        request_data['version'] = config.version  # Include the version in the request data
+        request_data['version'] = config.version
         config.last_heartbeat = time.time()
         logging.debug(f"Heartbeat updated at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(config.last_heartbeat))} with hardware '{request_data['hardware']}' and version {config.version} for miner ID {config.miner_id}.")
     
@@ -75,7 +76,6 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
         warning_message = response.text.split(warning_indicator)[1].strip('"')
         print(f"WARNING: {warning_message}")
 
-
     response_data = log_response(response, config.miner_id)
 
     try:
@@ -89,6 +89,46 @@ def send_miner_request(config, model_ids, min_deadline, current_model_id):
 
     return response_data, request_latency
 
+def check_and_reload_model(config, last_signal_time):
+    current_time = time.time()
+    # Only proceed if it's been at least 600 seconds
+    if current_time - last_signal_time >= config.reload_interval:
+        response = post_request(config.signal_url + "/miner_signal", {
+            "miner_id": config.miner_id,
+            "options": {"exclude_sdxl": config.exclude_sdxl}
+        }, config.miner_id)
+
+        # Process the response only if it's valid
+        if response and response.status_code == 200:
+            model_id_from_signal = response.json().get('model_id')
+            
+            # Proceed if the model is in local storage and not already loaded
+            if model_id_from_signal in get_local_model_ids(config) and model_id_from_signal not in config.loaded_models:
+                reload_model(config, model_id_from_signal)
+                last_signal_time = current_time  # Update last_signal_time after reloading model
+        else:
+            logging.error(f"Failed to get a valid response from /miner_signal for miner_id {config.miner_id}.")
+    
+    # Return the updated or unchanged last_signal_time
+    return last_signal_time if current_time - last_signal_time < config.reload_interval else current_time
+
+def process_jobs(config):
+    current_model_id = next(iter(config.loaded_models), None)
+    model_ids = get_local_model_ids(config)
+    if not model_ids:
+        logging.debug("No models found. Exiting...")
+        sys.exit(0)
+
+    job, request_latency = send_miner_request(config, model_ids, config.min_deadline, current_model_id)
+    if not job:
+        logging.info("No job received.")
+        return False
+
+    job_start_time = time.time()
+    logging.info(f"Processing Request ID: {job['job_id']}. Model ID: {job['model_id']}.")
+    submit_job_result(config, config.miner_id, job, job['temp_credentials'], job_start_time, request_latency)
+    return True
+
 def main(cuda_device_id):
 
     torch.cuda.set_device(cuda_device_id)
@@ -98,36 +138,22 @@ def main(cuda_device_id):
     # The parent process should have already downloaded the model files
     # Now we just need to load them into memory
     fetch_and_download_config_files(config)
-    
-    executed = False
+
+    # Load the default model before entering the loop
+    load_default_model(config)
+
+    last_signal_time = time.time()
     while True:
         try:
-            current_model_id = next(iter(config.loaded_models)) if config.loaded_models else None
-            model_ids = get_local_model_ids(config)
-            if len(model_ids) == 0:
-                logging.debug("No models found. Exiting...")
-                sys.exit(0)
-            
-            job, request_latency = send_miner_request(config, model_ids, config.min_deadline, current_model_id)
-
-            if job is not None:
-                job_start_time = time.time()  # Timestamp when the job starts processing
-                logging.info(f"Processing Request ID: {job['job_id']}. Model ID: {job['model_id']}.")
-                submit_job_result(config, config.miner_id, job, job['temp_credentials'], job_start_time, request_latency)
-                executed = True
-            else:
-                logging.info("No job received.")
-                executed = False
+            last_signal_time = check_and_reload_model(config, last_signal_time)
+            executed = process_jobs(config)
         except Exception as e:
-            logging.error(f"Error occurred: {e}")
-            import traceback
-            traceback.print_exc()
-            
+            logging.error("Error occurred:", exc_info=True)
+            executed = False
         if not executed:
             time.sleep(config.sleep_duration)
             
 if __name__ == "__main__":
-
     processes = []
     def signal_handler(signum, frame):
         for p in processes:

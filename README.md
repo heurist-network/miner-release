@@ -108,10 +108,12 @@ To optimize and customize your mining operations, you can utilize the following 
 Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
 #### `--auto-confirm`
 Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
+#### `--exclude-sdxl`
+Use this option if you do not intend to host the SDXL model locally. This can help save resources and avoid unnecessary model downloads. The absence of this option means the SDXL model is considered for hosting by default.
 
 **Usage Example:**
 ```bash
-python sd-miner.py --log-level DEBUG --auto-confirm yes
+python sd-miner.py --log-level DEBUG --auto-confirm yes --exclude-sdxl
 ```
 Congratulations! 🌟 You're now set to serve image generation requests. You don't need to keep it up 24/7. Feel free to close the program whenever you need your GPU like playing video games or streaming videos.
 
@@ -172,12 +174,26 @@ We use [vLLM](https://docs.vllm.ai/en/latest/), a fast and easy-to-use library f
 - You need enough disk space. You can find model size in [heurist-models repo](https://github.com/heurist-network/heurist-models/blob/main/models.json). Use `df -h` to see available disk space.
 - You must be able to access [HuggingFace](https://huggingface.co/) from internet.
 
-Note: for LLM miner, only `MINER_ID_0` in `.env` file is used. Multi-GPU support will be added in the future.
+Note: 
+* Within the .env file for the LLM miner, only the MINER_ID_0 is utilized.
+* By modifying the `gpu_ids` in the `config.toml` file to include the GPU(s) intended for use with your LLM application, multi-GPU capabilities are enabled.
+* Support for different models is facilitated through the specification of their model id upon initiating the starter script.
+
+| Model ID | VRAM Usage (GB) |
+|----------|-----------------|
+| TheBloke/OpenHermes-2.5-Mistral-7B-GPTQ  | 10               |
+| mistralai/Mistral-7B-Instruct-v0.1       | 15               |
+| NousResearch/Hermes-2-Pro-Mistral-7B     | 15               |
+| TheBloke/Mixtral-8x7B-Instruct-v0.1-GPTQ | 28               | 
+| TheBloke/orangetin-OpenHermes-Mixtral-8x7B-GPTQ | 28        |
+| TheBloke/Nous-Hermes-2-Yi-34B-GPTQ       | 37               |
+| meta-llama/llama-2-70b-chat              | 41               |
+
 
 ### Run the Setup Script
 ```bash
 chmod +x llm-miner-starter.sh
-./llm-miner-starter.sh
+./llm-miner-starter.sh [model_id]
 ```
 
 The first time that the miner program starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/huggingface` by default. 

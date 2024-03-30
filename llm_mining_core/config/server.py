@@ -7,7 +7,7 @@ from openai import OpenAI
 
 
 class LLMServerConfig:
-    MAX_MODEL_LEN = 18000
+    MAX_MODEL_LEN = 2048
     CHAT_TEMPLATE = ("{% for message in messages %}"
                      "{{'' + message['role'] + '\n' + message['content'] + '' + '\n'}}"
                      "{% endfor %}"
@@ -21,7 +21,8 @@ class LLMServerConfig:
         self.model_id = sys.argv[1]  # Model ID from the first argument
         self.model_quantization = None if sys.argv[2] == 'None' else sys.argv[2]  # Model quantization from the second argument
         self.served_model_name = sys.argv[3]  # Served model name from the third argument
-        self.model_revision = None if len(sys.argv) <= 4 or sys.argv[4] == 'None' else sys.argv[4]  # Model revision from the fourth argument, if present
+        self.gpu_memory_util  = sys.argv[4] # GPU memory utilization ratio for vllm
+        self.model_revision = None if len(sys.argv) <= 5 or sys.argv[5] == 'None' else sys.argv[5]  # Model revision from the fourth argument, if present
         self.process = None
     
     def initialize_client(self):
@@ -44,7 +45,8 @@ class LLMServerConfig:
             "--disable-log-requests",
             "--dtype", "half",
             "--port", str(self.base_config.port),
-            "--tensor-parallel-size",str(self.num_gpus)
+            "--tensor-parallel-size",str(self.num_gpus),
+            "--gpu-memory-utilization", self.gpu_memory_util
         ]
 
         if self.model_revision:

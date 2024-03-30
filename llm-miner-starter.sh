@@ -52,7 +52,7 @@ check_prerequisites() {
     else
         for missing in "${missing_prerequisites[@]}"; do
             if [[ "$missing" == "python3-venv" || "$missing" == "python3.8-venv" ]]; then
-                log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update && sudo apt install software-properties-common && sudo apt install $missing"
+                log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update || sudo apt upgrade || sudo apt install software-properties-common || sudo add-apt-repository ppa:deadsnakes/ppa || sudo apt install $missing"
             else
                 log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update && sudo apt install $missing"
             fi
@@ -272,6 +272,18 @@ validateVram() {
     else
         log_info "Sufficient VRAM available. Proceeding..."
     fi
+
+    # Determine GPU memory utilization based on model name and available VRAM
+    if [[ "$model_name" == *"mixtral-8x7b-gptq"* ]] && [ "$available_mb" -gt 32000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (32000-1000)/$available_mb" | bc)
+    elif [[ "$model_name" == *"pro-mistral-7b"* ]] && [ "$available_mb" -gt 18000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (18000-1000)/$available_mb" | bc)
+    else
+        local gpu_memory_util=$(echo "scale=2; (12000-1000)/$available_mb" | bc) # Default value or handle other cases as needed
+    fi
+
+    # Output the gpu_memory_util value
+    printf "%.2f" "$gpu_memory_util"
 }
 
 getModelId() {
@@ -306,13 +318,14 @@ main() {
     fi
 
     # Validate if the system has enough VRAM for the model
-    validateVram "$size_gb"
+    gpu_memory_util=$(validateVram "$size_gb")
 
     # Assuming all validations passed, proceed to execute the Python script with the model details
-    log_info "Executing Python script with model ID: $model_id, Quantization: $quantization, Model Name: $model_name and Revision: $revision"
+    log_info "Executing Python script with model ID: $model_id, Quantization: $quantization, Model Name: $model_name, Revision: $revision and GPU Memory Utilization ratio: $gpu_memory_util"
+    
     local python_script=$(ls llm-miner-*.py | head -n 1)
     if [[ -n "$python_script" ]]; then
-        python "$python_script" "$model_id" "$quantization" "$model_name" "$revision"
+        python "$python_script" "$model_id" "$quantization" "$model_name" $gpu_memory_util "$revision" 
         log_info "Python script executed successfully."
     else
         log_error "No Python script matching 'llm-miner-*.py' found."

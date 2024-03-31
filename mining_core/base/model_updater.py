@@ -42,8 +42,12 @@ class ModelUpdater:
         local_files = os.listdir(self.models_directory)
         local_model_names = {file_name.rsplit('.', 1)[0] for file_name in local_files if file_name.endswith('.safetensors')}
 
-        # Get the set of model names from the remote model list
-        remote_model_names = {model_info['name'] for model_info in remote_model_list if 'type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info)}
+        # Incorporate exclusion logic for certain model types (e.g., "sdxl")
+        remote_model_names = {
+            model_info['name'] for model_info in remote_model_list
+            if 'type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']) 
+            and (not self.config['exclude_sdxl'] or not model_info['type'].startswith('sdxl'))
+    }
 
         # Determine if there are any models that are in the remote list but not locally
         missing_models = remote_model_names - local_model_names

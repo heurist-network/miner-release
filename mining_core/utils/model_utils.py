@@ -1,10 +1,12 @@
 import os
+import sys
 import torch
 import io
 import gc
 import logging
 import time
-from diffusers import AutoencoderKL, DPMSolverMultistepScheduler, StableDiffusionXLPipeline
+from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
+from vendor.lpw_stable_diffusion_xl import SDXLLongPromptWeightingPipeline
 from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
 
 def get_local_model_ids(config):
@@ -13,6 +15,12 @@ def get_local_model_ids(config):
     return local_model_ids
 
 def load_model(config, model_id):
+    # Error handling for excluded sdxl models
+    if config.exclude_sdxl and model_id.startswith("SDXL"):
+        error_message = f"Loading of 'sdxl' models is disabled. Model '{model_id}' cannot be loaded as per configuration."
+        print(error_message)  # Print the error message to the console
+        raise ValueError(error_message)  # Optionally, raise an exception to halt the process
+    
     start_time = time.time()
     model_config = config.model_configs.get(model_id, None)
     if model_config is None:
@@ -25,9 +33,8 @@ def load_model(config, model_id):
         pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++")
     else:
-        pipe = StableDiffusionXLPipeline.from_single_file(model_file_path, torch_dtype=torch.float16, variant="fp16").to('cuda:' + str(config.cuda_device_id))
+        pipe = SDXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
     pipe.safety_checker = None
-    
     # TODO: Add support for other schedulers
 
     if 'vae' in model_config:
@@ -48,30 +55,46 @@ def unload_model(config, model_id):
         torch.cuda.empty_cache()
         gc.collect()
 
-def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed=93174771):
+def load_default_model(config):
+    model_ids = get_local_model_ids(config)
+    if not model_ids:
+        logging.error("No local models found. Exiting...")
+        sys.exit(1)  # Exit if no models are available locally
+
+    default_model_id = model_ids[0]
+
+    if default_model_id not in config.loaded_models:
+        logging.info(f"Loading default model {default_model_id}...")
+        current_model, _ = load_model(config, default_model_id)
+        config.loaded_models[default_model_id] = current_model
+        logging.info(f"Default model {default_model_id} loaded successfully.")
+
+def reload_model(config, model_id_from_signal):
+    if config.loaded_models:
+        model_to_unload = next(iter(config.loaded_models))
+        unload_model(config, model_to_unload)
+        logging.debug(f"Unloaded model {model_to_unload} to make space for {model_id_from_signal}")
+
+    logging.info(f"Loading model {model_id_from_signal}...")
+    current_model, _ = load_model(config, model_id_from_signal)
+    config.loaded_models[model_id_from_signal] = current_model
+    logging.info(f"Received model {model_id_from_signal} loaded successfully.")
+
+def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed):
     try:
-        current_model = config.loaded_models.get(model_id, None)
+        current_model = config.loaded_models.get(model_id)
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
-        if current_model is None:
-            # Check if there are any models to unload
-            if config.loaded_models:
-                # Unload the first model in the list
-                model_to_unload = next(iter(config.loaded_models))
-                unload_model(config, model_to_unload)
-                logging.debug(f"Unloaded model {model_to_unload} to make space for {model_id}")
-
-            logging.info(f"Loading model {model_id}...")
-            current_model, loading_latency = load_model(config, model_id)
-            config.loaded_models[model_id] = current_model
-
         kwargs = {
-            'height': min(height - height % 8, config.config['general']['max_height']),
-            'width': min(width - width % 8, config.config['general']['max_width']),
-            'num_inference_steps': min(num_iterations, config.config['general']['max_iterations']),
+            # For better/stable image quality, consider using larger height x weight values
+            'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+            'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+            'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
             'guidance_scale': guidance_scale,
             'negative_prompt': neg_prompt,
+            # StableDiffusionLongPromptWeightingPipeline does not support the following parameter
+            # 'add_watermarker': False
         }
 
         if seed is not None and seed >= 0:

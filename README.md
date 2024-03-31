@@ -6,6 +6,8 @@ Welcome to the Heurist Miner setup guide. This document is designed to help you 
 
 Heurist Miner allows users to contribute to the Heurist network by performing AI inference tasks in exchange for rewards. This guide will take you through the necessary steps to set up your mining operation.
 
+For curious readers to learn more about the hardware requirements for AI inference, read [Heurist's Guide to AI article](https://heuristai.medium.com/heurists-guide-to-ai-beginner-s-series-part-2-db77458a62dd).
+
 ## 🚀 Quick Start Guide
 
 For those eager to dive in, here's a quick overview of the setup process:
@@ -34,7 +36,7 @@ For those eager to dive in, here's a quick overview of the setup process:
 ### Configuring Your Miner ID
 
 1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
-2. **Define Unique Miner IDs:** In the `.env` file, you will assign a unique Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately.
+2. **Define Miner IDs:** In the `.env` file, you should assign an Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately. If you have multiple GPUs, i-th GPU will use i-th miner ID. You can use the same address or different ones, which doesn't affect your rewards.
 
 ```plaintext
 MINER_ID_0=0xYourFirstWalletAddressHere
@@ -97,7 +99,7 @@ conda activate pytorch-gpu-python-3-10.
 See the top of this guide.
 
 #### Step 9. Run the miner program
-1. Run `python3 sd-miner-v0.0.x.py` (select the latest version of file) in Conda environment command prompt.
+1. Run `python3 sd-miner-v1.x.x.py` (select the latest version of file) in Conda environment command prompt.
 
 2. Type `yes` when the program prompts you to download model files. It will take a while to download all models. The program will start processing automatically once it completes downloading.
 
@@ -108,11 +110,21 @@ To optimize and customize your mining operations, you can utilize the following 
 Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
 #### `--auto-confirm`
 Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
+#### `--exclude-sdxl`
+Exclude SDXL models. Recommended for Laptop GPUs, 3060, 4060, or if you are running LLM miner alongside SD miner on a same GPU, or if your available VRAM is less than 10GB. SDXL models consumes more resources (and they also earn more rewards). Turning it off will prevent performance issues or crashes on slower GPUs.
 
 **Usage Example:**
+
+To enable debug-level logging and auto-confirm:
 ```bash
 python sd-miner.py --log-level DEBUG --auto-confirm yes
 ```
+
+To exclude SDXL models:
+```bash
+python sd-miner.py --exclude-sdxl
+```
+
 Congratulations! 🌟 You're now set to serve image generation requests. You don't need to keep it up 24/7. Feel free to close the program whenever you need your GPU like playing video games or streaming videos.
 
 </details>
@@ -155,7 +167,29 @@ This guide assumes you're familiar with the terminal and basic Linux commands. M
 Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (See the top of this guide. This is very important for tracking your contribution!)
 
 ### Step 9. Run the miner program
-- Execute the miner script with `python3 sd-miner-v0.0.x.py` (select the latest version) in your terminal. Agree to download model files when prompted.
+- Execute the miner script with `python3 sd-miner-v1.x.x.py` (select the latest version) in your terminal. Agree to download model files when prompted.
+
+### Step 10. (Optional) Enhancing Your Mining Experience with CLI Options
+To optimize and customize your mining operations, you can utilize the following command line interface (CLI) options when starting the miner:
+
+#### `--log-level`
+Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
+#### `--auto-confirm`
+Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
+#### `--exclude-sdxl`
+Exclude SDXL models. Recommended for Laptop GPUs, 3060, 4060, or if you are running LLM miner alongside SD miner on a same GPU, or if your available VRAM is less than 10GB. SDXL models consumes more resources (and they also earn more rewards). Turning it off will prevent performance issues or crashes on slower GPUs.
+
+**Usage Example:**
+
+To enable debug-level logging and auto-confirm:
+```bash
+python sd-miner.py --log-level DEBUG --auto-confirm yes
+```
+
+To exclude SDXL models:
+```bash
+python sd-miner.py --exclude-sdxl
+```
   
 ### Additional Linux-Specific Tips:
 - Use `screen` or `tmux` to keep the miner running in the background, especially when connected via SSH.
@@ -172,15 +206,37 @@ We use [vLLM](https://docs.vllm.ai/en/latest/), a fast and easy-to-use library f
 - You need enough disk space. You can find model size in [heurist-models repo](https://github.com/heurist-network/heurist-models/blob/main/models.json). Use `df -h` to see available disk space.
 - You must be able to access [HuggingFace](https://huggingface.co/) from internet.
 
-Note: for LLM miner, only `MINER_ID_0` in `.env` file is used. Multi-GPU support will be added in the future.
+### Select a Model ID
+LLMs typically consume a large amount of VRAM (Video Memory) of your GPU. Larger models have higher VRAM requirements and also have higher rewards. Read [Miner Guide Docs](https://docs.heurist.ai/guides/miner-guide) to choose a model that fits your hardware.
 
 ### Run the Setup Script
 ```bash
 chmod +x llm-miner-starter.sh
-./llm-miner-starter.sh
+./llm-miner-starter.sh <model_id> --miner-id-index 0 --port 8000 --gpu-ids 0
 ```
 
-The first time that the miner program starts up will take a long time because it needs to download the model file. Models are saved in `$HOME/.cache/huggingface` by default. 
+`model_id` is mandatory. For example, `openhermes-2.5-mistral-7b-gptq` is the smallest model that we support. It requires 12GB VRAM.
+
+#### Meaning of Optional CLI arguments
+- `--miner-id-index` specifies the index of miner_id in `.env` file to use. Default is 0 (using the first address configured)
+- `--port` specifies the port to communicate with vLLM process. Default is 8000. Change this if this port is occupied.
+- `--gpu-ids` specifies the GPU ID to use. Default is 0. Change this if you have multiple GPUs and want to use a different one.
+
+#### Example startup command
+
+To use default options:
+```bash
+./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq
+```
+
+To use the second address with custom port and GPU ID
+```bash
+./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq --miner-id-index 1 --port 8001 --gpu-ids 1
+```
+
+### If you have trouble downloading
+The first time that the miner program starts up will take a long time because it needs to download the model file. You should see progress bars in the command line output. Models are saved in `$HOME/.cache/huggingface` by default. If download progress is interrupted or throws an error, press "Ctrl+C" to stop the starter script and retry. If it's still stuck, delete `$HOME/.cache/huggingface` and try again.
+
 </details>
 
 ## ❓ Troubleshooting and FAQs
@@ -199,4 +255,4 @@ The first time that the miner program starts up will take a long time because it
 
 **Q: Why do I see "CUDA out of memory error"?**  
 
-**A:** Use `nvidia-smi` to see available memory. Check if there are any other processes using the GPU. Confirm that your available GPU memory satisfies the minimum requirement for the model.
+**A:** Use `nvidia-smi` to see available memory. Check if there are any other processes using the GPU. Confirm that your available GPU memory satisfies the minimum requirement for the model. If you have multiple GPUs, make sure you configure `--gpu-ids` to specify a GPU with sufficient free VRAM.

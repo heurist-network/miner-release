@@ -22,12 +22,20 @@ def fetch_and_download_config_files(config):
     try:
         models = requests.get(config.model_config_url).json()
         vaes = requests.get(config.vae_config_url).json()
-        config.model_configs = {model['name']: model for model in models if 'type' in model and 'sd' in model['type']}
-        config.vae_configs = {vae['name']: vae for vae in vaes}
+        config.model_configs = {
+            model['name']: model
+            for model in models
+            if 'type' in model and 'sd' in model['type'] and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
+        }
+
+        config.vae_configs = {
+            vae['name']: vae
+            for vae in vaes
+        }
 
         total_size = 0
         files_to_download = []
-        for model in models:
+        for model in config.model_configs.values():
             if not 'type' in model or ('sd' not in model['type'] and 'vae' not in model['type']):
                 continue
             if not 'size_mb' in model:

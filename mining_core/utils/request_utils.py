@@ -107,3 +107,5 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
         
     except requests.exceptions.RequestException as err:
         logging.error(f"Error occurred during job submission: {err}")
+
+

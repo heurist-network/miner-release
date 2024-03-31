@@ -341,7 +341,7 @@ main() {
     fi
 
     # Validate if the system has enough VRAM for the model
-    gpu_memory_util=$(validateVram "$size_gb")
+    gpu_memory_util=$(validateVram "$size_gb") || exit 1
     log_info "GPU Memory Utilization ratio for vllm: $gpu_memory_util"
 
     # Assuming all validations passed, proceed to execute the Python script with the model details

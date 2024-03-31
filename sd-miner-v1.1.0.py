@@ -11,8 +11,8 @@ import threading
 import requests
 from dotenv import load_dotenv
 
-from mining_core.base import BaseConfig, ModelUpdater
-from mining_core.utils import (
+from sd_mining_core.base import BaseConfig, ModelUpdater
+from sd_mining_core.utils import (
     check_cuda, get_hardware_description,
     fetch_and_download_config_files, get_local_model_ids,
     post_request, log_response, submit_job_result,

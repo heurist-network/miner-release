@@ -19,7 +19,7 @@ log_error() {
 check_prerequisites() {
     local missing_prerequisites=()
     # Base prerequisites without considering Python venv yet
-    local prerequisites=("jq" "wget")
+    local prerequisites=("jq" "wget" "bc")
 
     # Determine the default Python version
     local python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')

@@ -237,6 +237,9 @@ To use the second address with custom port and GPU ID
 ### If you have trouble downloading
 The first time that the miner program starts up will take a long time because it needs to download the model file. You should see progress bars in the command line output. Models are saved in `$HOME/.cache/huggingface` by default. If download progress is interrupted or throws an error, press "Ctrl+C" to stop the starter script and retry. If it's still stuck, delete `$HOME/.cache/huggingface` and try again.
 
+### If you are running 8x7b or 34b or 70b model
+We notice that 8x7b, 34b, 70b model loading might take very long time (up to 1 hour) on some devices. If you keep seeing "Model is not ready" and if you don't see any error during downloading, you should wait for some more time.
+
 </details>
 
 ## ❓ Troubleshooting and FAQs

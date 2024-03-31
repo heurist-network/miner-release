@@ -6,7 +6,7 @@ import gc
 import logging
 import time
 from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
-from vendor.lpw_stable_diffusion_xl import SDXLLongPromptWeightingPipeline
+from vendor.lpw_stable_diffusion_xl import StableDiffusionXLLongPromptWeightingPipeline
 from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
 
 def get_local_model_ids(config):
@@ -33,7 +33,7 @@ def load_model(config, model_id):
         pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++")
     else:
-        pipe = SDXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
+        pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
     pipe.safety_checker = None
     # TODO: Add support for other schedulers
 

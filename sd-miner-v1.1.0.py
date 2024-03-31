@@ -142,7 +142,7 @@ def main(cuda_device_id):
     # Load the default model before entering the loop
     load_default_model(config)
 
-    last_signal_time = time.time()
+    last_signal_time = 0
     while True:
         try:
             last_signal_time = check_and_reload_model(config, last_signal_time)

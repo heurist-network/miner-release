@@ -309,7 +309,7 @@ main() {
     local gpu_ids="0" # User can specify GPUs to use. Example: "0,1" for GPUs 0 and 1.
 
     # Fetch model details including the model ID, required VRAM size, quantization method, and model name
-    heurist_model_id=$(getModelId "$1")
+    heurist_model_id=$(getModelId "$1") || exit 1
     read -r size_gb quantization hf_model_id revision < <(fetchModelDetails "$heurist_model_id")
 
     shift 1
@@ -341,7 +341,7 @@ main() {
     fi
 
     # Validate if the system has enough VRAM for the model
-    gpu_memory_util=$(validateVram "$size_gb") || exit 1
+    gpu_memory_util=$(validateVram "$size_gb")
     log_info "GPU Memory Utilization ratio for vllm: $gpu_memory_util"
 
     # Assuming all validations passed, proceed to execute the Python script with the model details

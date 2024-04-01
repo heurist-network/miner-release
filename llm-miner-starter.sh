@@ -196,7 +196,7 @@ install_with_spinner() {
 # Example usage for your dependency installation function
 install_dependencies() {
     log_info "Installing Python dependencies..."
-    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0")
+    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0" "wheel" "packaging" "flash-attn")
 
     for dep in "${dependencies[@]}"; do
         if ! install_with_spinner "$dep"; then

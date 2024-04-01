@@ -42,6 +42,9 @@ For those eager to dive in, here's a quick overview of the setup process:
 MINER_ID_0=0xYourFirstWalletAddressHere
 MINER_ID_1=0xYourSecondWalletAddressHere
 ```
+
+3. **(For SD Miners)If you have multiple GPUs** Change the `num_cuda_devices` in `config.toml` to the number of GPUs you want to use. The number should match the number of Miner IDs in `.env`
+
 <details>
 <summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>
 

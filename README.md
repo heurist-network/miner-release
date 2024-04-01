@@ -240,6 +240,17 @@ The first time that the miner program starts up will take a long time because it
 ### If you are running 8x7b or 34b or 70b model
 We notice that 8x7b, 34b, 70b model loading might take very long time (up to 1 hour) on some devices. If you keep seeing "Model is not ready" and if you don't see any error during downloading, you should wait for some more time.
 
+### Reference table demonstrating model id and vram usage
+| Model ID | VRAM Usage (GB) |
+|----------|-----------------|
+| openhermes-2.5-mistral-7b-gptq  | 10               |
+| mistralai/mistral-7b-instruct-v0.2       | 15               |
+| openhermes-2-pro-mistral-7b     | 15               |
+| mistralai/mixtral-8x7b-instruct-v0.1 | 28               | 
+| openhermes-mixtral-8x7b-gptq | 28        |
+| openhermes-2-yi-34b-gptq       | 37               |
+| meta-llama/llama-2-70b-chat              | 41               |
+
 </details>
 
 ## ❓ Troubleshooting and FAQs

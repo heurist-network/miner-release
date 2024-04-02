@@ -48,7 +48,7 @@ check_prerequisites() {
     else
         for missing in "${missing_prerequisites[@]}"; do
             if [[ "$missing" == "python3-venv" || "$missing" == "python3.8-venv" ]]; then
-                log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update || sudo apt upgrade || sudo apt install software-properties-common || sudo add-apt-repository ppa:deadsnakes/ppa || sudo apt install $missing"
+                log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update && sudo apt upgrade && sudo apt install software-properties-common && sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt install $missing"
             else
                 log_error "$missing is not installed but is required. Please install $missing with the following command: sudo apt update && sudo apt install $missing"
             fi

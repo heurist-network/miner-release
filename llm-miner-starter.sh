@@ -307,6 +307,7 @@ main() {
     local miner_id_index=0
     local port=8000
     local gpu_ids="0" # User can specify GPUs to use. Example: "0,1" for GPUs 0 and 1.
+    local pid_file_path="/tmp/python_pid.txt"
 
     # Fetch model details including the model ID, required VRAM size, quantization method, and model name
     heurist_model_id=$(getModelId "$1") || exit 1
@@ -348,7 +349,11 @@ main() {
     log_info "Executing Python script with Heurist model ID: $heurist_model_id, Quantization: $quantization, HuggingFace model ID: $hf_model_id, Revision: $revision, Miner ID Index: $miner_id_index, Port: $port, GPU IDs: $gpu_ids"
     local python_script=$(ls llm-miner-*.py | head -n 1)
     if [[ -n "$python_script" ]]; then
-        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids"
+        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids" "$pid_file_path" &
+        python_pid=$!
+        # Write the PID to a temporary file
+        echo $python_pid > "$pid_file_path"
+        wait $python_pid
         log_info "Python script executed successfully."
     else
         log_error "No Python script matching 'llm-miner-*.py' found."

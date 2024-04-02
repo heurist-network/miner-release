@@ -5,7 +5,7 @@ import sys
 import time
 import signal
 import atexit
-import torch
+import subprocess
 import logging
 from multiprocessing import Process, set_start_method
 
@@ -173,12 +173,41 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
     except Exception as e:
         logging.error(f"Error during text generation request: {str(e)}")
         return
+    
+def verify_related_gpu_process(temp_file_path):
+    try:
+        # Read the shell script's PID from the temporary file
+        with open(temp_file_path, 'r') as file:
+            shell_pid = file.read().strip()
+
+        # Fetch the list of PIDs currently using the GPU
+        gpu_processes_output = subprocess.check_output(['nvidia-smi', '--query-compute-apps=pid', '--format=csv,noheader'], text=True).strip()
+
+        # Check each GPU process to see if its parent PID matches the shell script's PID
+        for gpu_pid in gpu_processes_output.split('\n'):
+            gpu_pid = gpu_pid.strip()
+            ppid_output = subprocess.check_output(['ps', '-o', 'ppid=', '-p', gpu_pid], text=True).strip()
+            if ppid_output == shell_pid:
+                logging.debug(f"Related GPU process with PID {gpu_pid} (PPID: {shell_pid}) is alive.")
+                return True
+
+        # If no GPU process with a matching PPID is found, return False
+        logging.error(f"No related GPU process found for PID {shell_pid}.")
+        return False
+
+    except Exception as e:
+        logging.error(f"An error occurred while checking GPU processes: {e}")
+        return False
 
 def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
     while True:
         try:
+            if not verify_related_gpu_process(sys.argv[-1]):
+                print("No related GPU process is alive. Exiting program.")
+                sys.exit(1)  # Exit the program if no related GPU process is alive
+            
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:
                 model_id = job['model_id'] # Extract model_id from the job

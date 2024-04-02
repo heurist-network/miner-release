@@ -138,7 +138,7 @@ setup_conda_environment() {
     else
         log_info "Creating a virtual environment with Miniconda..."
         # Suppressing the output completely, consider logging at least errors
-        conda create -n llm-venv python=3.9 -y --quiet >/dev/null 2>&1
+        conda create -n llm-venv python=3.11 -y --quiet >/dev/null 2>&1
         log_info "Conda virtual environment 'llm-venv' created."
     fi
 
@@ -147,18 +147,18 @@ setup_conda_environment() {
 }
 
 setup_python_environment() {
-    log_info "Checking if the current Python version is between 3.8 and 3.11..."
+    #log_info "Checking if the current Python version is between 3.8 and 3.11..."
 
     # Get the major and minor version of the currently active Python
-    python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')
+    #python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')
     
-    if [[ "$python_version" =~ ^3\.(8|9|10|11)$ ]]; then
-        log_info "Current Python version ($python_version) is within the 3.8 to 3.11 range."
-        setup_venv_environment
-    else
-        log_info "Compatible Python version not found. Current version: $python_version. Proceeding with Miniconda."
-        setup_conda_environment
-    fi
+    #if [[ "$python_version" =~ ^3\.(8|9|10|11)$ ]]; then
+    #    log_info "Current Python version ($python_version) is within the 3.8 to 3.11 range."
+    #    setup_venv_environment
+    #else
+    #log_info "Compatible Python version not found. Current version: $python_version. Proceeding with Miniconda."
+    setup_conda_environment
+    #fi
 }
 
 install_with_spinner() {

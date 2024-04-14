@@ -1,41 +1,17 @@
-import os
-import re
-import requests
 import sys
 import time
 import signal
 import atexit
-import torch
 import logging
+import requests
 from multiprocessing import Process, set_start_method
 
-from llm_mining_core.config import BaseConfig, LLMServerConfig
 from llm_mining_core.utils import (
+    load_config, load_miner_ids,
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
     send_miner_request,
     configure_logging
 )
-
-def load_config(filename='config.toml'):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(base_dir, filename)
-    base_config = BaseConfig(config_path)
-    server_config = LLMServerConfig(base_config)
-    return base_config, server_config
-
-def load_miner_ids():
-    pattern = re.compile(r'MINER_ID_\d+')
-    
-    # Find all environment variables that match the pattern
-    matching_env_vars = [var for var in os.environ if pattern.match(var)]
-    
-    # Extract the highest index from the matching environment variables
-    highest_index = max(int(var.split('_')[-1]) for var in matching_env_vars) if matching_env_vars else 0
-    
-    # Use the highest index to dynamically generate the list of miner IDs
-    miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(0, highest_index + 1)]
-
-    return miner_ids
 
 def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
@@ -173,7 +149,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
     except Exception as e:
         logging.error(f"Error during text generation request: {str(e)}")
         return
-
+    
 def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)

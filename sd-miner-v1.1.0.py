@@ -1,3 +1,4 @@
+import re
 import time
 import torch
 import sys
@@ -8,7 +9,7 @@ import logging
 from multiprocessing import Process, set_start_method
 import signal
 import threading
-import requests
+import subprocess
 from dotenv import load_dotenv
 
 from sd_mining_core.base import BaseConfig, ModelUpdater
@@ -30,13 +31,43 @@ class MinerConfig(BaseConfig):
 
     def _load_and_validate_miner_ids(self):
         miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
+        composite_miner_ids = []
+
+        evm_address_pattern = re.compile(r"^(0x[a-fA-F0-9]{40})(-[a-zA-Z0-9_]+)?$")
+
         for i, miner_id in enumerate(miner_ids):
             if miner_id is None:
                 print(f"ERROR: Miner ID for GPU {i} not found in .env. Exiting...")
                 raise ValueError(f"Miner ID for GPU {i} not found in .env.")
-            if not miner_id.startswith("0x"):
-                print(f"WARNING: Miner ID {miner_id} for GPU {i} does not start with '0x'.")
-        return miner_ids
+            
+            match = evm_address_pattern.match(miner_id)
+            if match:
+                evm_address = match.group(1)
+                suffix = match.group(2)
+                
+                if suffix:
+                    # Miner ID is a valid EVM address with a non-empty suffix
+                    composite_miner_ids.append(miner_id)
+                else:
+                    # Miner ID is a valid EVM address without a suffix or with an empty suffix
+                    # Get the GPU UUID using nvidia-smi
+                    try:
+                        output = subprocess.check_output(["nvidia-smi", "-L"]).decode("utf-8")
+                        gpu_info = output.split("\n")[i].strip()
+                        gpu_uuid_segment = gpu_info.split("GPU-")[1].split("-")[0]
+                        short_uuid = gpu_uuid_segment[:6]
+                        composite_miner_id = f"{evm_address}-{short_uuid}"
+                        composite_miner_ids.append(composite_miner_id)
+                    except (subprocess.CalledProcessError, IndexError):
+                        # nvidia-smi command failed or UUID not found
+                        print(f"WARNING: Failed to retrieve GPU UUID for GPU {i}. Using original miner ID.")
+                        composite_miner_ids.append(miner_id)
+            else:
+                # Miner ID is not a valid EVM address
+                print(f"WARNING: Miner ID {miner_id} for GPU {i} is not a valid EVM address.")
+                composite_miner_ids.append(miner_id)
+        
+        return composite_miner_ids
 
     def _assign_miner_id(self, miner_ids, cuda_device_id):
         if self.num_cuda_devices > 1 and miner_ids[cuda_device_id]:

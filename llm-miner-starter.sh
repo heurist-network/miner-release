@@ -146,21 +146,6 @@ setup_conda_environment() {
     log_info "Conda virtual environment 'llm-venv' activated."
 }
 
-setup_python_environment() {
-    #log_info "Checking if the current Python version is between 3.8 and 3.11..."
-
-    # Get the major and minor version of the currently active Python
-    #python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')
-    
-    #if [[ "$python_version" =~ ^3\.(8|9|10|11)$ ]]; then
-    #    log_info "Current Python version ($python_version) is within the 3.8 to 3.11 range."
-    #    setup_venv_environment
-    #else
-    #log_info "Compatible Python version not found. Current version: $python_version. Proceeding with Miniconda."
-    setup_conda_environment
-    #fi
-}
-
 install_with_spinner() {
     local dep=$1
     (
@@ -196,7 +181,7 @@ install_with_spinner() {
 # Example usage for your dependency installation function
 install_dependencies() {
     log_info "Installing Python dependencies..."
-    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0" "wheel" "packaging")
+    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0" "wheel" "packaging" "psutil")
 
     for dep in "${dependencies[@]}"; do
         if ! install_with_spinner "$dep"; then
@@ -300,7 +285,7 @@ main() {
 
     check_prerequisites
     validate_connectivity
-    setup_python_environment
+    setup_conda_environment
     install_dependencies
 
     # Default values for the new arguments

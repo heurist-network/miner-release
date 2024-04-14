@@ -50,5 +50,4 @@ def send_miner_request(config, miner_id, model_id):
             return None, None
     except Exception as e:
         # fail silently
-        #print(f"Error parsing response: {e}")
         return None, None

@@ -157,6 +157,7 @@ def worker(miner_id):
         try:
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:
+                job_start_time = time.time()
                 model_id = job['model_id'] # Extract model_id from the job
                 prompt = job['model_input']['LLM']['prompt']
                 temperature = job['model_input']['LLM']['temperature']
@@ -166,9 +167,11 @@ def worker(miner_id):
                 if seed == -1: # Handling for seed if specified as -1
                     seed = None
                 stop = base_config.stop_words # Assuming stop_words are defined earlier in the script
-                
-                # Process the job with the miner
                 generate(base_config, server_config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
+                job_end_time = time.time()  # Record the end time
+                total_processing_time = job_end_time - job_start_time
+                if total_processing_time > base_config.llm_timeout_seconds:
+                    print("Warning: the previous request timed out. You will not earn points. Please check miner configuration or network connection.")
             else:
                 pass
         except Exception as e:

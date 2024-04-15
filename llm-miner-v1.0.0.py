@@ -9,7 +9,7 @@ from multiprocessing import Process, set_start_method
 from llm_mining_core.utils import (
     load_config, load_miner_ids,
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
-    send_miner_request,
+    check_vllm_server_status, send_miner_request,
     configure_logging
 )
 
@@ -154,6 +154,9 @@ def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
     while True:
+        if not check_vllm_server_status():
+            logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")
+            sys.exit(1)
         try:
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:

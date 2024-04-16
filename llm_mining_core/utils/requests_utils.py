@@ -52,3 +52,32 @@ def send_miner_request(config, miner_id, model_id):
         # fail silently
         #print(f"Error parsing response: {e}")
         return None, None
+    
+def get_metric_value(metric_name, base_config):
+    """
+    Fetches the value of a specific metric from the llm endpoint.
+
+    Args:
+        metric_name (str): The name of the metric to fetch.
+        base_config (BaseConfig): The base configuration object.
+
+    Returns:
+        float or None: The value of the metric if found, None otherwise.
+    """
+    try:
+        url = f"{base_config.llm_url}:{base_config.port}/metrics"
+        print(f"Fetching metrics from {url}")
+        response = requests.get(url)
+        response_text = response.text
+        lines = response_text.split('\n')
+        for line in lines:
+            if line.startswith(f"vllm:{metric_name}"):
+                parts = line.split(' ')
+                if len(parts) >= 2:
+                    value = float(parts[1])
+                    return value
+    except Exception as e:
+        # fail silently
+        # print(f"Error occurred while finding metric value: {str(e)}")
+        return None
+    return None

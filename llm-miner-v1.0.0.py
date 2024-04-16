@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import random
 import sys
 import time
 import signal
@@ -182,7 +183,8 @@ def worker(miner_id):
         try:
             # Check if the number of running requests exceeds the maximum concurrent requests
             if get_metric_value("num_requests_running", base_config) >= base_config.max_concurrent_requests:
-                print("Too many requests running, waiting for a while")
+                # Pass silently if too many requests are running
+                # print("Too many requests running, waiting for a while")
                 time.sleep(base_config.sleep_duration)
                 pass
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
@@ -246,7 +248,8 @@ def main_loop():
 
         for _ in range(base_config.num_child_process):
             process = Process(target=worker, args=(miner_id,))
-            time.sleep(base_config.sleep_duration) # Sleep for a while to avoid all processes starting at the same time
+            random_number = random.randint(0, base_config.sleep_duration)
+            time.sleep(random_number) # Sleep for a while to avoid all processes starting at the same time
             process.start()
             processes.append(process)
 

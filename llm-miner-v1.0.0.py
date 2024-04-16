@@ -183,6 +183,7 @@ def worker(miner_id):
             # Check if the number of running requests exceeds the maximum concurrent requests
             if get_metric_value("num_requests_running", base_config) >= base_config.max_concurrent_requests:
                 print("Too many requests running, waiting for a while")
+                time.sleep(base_config.sleep_duration)
                 pass
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:

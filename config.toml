@@ -30,4 +30,4 @@ reload_interval = 600
 max_iterations = 50
 max_width = 1024
 max_height = 1024
-max_concurrent_requests = 4
+concurrency_soft_limit = 4

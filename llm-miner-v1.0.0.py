@@ -13,7 +13,8 @@ from llm_mining_core.config import BaseConfig, LLMServerConfig
 from llm_mining_core.utils import (
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
     send_miner_request,
-    configure_logging
+    configure_logging,
+    get_metric_value
 )
 
 def load_config(filename='config.toml'):
@@ -179,6 +180,10 @@ def worker(miner_id):
     configure_logging(base_config, miner_id)
     while True:
         try:
+            # Check if the number of running requests exceeds the maximum concurrent requests
+            if get_metric_value("num_requests_running", base_config) >= base_config.max_concurrent_requests:
+                print("Too many requests running, waiting for a while")
+                pass
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:
                 model_id = job['model_id'] # Extract model_id from the job
@@ -240,6 +245,7 @@ def main_loop():
 
         for _ in range(base_config.num_child_process):
             process = Process(target=worker, args=(miner_id,))
+            time.sleep(base_config.sleep_duration) # Sleep for a while to avoid all processes starting at the same time
             process.start()
             processes.append(process)
 

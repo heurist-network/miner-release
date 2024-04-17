@@ -86,6 +86,8 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
 
         job_end_time = time.time()
         total_time = job_end_time - job_start_time
+        if total_time > config.sd_timeout_seconds:
+            print("Warning: the previous request timed out. You will not earn points. Please check miner configuration or network connection.")
         
         # Log job completion
         logging.info(f"Request ID {job['job_id']} completed. Total time: {total_time:.2f} s")

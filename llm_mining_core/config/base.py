@@ -27,6 +27,7 @@ class BaseConfig:
         self.sleep_duration = self.config['system']['sleep_duration']
         self.num_child_process = self.config['system']['num_child_process']
         self.gpu_to_use = sys.argv[8]
+        self.concurrency_soft_limit = self.config['processing_limits']['concurrency_soft_limit']
 
         self.eos = "[DONE]"
         # A set of stop words to use - this is not a complete set, and you may want to

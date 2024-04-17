@@ -1,3 +1,7 @@
+import os
+import re
+import requests
+import random
 import sys
 import time
 import signal
@@ -9,8 +13,10 @@ from multiprocessing import Process, set_start_method
 from llm_mining_core.utils import (
     load_config, load_miner_ids,
     decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
-    check_vllm_server_status, send_miner_request,
-    configure_logging
+    send_miner_request,
+    configure_logging,
+    get_metric_value,
+    check_vllm_server_status
 )
 
 def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
@@ -158,6 +164,12 @@ def worker(miner_id):
             logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")
             sys.exit(1)
         try:
+            # Check if the number of running requests exceeds the maximum concurrent requests
+            if get_metric_value("num_requests_running", base_config) >= base_config.concurrency_soft_limit:
+                # Pass silently if too many requests are running
+                # print("Too many requests running, waiting for a while")
+                time.sleep(base_config.sleep_duration)
+                pass
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:
                 job_start_time = time.time()
@@ -222,6 +234,8 @@ def main_loop():
 
         for _ in range(base_config.num_child_process):
             process = Process(target=worker, args=(miner_id,))
+            random_number = random.randint(0, base_config.sleep_duration)
+            time.sleep(random_number) # Sleep for a while to avoid all processes starting at the same time
             process.start()
             processes.append(process)
 

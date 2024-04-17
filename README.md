@@ -36,12 +36,20 @@ For those eager to dive in, here's a quick overview of the setup process:
 ### Configuring Your Miner ID
 
 1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
-2. **Define Miner IDs:** In the `.env` file, you should assign an Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately. If you have multiple GPUs, i-th GPU will use i-th miner ID. You can use the same address or different ones, which doesn't affect your rewards.
+2. **Define Miner IDs:** In the `.env` file, you should assign an Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately. If you have multiple GPUs, i-th GPU will use i-th miner ID. You can use the same address or different ones, which doesn't affect your rewards. We support adding a custom tag as miner ID suffix to help you view the performance of each GPU individually.
 
+Option 1: Use default GPU tags (obtained from GPU UUID)
 ```plaintext
 MINER_ID_0=0xYourFirstWalletAddressHere
 MINER_ID_1=0xYourSecondWalletAddressHere
 ```
+
+Option 2: Customize GPU tags (only alphanumeric characters supported after a hyphen)
+```plaintext
+MINER_ID_0=0xYourFirstWalletAddressHere-GamingPC4090
+MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
+```
+
 
 3. **(For SD Miners)If you have multiple GPUs** Change the `num_cuda_devices` in `config.toml` to the number of GPUs you want to use. The number should match the number of Miner IDs in `.env`
 

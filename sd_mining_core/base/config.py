@@ -16,6 +16,7 @@ class BaseConfig:
         self.log_filename = self.config['logging'].get('sd_log_filename', 'sd_miner.log')
         self.base_url = self.config['service']['base_url']
         self.signal_url = self.config['service']['signal_url']
+        self.sd_timeout_seconds = self.config['service']['sd_timeout_seconds']
         self.s3_bucket = self.config['storage']['s3_bucket']
         self.base_dir = os.path.expanduser(self.config['storage'].get('base_dir', '.'))
         self.model_config_url = self.config['model_config']['model_config_url']

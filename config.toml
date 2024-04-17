@@ -2,6 +2,8 @@
 base_url = "http://sequencer.heurist.xyz"
 llm_url = "http://localhost"
 signal_url = "https://d2k7cjzmjgpm6p.cloudfront.net/prod"
+sd_timeout_seconds = 22
+llm_timeout_seconds = 210
 
 [logging]
 sd_log_filename = "sd-miner.log"

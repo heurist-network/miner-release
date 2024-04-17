@@ -1,8 +1,25 @@
 import time
+import psutil
 import requests
 from .cuda_utils import get_hardware_description
 
 DEFAULT_MINER_ID = "default_miner_id"
+
+def check_vllm_server_status():
+    """
+    Checks if the vLLM server process is currently running.
+    This function iterates over the running processes and checks if any process
+    matches the criteria for the vLLM server process. It looks for a process
+    with 'python' as the first argument, '-m' as one of the arguments, and
+    'vllm.entrypoints.openai.api_server' as another argument.
+    Returns:
+        bool: True if the vLLM server process is running, False otherwise.
+    """
+    for proc in psutil.process_iter(['pid', 'cmdline']):
+        cmdline = proc.info['cmdline']
+        if cmdline and 'python' in cmdline[0] and '-m' in cmdline and 'vllm.entrypoints.openai.api_server' in cmdline:
+            return True
+    return False
 
 def send_miner_request(config, miner_id, model_id):
     """

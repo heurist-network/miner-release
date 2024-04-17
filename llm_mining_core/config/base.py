@@ -13,6 +13,7 @@ class BaseConfig:
         # General configurations
         self.base_url = self.config['service']['base_url']
         self.llm_url = self.config['service']['llm_url']
+        self.llm_timeout_seconds = self.config['service']['llm_timeout_seconds']
         self.port = sys.argv[7]
         self.log_filename = self.config['logging']['llm_log_filename']
         self.version = self.config['versions'].get('llm_version', 'unknown')

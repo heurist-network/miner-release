@@ -1,6 +1,6 @@
 import time
-import logging
 import psutil
+import logging
 import requests
 from urllib3.util import Retry
 from requests.adapters import HTTPAdapter
@@ -29,16 +29,15 @@ def send_miner_request(config, miner_id, model_id):
     Sends a request for a new mining job to the server using the given configuration.
 
     Parameters:
-    config (BaseConfig): The configuration instance containing necessary settings.
-    miner_id (str): The ID of the miner requesting a job.
+        config (BaseConfig): The configuration instance containing necessary settings.
+        miner_id (str): The ID of the miner requesting a job.
 
     Returns:
-    dict or None: The job details as a dictionary if available, otherwise None.
+        dict or None: The job details as a dictionary if available, otherwise None.
     """
     url = f"{config.base_url}/miner_request"
     if miner_id is None:
         miner_id = DEFAULT_MINER_ID
-
     request_data = {
         "miner_id": miner_id,
         "model_id": model_id,
@@ -51,7 +50,7 @@ def send_miner_request(config, miner_id, model_id):
         request_data['hardware'] = get_hardware_description()
         request_data['version'] = config.version
         config.last_heartbeat_per_miner[miner_id] = current_time
-
+    
     retry_strategy = Retry(
         total=0,  # Disable retries
         connect=0,  # Disable connect retries
@@ -62,32 +61,32 @@ def send_miner_request(config, miner_id, model_id):
         allowed_methods=[]  # Disable retries on all methods
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
-    
+
     with requests.Session() as session:
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-
         try:
             response = session.post(url, json=request_data)
-            response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
-    
             # Assuming response.text contains the full text response from the server
             warning_indicator = "Warning:"
-            if warning_indicator in response.text:
+            if response and warning_indicator in response.text:
                 # Extract the warning message and use strip() to remove any trailing quotation marks
                 warning_message = response.text.split(warning_indicator)[1].strip('"')
                 print(f"WARNING: {warning_message}")
                 return None, None
-    
-            data = response.json()
-            end_time = time.time()
-            request_latency = end_time - current_time
-    
-            if isinstance(data, dict):
-                return data, request_latency
-            else:
+        
+            try:
+                data = response.json()
+                end_time = time.time()
+                request_latency = end_time - current_time
+                if isinstance(data, dict):
+                    return data, request_latency
+                else:
+                    return None, None
+            except Exception as e:
+                # fail silently
+                # print(f"Error parsing response: {e}")
                 return None, None
-    
         except requests.exceptions.RequestException as e:
             logging.error(f"Error sending request: {e}")
             return None, None

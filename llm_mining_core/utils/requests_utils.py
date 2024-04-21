@@ -89,7 +89,7 @@ def send_miner_request(config, miner_id, model_id):
                 return None, None
     
         except requests.exceptions.RequestException as e:
-            print(f"Error sending request: {e}")
+            logging.error(f"Error sending request: {e}")
             return None, None
     
 def get_metric_value(metric_name, base_config):
@@ -117,6 +117,6 @@ def get_metric_value(metric_name, base_config):
                     return value
     except Exception as e:
         # fail silently
-        # print(f"Error occurred while finding metric value: {str(e)}")
+        logging.error(f"Error occurred while finding metric value: {str(e)}")
         return None
     return None

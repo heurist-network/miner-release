@@ -1,6 +1,9 @@
 import time
 import psutil
+import logging
 import requests
+from urllib3.util import Retry
+from requests.adapters import HTTPAdapter
 from .cuda_utils import get_hardware_description
 
 DEFAULT_MINER_ID = "default_miner_id"
@@ -47,28 +50,46 @@ def send_miner_request(config, miner_id, model_id):
         request_data['hardware'] = get_hardware_description()
         request_data['version'] = config.version
         config.last_heartbeat_per_miner[miner_id] = current_time
+    
+    retry_strategy = Retry(
+        total=0,  # Disable retries
+        connect=0,  # Disable connect retries
+        read=0,  # Disable read retries
+        redirect=0,  # Disable redirect retries
+        status=0,  # Disable status retries
+        status_forcelist=[],  # No status codes to force retry
+        allowed_methods=[]  # Disable retries on all methods
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
 
-    response = requests.post(url, json=request_data)
-    # Assuming response.text contains the full text response from the server
-    warning_indicator = "Warning:"
-    if response and warning_indicator in response.text:
-        # Extract the warning message and use strip() to remove any trailing quotation marks
-        warning_message = response.text.split(warning_indicator)[1].strip('"')
-        print(f"WARNING: {warning_message}")
-        return None, None
-
-    try:
-        data = response.json()
-        end_time = time.time()
-        request_latency = end_time - current_time
-        if isinstance(data, dict):
-            return data, request_latency
-        else:
+    with requests.Session() as session:
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        try:
+            response = session.post(url, json=request_data)
+            # Assuming response.text contains the full text response from the server
+            warning_indicator = "Warning:"
+            if response and warning_indicator in response.text:
+                # Extract the warning message and use strip() to remove any trailing quotation marks
+                warning_message = response.text.split(warning_indicator)[1].strip('"')
+                print(f"WARNING: {warning_message}")
+                return None, None
+        
+            try:
+                data = response.json()
+                end_time = time.time()
+                request_latency = end_time - current_time
+                if isinstance(data, dict):
+                    return data, request_latency
+                else:
+                    return None, None
+            except Exception as e:
+                # fail silently
+                # print(f"Error parsing response: {e}")
+                return None, None
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error sending request: {e}")
             return None, None
-    except Exception as e:
-        # fail silently
-        #print(f"Error parsing response: {e}")
-        return None, None
     
 def get_metric_value(metric_name, base_config):
     """
@@ -95,6 +116,6 @@ def get_metric_value(metric_name, base_config):
                     return value
     except Exception as e:
         # fail silently
-        # print(f"Error occurred while finding metric value: {str(e)}")
+        logging.error(f"Error occurred while finding metric value: {str(e)}")
         return None
     return None

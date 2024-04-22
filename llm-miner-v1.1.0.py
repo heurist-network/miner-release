@@ -158,6 +158,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                 print(f"Failed to submit result for job_id: {job_id} with status code: {res.status_code}")
     except Exception as e:
         logging.error(f"Error during text generation request: {str(e)}")
+        print(f"Error during text generation request: {str(e)}")
         return
     
 def worker(miner_id):

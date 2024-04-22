@@ -151,7 +151,11 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                 "request_latency": request_latency,
                 "inference_latency": inference_latency
             }
-            requests.post(url, json=result)
+            res = requests.post(url, json=result)
+            if(res.status_code == 200):
+                print(f"Result submitted successfully for job_id: {job_id}")
+            else:
+                print(f"Failed to submit result for job_id: {job_id} with status code: {res.status_code}")
     except Exception as e:
         logging.error(f"Error during text generation request: {str(e)}")
         return

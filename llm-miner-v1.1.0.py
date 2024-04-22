@@ -28,7 +28,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
         return
     
     decoded_prompt = None
-    if "openhermes" in model_id:
+    if "openhermes" in model_id or "dolphin" in model_id:
         decoded_prompt = decode_prompt_chatml(prompt)
     elif "llama" in model_id:
         decoded_prompt = decode_prompt_llama(prompt)

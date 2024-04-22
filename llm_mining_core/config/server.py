@@ -7,10 +7,16 @@ from openai import OpenAI
 
 class LLMServerConfig:
     MAX_MODEL_LEN = 4096
-    CHAT_TEMPLATE = ("{% for message in messages %}"
+    OPENHERMES_CHAT_TEMPLATE = ("{% for message in messages %}"
                      "{{'' + message['role'] + '\n' + message['content'] + '' + '\n'}}"
                      "{% endfor %}"
                      "{% if add_generation_prompt %}{{ 'assistant\n' }}{% endif %}")
+    DOLPHIN_CHAT_TEMPLATE = (
+        "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}"
+        "{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+    )
 
     def __init__(self, base_config):
         self.base_config = base_config
@@ -23,6 +29,7 @@ class LLMServerConfig:
         self.gpu_memory_util  = sys.argv[4] # GPU memory utilization ratio for vllm
         self.model_revision = None if len(sys.argv) <= 5 or sys.argv[5] == 'None' else sys.argv[5]  # Model revision from the fourth argument, if present
         self.process = None
+        self.chat_template = self.DOLPHIN_CHAT_TEMPLATE if "dolphin" in self.model_id else self.OPENHERMES_CHAT_TEMPLATE
     
     def initialize_client(self):
         return OpenAI(base_url=self.base_config.api_base_url, api_key="N/A")
@@ -36,7 +43,7 @@ class LLMServerConfig:
             "--model", self.model_id,
             "--served-model-name", self.served_model_name,
             "--max-model-len", str(self.MAX_MODEL_LEN),
-            "--chat-template", self.CHAT_TEMPLATE,
+            "--chat-template", self.chat_template,
             "--disable-log-requests",
             "--dtype", "half",
             "--port", str(self.base_config.port),

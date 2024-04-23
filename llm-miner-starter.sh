@@ -181,7 +181,7 @@ install_with_spinner() {
 # Example usage for your dependency installation function
 install_dependencies() {
     log_info "Installing Python dependencies..."
-    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0" "wheel" "packaging" "psutil")
+    local dependencies=("vllm" "python-dotenv" "toml" "openai" "triton==2.1.0" "wheel" "packaging" "psutil" "ray")
 
     for dep in "${dependencies[@]}"; do
         if ! install_with_spinner "$dep"; then
@@ -235,35 +235,45 @@ validateVram() {
         exit 1
     fi
 
-    # Fetch the available VRAM in MB
-    local available_mb=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | awk -v gpu_id="$gpu_ids" 'NR==gpu_id+1{print $1}')
+    # Initialize total available VRAM
+    local total_available_mb=0
 
-    if [ -z "$available_mb" ]; then
-        log_error "Failed to fetch available VRAM."
-        exit 1
-    fi
+    # Iterate over each GPU ID
+    IFS=',' read -ra gpu_id_array <<< "$gpu_ids"
+    for gpu_id in "${gpu_id_array[@]}"; do
+        # Fetch the available VRAM in MB for each GPU
+        local available_mb=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits --id="$gpu_id")
 
-    log_info "Available VRAM: ${available_mb}MB, Required VRAM: ${required_mb}MB"
+        if [ -z "$available_mb" ]; then
+            log_error "Failed to fetch available VRAM for GPU $gpu_id."
+            exit 1
+        fi
 
-    # Compare available and required VRAM
-    if [ "$available_mb" -lt "$required_mb" ]; then
-        log_error "Insufficient VRAM. Available: ${available_mb}MB, Required: ${required_mb}MB."
-        exit 1
+        # Add the available VRAM to the total
+        total_available_mb=$((total_available_mb + available_mb))
+    done
+
+    log_info "Total available VRAM: ${total_available_mb}MB, Required VRAM: ${required_mb}MB"
+
+    # Compare total available VRAM and required VRAM
+    if [ "$total_available_mb" -lt "$required_mb" ]; then
+        log_error "Insufficient VRAM. Total available: ${total_available_mb}MB, Required: ${required_mb}MB."
+        # exit 1
     else
         log_info "Sufficient VRAM available. Proceeding..."
     fi
 
-    # Determine GPU memory utilization based on model name and available VRAM
-    if [[ "$heurist_model_id" == *"mixtral-8x7b-gptq"* ]] && [ "$available_mb" -gt 32000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (32000-1000)/$available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"yi-34b-gptq"* ]] && [ "$available_mb" -gt 38000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (38000-1000)/$available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$available_mb" -gt 19000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (19000-1000)/$available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"pro-mistral-7b"* ]] && [ "$available_mb" -gt 18000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (18000-1000)/$available_mb" | bc)
+    # Determine GPU memory utilization based on model name and total available VRAM
+    if [[ "$heurist_model_id" == *"mixtral-8x7b-gptq"* ]] || [[ "$heurist_model_id" == *"mixtral-8x7b-instruct-v0.1"* ]] && [ "$total_available_mb" -gt 32000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (32000-1000)/$total_available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"yi-34b-gptq"* ]] && [ "$total_available_mb" -gt 38000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (38000-1000)/$total_available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$total_available_mb" -gt 19000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (19000-1000)/$total_available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"pro-mistral-7b"* ]] && [ "$total_available_mb" -gt 18000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (18000-1000)/$total_available_mb" | bc)
     else
-        local gpu_memory_util=$(echo "scale=2; (12000-1000)/$available_mb" | bc) # Default value or handle other cases as needed
+        local gpu_memory_util=$(echo "scale=2; (12000-1000)/$total_available_mb" | bc) # Default value or handle other cases as needed
     fi
 
     # Output the gpu_memory_util value

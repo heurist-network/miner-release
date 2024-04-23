@@ -257,8 +257,9 @@ We notice that 8x7b, 34b, 70b model loading might take very long time (up to 1 h
 | openhermes-2.5-mistral-7b-gptq  | 10               |
 | mistralai/mistral-7b-instruct-v0.2       | 15               |
 | openhermes-2-pro-mistral-7b     | 15               |
+| (recommended) dolphin-2.9-llama3-8b     | 17               |
 | mistralai/mixtral-8x7b-instruct-v0.1 | 28               | 
-| openhermes-mixtral-8x7b-gptq | 28        |
+| (recommended) openhermes-mixtral-8x7b-gptq | 28        |
 | openhermes-2-yi-34b-gptq       | 37               |
 | meta-llama/llama-2-70b-chat              | 41               |
 

@@ -268,8 +268,8 @@ validateVram() {
         local gpu_memory_util=$(echo "scale=2; (32000-1000)/$total_available_mb" | bc)
     elif [[ "$heurist_model_id" == *"yi-34b-gptq"* ]] && [ "$total_available_mb" -gt 38000 ]; then
         local gpu_memory_util=$(echo "scale=2; (40000-1000)/$total_available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"70b"* ]] && [ "$available_mb" -gt 38000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (44000-1000)/$available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"70b"* ]] && [ "$total_available_mb" -gt 38000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (44000-1000)/$total_available_mb" | bc)
     elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$total_available_mb" -gt 19000 ]; then
         local gpu_memory_util=$(echo "scale=2; (19000-1000)/$total_available_mb" | bc)
     elif [[ "$heurist_model_id" == *"pro-mistral-7b"* ]] && [ "$total_available_mb" -gt 18000 ]; then

@@ -1,5 +1,5 @@
 [service]
-base_url = "https://b1ba-2409-40c2-1032-3e23-95c0-fc6-2c96-6b2f.ngrok-free.app"
+base_url = "http://private-sequencer.heurist.xyz"
 llm_url = "http://localhost"
 signal_url = "https://d2k7cjzmjgpm6p.cloudfront.net/prod"
 sd_timeout_seconds = 22

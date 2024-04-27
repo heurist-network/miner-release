@@ -13,14 +13,15 @@ class BaseConfig:
         # General configurations
         self.base_url = self.config['service']['base_url']
         self.llm_url = self.config['service']['llm_url']
+        self.signal_url = self.config['service']['signal_url']
+
         self.llm_timeout_seconds = self.config['service']['llm_timeout_seconds']
         self.port = sys.argv[7]
         self.log_filename = self.config['logging']['llm_log_filename']
         self.version = self.config['versions'].get('llm_version', 'unknown')
-        
         self.api_base_url = f"{self.llm_url}:{self.port}/v1"
         self.served_model_name = sys.argv[3] # This is Heurist model name defined in https://github.com/heurist-network/heurist-models/blob/main/models.json
-
+        self.signal_interval = self.config['system']['signal_interval']
         # Heartbeat and process management
         self.last_heartbeat = time.time() - 10000  # Set a default past timestamp
         self.last_heartbeat_per_miner = defaultdict(lambda: 0)  # Tracks heartbeats per miner_id

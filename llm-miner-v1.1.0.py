@@ -8,6 +8,7 @@ import signal
 import atexit
 import logging
 import requests
+import threading
 from multiprocessing import Process, set_start_method
 
 from llm_mining_core.utils import (
@@ -16,7 +17,8 @@ from llm_mining_core.utils import (
     send_miner_request,
     configure_logging,
     get_metric_value,
-    check_vllm_server_status
+    check_vllm_server_status,
+    send_model_info_signal
 )
 
 def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
@@ -159,6 +161,8 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
 def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
+
+   
     while True:
         if not check_vllm_server_status():
             logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")
@@ -170,6 +174,7 @@ def worker(miner_id):
                 # print("Too many requests running, waiting for a while")
                 time.sleep(base_config.sleep_duration)
                 pass
+            
             job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
             if job is not None:
                 job_start_time = time.time()
@@ -195,6 +200,11 @@ def worker(miner_id):
             traceback.print_exc()
         
         time.sleep(base_config.sleep_duration)
+
+def periodic_send_model_info_signal(base_config, miner_id, last_signal_time):
+    while True:
+        last_signal_time = send_model_info_signal(base_config, miner_id, last_signal_time)
+        time.sleep(base_config.signal_interval) # Adjust the sleep interval based on your desired frequency
 
 def main_loop():
     processes = []
@@ -231,7 +241,6 @@ def main_loop():
             logging.warning(f"Warning: Configure your ETH address correctly in the .env file. Current value: {miner_id}")
         configure_logging(base_config, miner_id)
 
-
         for _ in range(base_config.num_child_process):
             process = Process(target=worker, args=(miner_id,))
             random_number = random.randint(0, base_config.sleep_duration)
@@ -241,9 +250,15 @@ def main_loop():
 
         logging.info("LLM miner started")
 
+        # Start the periodic function in a separate thread
+        last_signal_time = time.time()
+        periodic_thread = threading.Thread(target=periodic_send_model_info_signal, args=(base_config, miner_id, last_signal_time))
+        periodic_thread.start()
+
         # Wait for all processes to finish
         for process in processes:
             process.join()
+
     except KeyboardInterrupt:
         print("Main process interrupted. Terminating child processes.")
         for p in processes:

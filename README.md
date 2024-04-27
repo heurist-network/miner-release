@@ -104,7 +104,7 @@ conda activate pytorch-gpu-python-3-10.
 - Use the cd command to change directories to where `requirements.txt` is located. For example, `cd C:\Users\YourUsername\Documents\miner-release`.
 
 3. Install Dependencies:
-- `Run the command pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
+- Run the command `pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
 
 #### Step 8. Configuring Your Miner ID with a .env File
 See the top of this guide.

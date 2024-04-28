@@ -126,6 +126,8 @@ def check_and_reload_model(config, last_signal_time):
     if current_time - last_signal_time >= config.reload_interval:
         response = post_request(config.signal_url + "/miner_signal", {
             "miner_id": config.miner_id,
+            "model_type": "SD",
+            "model_id": next(iter(config.loaded_models.keys())),
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }, config.miner_id)
 

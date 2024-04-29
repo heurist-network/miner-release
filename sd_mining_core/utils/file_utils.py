@@ -1,7 +1,7 @@
 import os
-from tqdm import tqdm
-import requests
 import logging
+import requests
+from tqdm import tqdm
 
 def download_file(base_dir, file_url, file_name, total_size):
     try:
@@ -22,6 +22,7 @@ def fetch_and_download_config_files(config):
     try:
         models = requests.get(config.model_config_url).json()
         vaes = requests.get(config.vae_config_url).json()
+        loras = requests.get(config.lora_config_url).json()
         config.model_configs = {
             model['name']: model
             for model in models
@@ -33,10 +34,15 @@ def fetch_and_download_config_files(config):
             for vae in vaes
         }
 
+        config.lora_configs = { 
+            lora['name']: lora
+            for lora in loras 
+        }
+
         total_size = 0
         files_to_download = []
-        for model in config.model_configs.values():
-            if not 'type' in model or ('sd' not in model['type'] and 'vae' not in model['type']):
+        for model in config.model_configs.values() and config.lora_configs.values():
+            if 'type' not in model or (model['type'] not in ['sd', 'vae', 'lora']):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")

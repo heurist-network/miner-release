@@ -34,6 +34,7 @@ class LLMServerConfig:
             "--served-model-name", self.served_model_name,
             "--max-model-len", str(self.MAX_MODEL_LEN),
             "--chat-template", self.CHAT_TEMPLATE,
+            "--uvicorn-log-level", "warning",
             "--disable-log-requests",
             "--dtype", "half",
             "--port", str(self.base_config.port),

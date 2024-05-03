@@ -104,7 +104,7 @@ def get_metric_value(metric_name, base_config):
     """
     try:
         url = f"{base_config.llm_url}:{base_config.port}/metrics"
-        print(f"Fetching metrics from {url}")
+        #Call the metrics endpoint to get the metric value
         response = requests.get(url)
         response_text = response.text
         lines = response_text.split('\n')

@@ -66,7 +66,6 @@ class ModelUpdater:
             # Using 'name' and 'file_url' keys to identify and download models
             model_name = model_info['name']
             model_url = model_info['file_url']
-            model_size_mb = model_info['size_mb']
             file_name = f"{model_name}.safetensors"
 
             # The path where the model will be saved
@@ -75,7 +74,7 @@ class ModelUpdater:
             # Only download if the model file doesn't already exist
             if not os.path.exists(model_path):
                 print(f"Downloading new model: {model_name}")
-                download_file(self.models_directory, model_url, file_name, model_size_mb * 1024 * 1024)
+                download_file(self.models_directory, model_url, file_name)
     
     def update_configs(self, remote_model_list):
         """Update local configuration with new models from the remote list."""

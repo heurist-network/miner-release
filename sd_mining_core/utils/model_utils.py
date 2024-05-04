@@ -23,14 +23,14 @@ def get_local_model_ids(config):
                 local_model_ids.append(model_id)
             else:
                 if base_file not in local_files:
-                    print(f"Warning: Base model file '{model['base']}' not found for model '{model['name']}'.")
+                    logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                 if name_file not in local_files:
-                    print(f"Warning: LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
+                    logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
         else:
             if model_id + ".safetensors" in local_files:
                 local_model_ids.append(model_id)
             else:
-                print(f"Warning: Model file for '{model['name']}' not found in local directory.")
+                logging.warning(f"Model file for '{model['name']}' not found in local directory.")
     
     return local_model_ids
 

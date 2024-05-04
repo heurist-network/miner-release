@@ -4,6 +4,7 @@ from .decoder_utils import decode_prompt_llama, decode_prompt_mistral, decode_pr
 from .requests_utils import send_miner_request
 from .requests_utils import get_metric_value
 from .requests_utils import check_vllm_server_status
+from .requests_utils import send_model_info_signal
 from .logging_utils import configure_logging
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     'check_vllm_server_status', 'send_miner_request',
     'configure_logging',
     'get_metric_value',
+    'send_model_info_signal',
 ]

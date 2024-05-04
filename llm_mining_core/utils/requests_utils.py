@@ -119,3 +119,43 @@ def get_metric_value(metric_name, base_config):
         logging.error(f"Error occurred while finding metric value: {str(e)}")
         return None
     return None
+
+def send_model_info_signal(config, miner_id, last_signal_time):
+    """
+    Parameters:
+    - base_config (dict): A dictionary containing the configuration settings for the
+                           periodic signal, including the signal interval.
+    - miner_id (str): The unique identifier for the miner sending the signal.
+    - last_signal_time (float): The timestamp of the last signal sent, used to calculate the
+                                 next signal time.
+    """
+    current_time = time.time()
+    # Only proceed if it's been at least signal_interval in seconds
+    if current_time - last_signal_time >= config.signal_interval:
+        response = post_request(config.signal_url + "/miner_signal", {
+            "miner_id": miner_id,
+            "model_type": "LLM",
+            "model_id": config.served_model_name
+        }, miner_id)
+
+        # Process the response only if it's valid
+        if response and response.status_code == 200:
+            last_signal_time = current_time
+        else:
+            logging.error(f"Failed to get a valid response from /miner_signal for miner_id {miner_id}.")
+        
+    return last_signal_time if current_time - last_signal_time < config.signal_interval else current_time
+
+def post_request(url, data, miner_id=None):
+    try:
+        response = requests.post(url, json=data)
+        logging.debug(f"Request sent to {url} with data {data} received response: {response.status_code}")
+        # Directly return the response object
+        return response
+    except ValueError as ve:
+        miner_id_info = f" for miner_id {miner_id}" if miner_id else ""
+        logging.error(f"Failed to parse JSON response{miner_id_info}: {ve}")
+    except requests.exceptions.RequestException as re:
+        miner_id_info = f" for miner_id {miner_id}" if miner_id else ""
+        logging.error(f"Request failed{miner_id_info}: {re}")
+    return None

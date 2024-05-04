@@ -29,6 +29,7 @@ num_child_process = 4
 sleep_duration = 2
 min_deadline = 1
 reload_interval = 600
+signal_interval = 600
 
 [processing_limits]
 max_iterations = 50

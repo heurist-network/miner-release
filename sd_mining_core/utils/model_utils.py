@@ -119,7 +119,11 @@ def load_default_model(config):
     if default_model_id not in config.loaded_models:
         logging.info(f"Loading default model {default_model_id}...")
         current_model, _ = load_model(config, default_model_id)
-        config.loaded_models[default_model_id] = current_model
+        if '#' in default_model_id:
+            base_model_id, lora_weight_id = default_model_id.split('#')
+            config.loaded_models[lora_weight_id] = current_model
+        else:
+            config.loaded_models[default_model_id] = current_model
         logging.info(f"Default model {default_model_id} loaded successfully.")
 
 def reload_model(config, model_id_from_signal):
@@ -136,7 +140,11 @@ def reload_model(config, model_id_from_signal):
 
     logging.info(f"Loading model {model_id_from_signal}...")
     current_model, _ = load_model(config, model_id_from_signal)
-    config.loaded_models[model_id_from_signal] = current_model
+    if '#' in model_id_from_signal:
+        base_model_id, lora_weight_id = model_id_from_signal.split('#')
+        config.loaded_models[lora_weight_id] = current_model
+    else:
+        config.loaded_models[model_id_from_signal] = current_model
     logging.info(f"Received model {model_id_from_signal} loaded successfully.")
 
 def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed):

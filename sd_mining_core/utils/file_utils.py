@@ -39,11 +39,9 @@ def fetch_and_download_config_files(config):
         loras = requests.get(config.lora_config_url).json()
 
         config.model_configs = {
-            f"{model['base']}#{model['name']}" if 'base' in model else model['name']: model
-            for model in models
+            model['name']: model for model in models
             if 'type' in model and (
-                'sd' in model['type'] or
-                model['type'].startswith('composite')
+                'sd' in model['type'] or model['type'].startswith('composite')
             ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
         }
 

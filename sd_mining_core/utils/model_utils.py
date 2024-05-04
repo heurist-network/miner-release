@@ -68,17 +68,20 @@ def load_model(config, model_id):
     
     # Load LoRa weights if provided
     if lora_id is not None:
-        pipe = load_lora_weights(config, pipe, lora_id)
+        pipe = load_lora_weights(config, pipe, model_config['type'], lora_id)
     
     end_time = time.time()
     loading_latency = end_time - start_time
     
     return pipe, loading_latency
 
-def load_lora_weights(config, pipe, lora_id):
+def load_lora_weights(config, pipe, base_model_type, lora_id):
     lora_config = config.lora_configs.get(lora_id)
+
     if lora_config is None:
         raise ValueError(f"LoRa ID '{lora_id}' not found in configuration.")
+    if lora_config['base_model'] != base_model_type:
+        raise ValueError(f"LoRa '{lora_id}' is not compatible with the loaded model type '{base_model_type}'.")
     
     lora_file_path = os.path.join(config.base_dir, f"{lora_id}.safetensors")
     if not os.path.exists(lora_file_path):

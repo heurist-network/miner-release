@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 from tqdm import tqdm
+from itertools import chain
 
 def download_file(base_dir, file_url, file_name, total_size):
     try:
@@ -45,8 +46,8 @@ def fetch_and_download_config_files(config):
 
         total_size = 0
         files_to_download = []
-        for model in config.model_configs.values() and config.lora_configs.values():
-            if 'type' not in model or (model['type'] not in ['sd', 'vae', 'lora', 'composite15', 'compositexl']):
+        for model in chain(config.model_configs.values(), config.lora_configs.values()):
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora']):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")

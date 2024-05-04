@@ -11,47 +11,97 @@ from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeli
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
-    local_model_ids = [model['name'] for model in config.model_configs.values() if model['name'] + ".safetensors" in local_files]
+    local_model_ids = []
+    
+    for model in config.model_configs.values():
+        model_id = model['name']
+        if 'base' in model:
+            base_file = model['base'] + ".safetensors"
+            name_file = model['name'] + ".safetensors"
+            if base_file in local_files and name_file in local_files:
+                model_id = f"{model['base']}#{model['name']}"
+                local_model_ids.append(model_id)
+            else:
+                if base_file not in local_files:
+                    print(f"Warning: Base model file '{model['base']}' not found for model '{model['name']}'.")
+                if name_file not in local_files:
+                    print(f"Warning: LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
+        else:
+            if model_id + ".safetensors" in local_files:
+                local_model_ids.append(model_id)
+            else:
+                print(f"Warning: Model file for '{model['name']}' not found in local directory.")
+    
     return local_model_ids
 
 def load_model(config, model_id):
-    # Error handling for excluded sdxl models
-    if config.exclude_sdxl and model_id.startswith("SDXL"):
-        error_message = f"Loading of 'sdxl' models is disabled. Model '{model_id}' cannot be loaded as per configuration."
-        print(error_message)  # Print the error message to the console
-        raise ValueError(error_message)  # Optionally, raise an exception to halt the process
-    
     start_time = time.time()
-    model_config = config.model_configs.get(model_id, None)
+    
+    # Split the model_id into base model and LoRa weights (if provided)
+    model_parts = model_id.split("#")
+    base_model_id = model_parts[0]
+    lora_id = model_parts[1] if len(model_parts) > 1 else None
+    
+    # Validate and load the base model
+    if config.exclude_sdxl and base_model_id.startswith("SDXL"):
+        raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
+    
+    model_config = config.model_configs.get(base_model_id)
     if model_config is None:
-        raise Exception(f"Model configuration for {model_id} not found.")
+        raise ValueError(f"Model configuration for {base_model_id} not found.")
 
-    model_file_path = os.path.join(config.base_dir, f"{model_id}.safetensors")
-
-    # Load the main model
+    model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
+    
     if model_config['type'] == "sd15":
         pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++")
     else:
         pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
+    
     pipe.safety_checker = None
-    # TODO: Add support for other schedulers
-
+    
     if 'vae' in model_config:
         vae_name = model_config['vae']
         vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
         vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
         pipe.vae = vae
     
-    end_time = time.time()  # End measuring time
-    # Calculate and log the loading latency
+    # Load LoRa weights if provided
+    if lora_id is not None:
+        pipe = load_lora_weights(config, pipe, lora_id)
+    
+    end_time = time.time()
     loading_latency = end_time - start_time
-
+    
     return pipe, loading_latency
+
+def load_lora_weights(config, pipe, lora_id):
+    lora_config = config.lora_configs.get(lora_id)
+    if lora_config is None:
+        raise ValueError(f"LoRa ID '{lora_id}' not found in configuration.")
+    
+    lora_file_path = os.path.join(config.base_dir, f"{lora_id}.safetensors")
+    if not os.path.exists(lora_file_path):
+        raise FileNotFoundError(f"LoRa weights file '{lora_file_path}' not found.")
+    
+    try:
+        pipe.load_lora_weights(lora_file_path)
+        config.loaded_loras[lora_id] = pipe
+        print("Using lora weights", lora_id)
+        return pipe
+    except Exception as e:
+        raise ValueError(f"Failed to load LoRa weights for '{lora_id}': {e}")
 
 def unload_model(config, model_id):
     if model_id in config.loaded_models:
         del config.loaded_models[model_id]
+        torch.cuda.empty_cache()
+        gc.collect()
+
+def unload_lora_weights(config, pipe, lora_id):
+    if lora_id in config.loaded_loras:
+        del config.loaded_loras[lora_id]
+        pipe.unload_lora_weights()
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -61,7 +111,7 @@ def load_default_model(config):
         logging.error("No local models found. Exiting...")
         sys.exit(1)  # Exit if no models are available locally
 
-    default_model_id = model_ids[0]
+    default_model_id = model_ids[config.default_model_id] if config.default_model_id < len(model_ids) else model_ids[0]
 
     if default_model_id not in config.loaded_models:
         logging.info(f"Loading default model {default_model_id}...")
@@ -72,6 +122,12 @@ def load_default_model(config):
 def reload_model(config, model_id_from_signal):
     if config.loaded_models:
         model_to_unload = next(iter(config.loaded_models))
+        # Check if the model has associated LoRa weights
+        for lora_id, loaded_pipe in config.loaded_loras.items():
+            if loaded_pipe == config.loaded_models[model_to_unload]:
+                unload_lora_weights(config, loaded_pipe, lora_id)
+                logging.debug(f"Unloaded LoRa weights {lora_id} associated with model {model_to_unload}")
+                break
         unload_model(config, model_to_unload)
         logging.debug(f"Unloaded model {model_to_unload} to make space for {model_id_from_signal}")
 

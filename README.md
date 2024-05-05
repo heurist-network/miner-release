@@ -232,7 +232,6 @@ chmod +x llm-miner-starter.sh
 - `--miner-id-index` specifies the index of miner_id in `.env` file to use. Default is 0 (using the first address configured)
 - `--port` specifies the port to communicate with vLLM process. Default is 8000. Change this if this port is occupied.
 - `--gpu-ids` specifies the GPU ID to use. Default is 0. Change this if you have multiple GPUs and want to use a different one.
-
 #### Example startup command
 
 To use default options:
@@ -243,6 +242,11 @@ To use default options:
 To use the second address with custom port and GPU ID
 ```bash
 ./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq --miner-id-index 1 --port 8001 --gpu-ids 1
+```
+
+To deploy large models across multiple GPU instances
+```bash
+./llm-miner-starter.sh openhermes-mixtral-8x7b-gptq --miner-id-index 0 --port 8000 --gpu-ids 0,1
 ```
 
 ### If you have trouble downloading

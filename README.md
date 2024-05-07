@@ -53,6 +53,8 @@ MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
 
 3. **(For SD Miners)If you have multiple GPUs** Change the `num_cuda_devices` in `config.toml` to the number of GPUs you want to use. The number should match the number of Miner IDs in `.env`
 
+4. **Run LLM Miner and SD Miners on same GPU** First run LLM Miner, make sure it's running, then run SD Miner. This may avoid LLM Miner failure to load.
+
 <details>
 <summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>
 

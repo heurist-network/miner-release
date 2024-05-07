@@ -2,10 +2,12 @@ import os
 import sys
 import json
 import toml
+import time
 from web3 import Web3
 from mnemonic import Mnemonic
 from dotenv import load_dotenv
 from prettytable import PrettyTable
+from eth_account.messages import encode_defunct
 
 class WalletGenerator:
     def __init__(self, config_file, abi_file):
@@ -123,6 +125,23 @@ class WalletGenerator:
                     raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
 
             print(f"MINER ID {miner_id} validated. Proceed to mining loop...")
+
+    def generate_signature(self, miner_id):
+        file_path = os.path.join(self.keys_dir, f'{miner_id.split("-")[0].lower()}.txt')
+        with open(file_path, 'r') as file:
+            seed_phrase = file.readline().strip().split(': ')[1]
+        
+        self.w3.eth.account.enable_unaudited_hdwallet_features()
+        private_key = self.w3.eth.account.from_mnemonic(seed_phrase).key
+        
+        current_time_secs = int(time.time())
+        hourly_time = current_time_secs - (current_time_secs % 3600)  # Unix Timestamp Round down to the nearest hour
+        
+        message = f"{miner_id.split('-')[0].lower()}-{hourly_time}"
+        signable_message = encode_defunct(text=message)
+        signature = self.w3.eth.account.sign_message(signable_message, private_key=private_key)
+        
+        return signature.signature.hex()
 
 if __name__ == '__main__':
     abi_file = abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')

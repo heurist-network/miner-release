@@ -16,6 +16,7 @@ llm_version = "llm-v1.1.1"
 [storage]
 s3_bucket = 'heurist-images'
 base_dir = "~/.cache/heurist"
+keys_dir = "~/.heurist-keys"
 
 [model_config]
 model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models.json"

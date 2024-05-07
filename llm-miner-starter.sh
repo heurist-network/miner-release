@@ -221,6 +221,30 @@ fetchModelDetails() {
     echo "$size_gb $quantization $hf_model_id $revision"
 }
 
+validateMinerId() {
+    local miner_id=$1
+    local config_file=$2
+    local abi_file=$3
+
+    # Call the WalletGenerator class directly
+    python -c "
+from auth.generator import WalletGenerator
+
+config_file = '$config_file'
+abi_file = '$abi_file'
+miner_id = '$miner_id'
+
+wallet_generator = WalletGenerator(config_file, abi_file)
+wallet_generator.validate_miner_keys([miner_id])
+"
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+        log_error "Wallet validation failed for Miner ID: $miner_id"
+        exit 1
+    fi
+}
+
 # Validate GPU VRAM is enough to host expected model
 validateVram() {
     local size_gb="$1"
@@ -322,6 +346,10 @@ main() {
                 ;;
         esac
     done
+
+    # Extract the miner ID from the .env file based on the miner_id_index
+    miner_id=$(sed -n "s/^MINER_ID_$miner_id_index=//p" .env)
+    validateMinerId "$miner_id" "config.toml" "auth/abi.json"
 
     # Check if the model details were not properly fetched
     if [ -z "$size_gb" ] || [ -z "$quantization" ] || [ -z "$hf_model_id" ] || [ -z "$revision" ]; then

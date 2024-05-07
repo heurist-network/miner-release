@@ -106,24 +106,21 @@ class WalletGenerator:
         for miner_id in miner_ids:
             file_path = os.path.join(self.keys_dir, f'{miner_id.lower()}.txt')
 
-            print("File path", file_path)
             if not os.path.exists(file_path):
                 print(f"ERROR: Text file missing for Miner ID {miner_id}. Exiting...")
-                sys.exit(1)
-                # raise ValueError(f"Text file missing for Miner ID {miner_id}.")
-
-            if not self.is_bind(miner_id):
-                print(f"ERROR: No binding found for Miner ID {miner_id}. Exiting...")
-                raise ValueError(f"No binding found for Miner ID {miner_id}.")
+                raise ValueError(f"Text file missing for Miner ID {miner_id}.")
 
             with open(file_path, 'r') as file:
                 seed_phrase = file.readline().strip().split(': ')[1]
                 iw_address = file.readline().strip().split(': ')[1]
 
-            bind_iw_address = self.contract.functions.identityAddress(miner_id).call()
-            if iw_address.lower() != bind_iw_address.lower():
-                print(f"ERROR: Mismatch found for Miner ID {miner_id}. Exiting...")
-                raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
+            if not self.is_bind(miner_id):
+                print(f"WARNING: Identity file exists but no binding found for Miner ID {miner_id}. Proceeding with caution...")
+            else:
+                bind_iw_address = self.contract.functions.identityAddress(miner_id).call()
+                if iw_address.lower() != bind_iw_address.lower():
+                    print(f"ERROR: Mismatch found for Miner ID {miner_id}. Exiting...")
+                    raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
 
             print(f"MINER ID {miner_id} validated. Proceed to mining loop...")
 

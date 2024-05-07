@@ -1,0 +1,40 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "rwAddress",
+                "type": "address"
+            }
+        ],
+        "name": "identityAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "iwAddress",
+                "type": "address"
+            }
+        ],
+        "name": "rewardAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

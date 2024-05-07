@@ -1,14 +1,13 @@
 import os
-import re
-import requests
-import random
 import sys
 import time
 import signal
 import atexit
+import random
 import logging
 import requests
 import threading
+from auth.generator import WalletGenerator
 from multiprocessing import Process, set_start_method
 
 from llm_mining_core.utils import (
@@ -245,6 +244,9 @@ def main_loop():
             miner_id = miner_ids[miner_id_index]
         if miner_id is None or not miner_id.startswith("0x"):
             logging.warning(f"Warning: Configure your ETH address correctly in the .env file. Current value: {miner_id}")
+        
+        wallet_generator = WalletGenerator(os.path.join(os.path.dirname(__file__),'config.toml'), abi_file = os.path.join(os.path.dirname(__file__), 'auth', 'abi.json'))
+        wallet_generator.validate_miner_keys([miner_id.split("-")[0]])
         configure_logging(base_config, miner_id)
 
         for _ in range(base_config.num_child_process):

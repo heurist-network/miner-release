@@ -12,17 +12,17 @@ from eth_account.messages import encode_defunct
 class WalletGenerator:
     def __init__(self, config_file, abi_file):
         load_dotenv()
-        self.keys_dir = os.path.expanduser('~/.heurist-keys')
-        os.makedirs(self.keys_dir, exist_ok=True)
         
         with open(config_file, 'r') as file:
             config = toml.load(file)
             rpc_url = config['contract']['rpc']
             contract_address = config['contract']['address']
-        
+            self.keys_dir = os.path.expanduser(config['storage']['keys_dir'])
+                
         with open(abi_file, 'r') as file:
             contract_abi = json.load(file)
         
+        os.makedirs(self.keys_dir, exist_ok=True)
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         self.contract = self.w3.eth.contract(address=contract_address, abi=contract_abi)
 
@@ -34,9 +34,21 @@ class WalletGenerator:
         for key, value in data.items():
             table.add_row([key, value])
         print(table)
+        print("Make sure you back up the identity wallet file. One identity wallet is bound to one miner address receiving rewards. The identity wallet is used for authentication only. DO NOT deposit funds into the identity wallet.\n")
 
     def is_bind(self, rw_address):
         return self.contract.functions.identityAddress(rw_address).call() != '0x0000000000000000000000000000000000000000'
+
+    def read_wallet_file(self, file_path):
+        with open(file_path, 'r') as file:
+            seed_phrase = file.readline().strip().split(': ')[1]
+            iw_address = file.readline().strip().split(': ')[1]
+        return seed_phrase, iw_address
+
+    def write_wallet_file(self, file_path, seed_phrase, iw_address):
+        with open(file_path, 'w') as file:
+            file.write(f"Seed Phrase: {seed_phrase}\n")
+            file.write(f"Identity Key: {iw_address.lower()}\n")  # Store identity wallet address in lowercase
 
     def generate_wallets(self):
         for key, value in os.environ.items():
@@ -47,16 +59,18 @@ class WalletGenerator:
 
                 if not self.is_bind(rw_address):
                     # Case: There's no binding
-                    print(f"\033[1mMiner ID: {miner_id}\033[0m - No binding identity wallet, generating one...")
-                    mnemo = Mnemonic("english")
-                    seed_phrase = mnemo.generate(strength=128)
-                    self.w3.eth.account.enable_unaudited_hdwallet_features()
-                    account = self.w3.eth.account.from_mnemonic(seed_phrase)
-                    iw_address = account.address
-
-                    with open(file_path, 'w') as file:
-                        file.write(f"Seed Phrase: {seed_phrase}\n")
-                        file.write(f"Identity Key: {iw_address.lower()}\n")  # Store identity wallet address in lowercase
+                    if os.path.exists(file_path):
+                        # Check if the [RW].txt file exists
+                        seed_phrase, iw_address = self.read_wallet_file(file_path)
+                        print(f"\033[1mMiner ID: {miner_id}\033[0m - Warning: Identity wallet file for {rw_address} is found, but binding is not established on-chain.")
+                    else:
+                        print(f"\033[1mMiner ID: {miner_id}\033[0m - No binding identity wallet, generating one...")
+                        mnemo = Mnemonic("english")
+                        seed_phrase = mnemo.generate(strength=128)
+                        self.w3.eth.account.enable_unaudited_hdwallet_features()
+                        account = self.w3.eth.account.from_mnemonic(seed_phrase)
+                        iw_address = account.address
+                        self.write_wallet_file(file_path, seed_phrase, iw_address)
 
                 else:
                     # Case: There is a binding
@@ -77,59 +91,49 @@ class WalletGenerator:
                             account = self.w3.eth.account.from_mnemonic(seed_phrase)
                             imported_iw_address = account.address
 
-                        with open(file_path, 'w') as file:
-                            file.write(f"Seed Phrase: {seed_phrase}\n")
-                            file.write(f"Identity Key: {imported_iw_address.lower()}\n")  # Store identity wallet address in lowercase
+                        self.write_wallet_file(file_path, seed_phrase, imported_iw_address)
 
                     else:
                         # We have the RW.txt file
-                        print(f"\033[1mMiner ID: {miner_id}\033[0m - Binding identity wallet found and text file located, printing to console...")
-                        with open(file_path, 'r') as file:
-                            seed_phrase = file.readline().strip().split(': ')[1]
-                            iw_address = file.readline().strip().split(': ')[1]
+                        print(f"\033[1mMiner ID: {miner_id}\033[0m - Binding identity wallet found")
+                        seed_phrase, iw_address = self.read_wallet_file(file_path)
 
                         bind_iw_address = self.contract.functions.identityAddress(rw_address).call()
                         if iw_address.lower() != bind_iw_address.lower():  # Compare in lowercase
-                            print(f"Mismatch found for Miner ID {miner_id}. Aborting.")
-                            return
+                            raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
                         
-                with open(file_path, 'r') as file:
-                    seed_phrase = file.readline().strip().split(': ')[1]
-                    iw_address = file.readline().strip().split(': ')[1]
+                seed_phrase, iw_address = self.read_wallet_file(file_path)
                 data = {
                     "Miner ID": miner_id,
-                    "Seed Phrase": seed_phrase,
-                    "Identity Wallet": iw_address,
+                    "Identity Wallet Seed Phrase": seed_phrase,
+                    "Identity Wallet Public Key": iw_address,
                     "Wallet File": file_path
                 }
                 self.print_table(data)
-    
+
     def validate_miner_keys(self, miner_ids):
         for miner_id in miner_ids:
             file_path = os.path.join(self.keys_dir, f'{miner_id.lower()}.txt')
 
             if not os.path.exists(file_path):
-                print(f"ERROR: Text file missing for Miner ID {miner_id}. Exiting...")
+                print(f"ERROR: Identity wallet file missing for Miner ID {miner_id}. Exiting...")
                 raise ValueError(f"Text file missing for Miner ID {miner_id}.")
 
-            with open(file_path, 'r') as file:
-                seed_phrase = file.readline().strip().split(': ')[1]
-                iw_address = file.readline().strip().split(': ')[1]
+            seed_phrase, iw_address = self.read_wallet_file(file_path)
 
             if not self.is_bind(miner_id):
-                print(f"WARNING: Identity file exists but no binding found for Miner ID {miner_id}. Proceeding with caution...")
+                print(f"Warning: Identity wallet binding is not established for Miner ID {miner_id}. The binding will be effective after completion of some compute jobs.")
             else:
                 bind_iw_address = self.contract.functions.identityAddress(miner_id).call()
                 if iw_address.lower() != bind_iw_address.lower():
                     print(f"ERROR: Mismatch found for Miner ID {miner_id}. Exiting...")
                     raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
 
-            print(f"MINER ID {miner_id} validated. Proceed to mining loop...")
+            print(f"MINER ID {miner_id} authenticated. Proceed to mining.")
 
     def generate_signature(self, miner_id):
         file_path = os.path.join(self.keys_dir, f'{miner_id.split("-")[0].lower()}.txt')
-        with open(file_path, 'r') as file:
-            seed_phrase = file.readline().strip().split(': ')[1]
+        seed_phrase, iw_address = self.read_wallet_file(file_path)
         
         self.w3.eth.account.enable_unaudited_hdwallet_features()
         private_key = self.w3.eth.account.from_mnemonic(seed_phrase).key
@@ -141,7 +145,7 @@ class WalletGenerator:
         signable_message = encode_defunct(text=message)
         signature = self.w3.eth.account.sign_message(signable_message, private_key=private_key)
         
-        return signature.signature.hex()
+        return iw_address, signature.signature.hex()
 
 if __name__ == '__main__':
     abi_file = abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')

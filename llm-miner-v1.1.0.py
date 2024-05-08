@@ -145,7 +145,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                     res = res[:res.index(word)]
                     break
             
-            signature = base_config.wallet_generator.generate_signature(miner_id)
+            identity_address, signature = base_config.wallet_generator.generate_signature(miner_id)
             url = base_config.base_url + "/miner_submit"
             result = {
                 "miner_id": miner_id,
@@ -153,6 +153,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                 "result": {"Text": res},
                 "request_latency": request_latency,
                 "inference_latency": inference_latency,
+                "identity_address": identity_address,
                 "signature": signature  # Include the signature in the result payload
             }
             res = requests.post(url, json=result)
@@ -170,7 +171,6 @@ def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
 
-   
     while True:
         if not check_vllm_server_status():
             logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")

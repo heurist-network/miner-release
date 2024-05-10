@@ -48,7 +48,7 @@ class WalletGenerator:
     def write_wallet_file(self, file_path, seed_phrase, iw_address):
         with open(file_path, 'w') as file:
             file.write(f"Seed Phrase: {seed_phrase}\n")
-            file.write(f"Identity Key: {iw_address.lower()}\n")  # Store identity wallet address in lowercase
+            file.write(f"Identity Wallet Address: {iw_address.lower()}\n")  # Store identity wallet address in lowercase
 
     def generate_wallets(self):
         for key, value in os.environ.items():

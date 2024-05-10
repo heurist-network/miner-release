@@ -106,7 +106,7 @@ class WalletGenerator:
                 data = {
                     "Miner ID": miner_id,
                     "Identity Wallet Seed Phrase": seed_phrase,
-                    "Identity Wallet Public Key": iw_address,
+                    "Identity Wallet Address": iw_address,
                     "Wallet File": file_path
                 }
                 self.print_table(data)

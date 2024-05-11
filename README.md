@@ -41,32 +41,38 @@ To prevent impersonation, every miner should have a pair of wallets.
 
 - Reward wallet (Miner ID): It is the wallet to receive points. It may hold NFT to boost the rewards. The address is shared publicly.
 
-We use a Soul-Bound Token (SBT) to store 1:1 relationship between an identity wallet and a reward wallet. SBT contract is deployed on zkSync Era testnet. https://sepolia.explorer.zksync.io/address/0x38A23E4E854d9e279F44069EF09c938741B44ee8. It will be migrated to zkSync mainnet in the future. The identity-reward wallet binding is established automatically after your miner processes some jobs.
+We use a Soul-Bound Token (SBT) to store 1:1 relationship between an identity wallet and a reward wallet. The SBT contract is currently active on the zkSync Era testnet and can be found at [here](https://sepolia.explorer.zksync.io/address/0x38A23E4E854d9e279F44069EF09c938741B44ee8). It will be migrated to zkSync mainnet in the future. The identity-reward wallet binding is established automatically after your miner processes some jobs.
 
-Every miner request carries a signature signed by the identity wallet. This prevents unauthorized requests.
+Each miner request must be accompanied by a signature from the identity wallet to prevent unauthorized actions.
 
 ### Configuring Your Miner ID and Identity Wallet
 
-1. **Create a `.env` File:** Navigate to the root directory of your `miner-release` folder. Here, create a new file named `.env`. This file will hold the unique identifiers (miner IDs) for your mining operation. You can find the example `.env.example`
-2. **Define Miner IDs:** In the `.env` file, you should assign an Ethereum wallet address as a miner ID for each of your GPUs. These Ethereum addresses will serve as the miner IDs, which are crucial for tracking your contributions and ensuring you receive rewards accurately. If you have multiple GPUs, i-th GPU will use i-th miner ID. You can use the same address or different ones, which doesn't affect your rewards. We support adding a custom tag as miner ID suffix to help you view the performance of each GPU individually.
+#### 1. **Setting Up Environment Variables**
+- **Create a `.env` File:** In the root of your `miner-release` directory, create a file named `.env`. This will store the miner IDs for your operation, formatted as shown in the provided `env.example`.
 
-Option 1: Use default GPU tags (obtained from GPU UUID)
-```plaintext
-MINER_ID_0=0xYourFirstWalletAddressHere
-MINER_ID_1=0xYourSecondWalletAddressHere
-```
+#### 2. **Assigning Miner IDs**
+- **Ethereum Addresses as IDs:** In the `.env` file, assign an Ethereum wallet address as a miner ID for each GPU. These IDs are essential for tracking contributions and ensuring accurate reward distribution. If using multiple GPUs, assign each a unique or common address depending on your preference.
+- **Add Custom Tags:** Enhance monitoring by adding a suffix to your miner ID. This allows for individual performance tracking of GPUs.
 
-Option 2: Customize GPU tags (only alphanumeric characters supported after a hyphen)
-```plaintext
-MINER_ID_0=0xYourFirstWalletAddressHere-GamingPC4090
-MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
-```
+  **Default Tags Example:**
+  ```plaintext
+  MINER_ID_0=0xYourFirstWalletAddressHere
+  MINER_ID_1=0xYourSecondWalletAddressHere
+  ```
 
-3. **(For SD Miners)If you have multiple GPUs** Change the `num_cuda_devices` in `config.toml` to the number of GPUs you want to use. The number should match the number of Miner IDs in `.env`
+  **Custom Tags Example:**
+  ```plaintext
+  MINER_ID_0=0xYourFirstWalletAddressHere-GamingPC4090
+  MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
+  ```
 
-4.1 **If you have never created an identity wallet for the Miner ID** Run `python3 ./auth/generator.py`. The script creates one identity wallet for each of the Miner ID.
+#### 3. **Configuring GPU Usage**
+- **Adjust GPU Settings:** For operations using multiple GPUs, set `num_cuda_devices` in `config.toml` to match the total GPUs reflected by the miner IDs in your `.env` file.
 
-4.2 **If you have an identity wallet created on a different machine** Run `python3 ./auth/generator.py`. The script prompts you to input the seed phrase of the identity wallet associated with each of the Miner ID. Alternatively, you can manually create the wallet file in `~/.heurist-keys` folder.
+#### 4. **Managing Identity Wallets**
+- **Configuring the Virtual Environment:** For SD miners, the `gpu-3-11` conda environment is pre-configured. Ensure you activate this environment and rerun `pip install -r requirements` to install any new dependencies required for authentication. For LLM miners, the initialization script manages this setup automatically.
+- **Creating New Wallets:** Run `python3 ./auth/generator.py` if no identity wallet exists for a miner ID. This script generates a new wallet for each miner ID.
+- **Existing Wallets on Another Machine:** If your identity wallet was created elsewhere, run `python3 ./auth/generator.py` and enter the seed phrase when prompted. Alternatively, manually place the wallet file in the `~/.heurist-keys` directory.
 
 5. **If you run LLM Miner and SD Miners on the same GPU** Start LLM Miner first, and make sure it's running, then start SD Miner. This may avoid loading failures for LLM Miner.
 

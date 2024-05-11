@@ -68,6 +68,8 @@ MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
 
 4.2 **If you have an identity wallet created on a different machine** Run `python3 ./auth/generator.py`. The script prompts you to input the seed phrase of the identity wallet associated with each of the Miner ID. Alternatively, you can manually create the wallet file in `~/.heurist-keys` folder.
 
+5. **If you run LLM Miner and SD Miners on the same GPU** Start LLM Miner first, and make sure it's running, then start SD Miner. This may avoid loading failures for LLM Miner.
+
 <details>
 <summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>
 

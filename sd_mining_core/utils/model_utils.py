@@ -19,7 +19,6 @@ def get_local_model_ids(config):
             base_file = model['base'] + ".safetensors"
             name_file = model['name'] + ".safetensors"
             if base_file in local_files and name_file in local_files:
-                model_id = f"{model['base']}#{model['name']}"
                 local_model_ids.append(model_id)
             else:
                 if base_file not in local_files:
@@ -36,43 +35,56 @@ def get_local_model_ids(config):
 
 def load_model(config, model_id):
     start_time = time.time()
-    
-    # Split the model_id into base model and LoRa weights (if provided)
-    model_parts = model_id.split("#")
-    base_model_id = model_parts[0]
-    lora_id = model_parts[1] if len(model_parts) > 1 else None
-    
-    # Validate and load the base model
-    if config.exclude_sdxl and base_model_id.startswith("SDXL"):
-        raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
-    
-    model_config = config.model_configs.get(base_model_id)
-    if model_config is None:
+
+    lora_config = config.lora_configs.get(model_id)
+    model_config = config.model_configs.get(model_id)
+
+    if lora_config is not None and model_config is not None:
+        composite_model_config = model_config
+        if 'base' not in composite_model_config:
+            raise ValueError(f"Model configuration for {model_id} is missing the 'base' field.")
+        base_model_id = composite_model_config['base']
+    else:
+        composite_model_config = None
+        base_model_id = model_id
+
+    base_model_config = config.model_configs.get(base_model_id)
+    if base_model_config is None:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
-    model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
-    
-    if model_config['type'] == "sd15":
-        pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++")
+    if config.exclude_sdxl and base_model_id.startswith("SDXL"):
+        raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
+
+    base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
+
+    if base_model_config['type'] == "sd15":
+        pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(
+            base_model_file_path, torch_dtype=torch.float16
+        ).to('cuda:' + str(config.cuda_device_id))
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
+        )
     else:
-        pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(model_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
-    
+        pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(
+            base_model_file_path, torch_dtype=torch.float16
+        ).to('cuda:' + str(config.cuda_device_id))
+
     pipe.safety_checker = None
-    
-    if 'vae' in model_config:
-        vae_name = model_config['vae']
+
+    if 'vae' in base_model_config:
+        vae_name = base_model_config['vae']
         vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
-        vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to('cuda:' + str(config.cuda_device_id))
+        vae = AutoencoderKL.from_single_file(
+            vae_file_path, torch_dtype=torch.float16
+        ).to('cuda:' + str(config.cuda_device_id))
         pipe.vae = vae
-    
-    # Load LoRa weights if provided
-    if lora_id is not None:
-        pipe = load_lora_weights(config, pipe, model_config['type'], lora_id)
-    
+
+    if composite_model_config is not None:
+        pipe = load_lora_weights(config, pipe, base_model_config['type'], model_id)
+
     end_time = time.time()
     loading_latency = end_time - start_time
-    
+
     return pipe, loading_latency
 
 def load_lora_weights(config, pipe, base_model_type, lora_id):
@@ -115,16 +127,15 @@ def load_default_model(config):
         sys.exit(1)  # Exit if no models are available locally
 
     default_model_id = model_ids[config.default_model_id] if config.default_model_id < len(model_ids) else model_ids[0]
+    base_model_id = config.model_configs[default_model_id]['base'] if 'base' in config.model_configs[default_model_id] else default_model_id
 
-    if default_model_id not in config.loaded_models:
-        logging.info(f"Loading default model {default_model_id}...")
+    if base_model_id not in config.loaded_models:
         current_model, _ = load_model(config, default_model_id)
-        if '#' in default_model_id:
-            base_model_id, lora_weight_id = default_model_id.split('#')
-            config.loaded_models[lora_weight_id] = current_model
+        config.loaded_models[base_model_id] = current_model
+        if base_model_id != default_model_id:
+            logging.info(f"Default model {default_model_id} (base: {base_model_id}) loaded successfully.")
         else:
-            config.loaded_models[default_model_id] = current_model
-        logging.info(f"Default model {default_model_id} loaded successfully.")
+            logging.info(f"Default model {default_model_id} loaded successfully.")
 
 def reload_model(config, model_id_from_signal):
     if config.loaded_models:
@@ -138,14 +149,13 @@ def reload_model(config, model_id_from_signal):
         unload_model(config, model_to_unload)
         logging.debug(f"Unloaded model {model_to_unload} to make space for {model_id_from_signal}")
 
-    logging.info(f"Loading model {model_id_from_signal}...")
     current_model, _ = load_model(config, model_id_from_signal)
-    if '#' in model_id_from_signal:
-        base_model_id, lora_weight_id = model_id_from_signal.split('#')
-        config.loaded_models[lora_weight_id] = current_model
+    base_model_id_from_signal = config.model_configs[model_id_from_signal]['base'] if 'base' in config.model_configs[model_id_from_signal] else model_id_from_signal
+    config.loaded_models[base_model_id_from_signal] = current_model
+    if base_model_id_from_signal != model_id_from_signal:
+        logging.info(f"Received model {model_id_from_signal} (base: {base_model_id_from_signal}) loaded successfully.")
     else:
-        config.loaded_models[model_id_from_signal] = current_model
-    logging.info(f"Received model {model_id_from_signal} loaded successfully.")
+        logging.info(f"Received model {model_id_from_signal} loaded successfully.")
 
 def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed):
     try:

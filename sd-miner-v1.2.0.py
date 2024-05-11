@@ -126,10 +126,11 @@ def check_and_reload_model(config, last_signal_time):
     current_time = time.time()
     # Only proceed if it's been at least 600 seconds
     if current_time - last_signal_time >= config.reload_interval:
+        model_id = next(iter(config.loaded_loras.keys())) if next(iter(config.loaded_loras.keys()), None) is not None else next(iter(config.loaded_models.keys()))
         response = post_request(config.signal_url + "/miner_signal", {
             "miner_id": config.miner_id,
             "model_type": "SD",
-            "model_id": next(iter(config.loaded_models.keys())),
+            "model_id": model_id,
             "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }, config.miner_id)
@@ -150,12 +151,14 @@ def check_and_reload_model(config, last_signal_time):
 
 def process_jobs(config):
     current_model_id = next(iter(config.loaded_models), None)
+    current_lora_id = next(iter(config.loaded_loras), None)
     model_ids = get_local_model_ids(config)
     if not model_ids:
         logging.debug("No models found. Exiting...")
         sys.exit(0)
 
-    job, request_latency = send_miner_request(config, current_model_id, config.min_deadline)
+    model_id_to_send = current_lora_id if current_lora_id is not None else current_model_id
+    job, request_latency = send_miner_request(config, model_id_to_send, config.min_deadline)
     if not job:
         logging.info("No job received.")
         return False

@@ -2,6 +2,7 @@ import os
 import sys
 import toml
 import time
+from auth.generator import WalletGenerator
 
 class BaseConfig:
 
@@ -19,6 +20,7 @@ class BaseConfig:
         self.sd_timeout_seconds = self.config['service']['sd_timeout_seconds']
         self.s3_bucket = self.config['storage']['s3_bucket']
         self.base_dir = os.path.expanduser(self.config['storage'].get('base_dir', '.'))
+        self.keys_dir = os.path.expanduser(self.config['storage'].get('keys_dir', '.'))
         self.model_config_url = self.config['model_config']['model_config_url']
         self.vae_config_url = self.config['model_config']['vae_config_url']
         self.lora_config_url = self.config['model_config']['lora_config_url']
@@ -37,3 +39,7 @@ class BaseConfig:
         self.auto_confirm = auto_confirm
         self.exclude_sdxl = exclude_sdxl
         self.version = self.config['versions'].get('sd_version', 'unknown')
+
+        # Create an instance of WalletGenerator
+        abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')
+        self.wallet_generator = WalletGenerator(config_file, abi_file)

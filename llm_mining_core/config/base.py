@@ -1,7 +1,9 @@
+import os
 import sys
 import time
 import toml
 from collections import defaultdict
+from auth.generator import WalletGenerator
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -39,3 +41,6 @@ class BaseConfig:
             "<|im_start|>",
             "<|im_end|>",
         ]
+        # Create an instance of WalletGenerator
+        abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')
+        self.wallet_generator = WalletGenerator(config_file, abi_file)

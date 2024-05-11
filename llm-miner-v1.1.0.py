@@ -1,14 +1,13 @@
 import os
-import re
-import requests
-import random
 import sys
 import time
 import signal
 import atexit
+import random
 import logging
 import requests
 import threading
+from auth.generator import WalletGenerator
 from multiprocessing import Process, set_start_method
 
 from llm_mining_core.utils import (
@@ -145,13 +144,17 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                 if word in res:
                     res = res[:res.index(word)]
                     break
+            
+            identity_address, signature = base_config.wallet_generator.generate_signature(miner_id)
             url = base_config.base_url + "/miner_submit"
             result = {
                 "miner_id": miner_id,
                 "job_id": job_id,
                 "result": {"Text": res},
                 "request_latency": request_latency,
-                "inference_latency": inference_latency
+                "inference_latency": inference_latency,
+                "identity_address": identity_address,
+                "signature": signature  # Include the signature in the result payload
             }
             res = requests.post(url, json=result)
             if(res.status_code == 200):
@@ -168,7 +171,6 @@ def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
 
-   
     while True:
         if not check_vllm_server_status():
             logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")

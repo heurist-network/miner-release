@@ -1,3 +1,4 @@
+import os
 import requests
 import logging
 import time
@@ -63,6 +64,7 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
     """Submits the job result after processing and logs the total and inference times."""
     s3_key, inference_latency, loading_latency, upload_latency = execute_inference_and_upload(config, miner_id, job, temp_credentials)
 
+    identity_address, signature = config.wallet_generator.generate_signature(miner_id)
     # Construct result payload with latency data
     result = {
         "miner_id": miner_id,
@@ -73,7 +75,9 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
         "request_latency": request_latency,
         "loading_latency": loading_latency,
         "inference_latency": inference_latency,
-        "upload_latency": upload_latency
+        "upload_latency": upload_latency,
+        "identity_address": identity_address,
+        "signature": signature  # Include the signature in the result payload
     }
 
     try:

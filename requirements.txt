@@ -11,3 +11,6 @@ python-dotenv==1.0.1
 peft==0.10.0
 openai==1.14.3
 accelerate==0.29.1
+web3==6.18.0
+mnemonic==0.21
+prettytable==3.10.0

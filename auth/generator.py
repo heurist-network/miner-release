@@ -117,7 +117,7 @@ class WalletGenerator:
 
             if not os.path.exists(file_path):
                 print(f"ERROR: Identity wallet file missing for Miner ID {miner_id}. Exiting...")
-                raise ValueError(f"Identity wallet file not found in ~/.heurist-keys for Miner ID {miner_id}.")
+                raise ValueError(f"Identity wallet file not found in ~/.heurist-keys for Miner ID {miner_id}. Run `python3 auth/generator.py` to generate the identity wallet.")
 
             seed_phrase, iw_address = self.read_wallet_file(file_path)
 

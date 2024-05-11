@@ -159,7 +159,10 @@ def reload_model(config, model_id_from_signal):
 
 def execute_model(config, model_id, prompt, neg_prompt, height, width, num_iterations, guidance_scale, seed):
     try:
-        current_model = config.loaded_models.get(model_id)
+        current_model = config.loaded_models.get(model_id) or config.loaded_loras.get(model_id)
+        if current_model is None:
+            raise ValueError(f"Model '{model_id}' not found in loaded models or loaded LoRAs.")
+
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
@@ -170,8 +173,6 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
             'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
             'guidance_scale': guidance_scale,
             'negative_prompt': neg_prompt,
-            # StableDiffusionLongPromptWeightingPipeline does not support the following parameter
-            # 'add_watermarker': False
         }
 
         if seed is not None and seed >= 0:

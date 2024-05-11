@@ -74,7 +74,8 @@ Each miner request must be accompanied by a signature from the identity wallet t
 - **Creating New Wallets:** Run `python3 ./auth/generator.py` if no identity wallet exists for a miner ID. This script generates a new wallet for each miner ID.
 - **Existing Wallets on Another Machine:** If your identity wallet was created elsewhere, run `python3 ./auth/generator.py` and enter the seed phrase when prompted. Alternatively, manually place the wallet file in the `~/.heurist-keys` directory.
 
-5. **If you run LLM Miner and SD Miners on the same GPU** Start LLM Miner first, and make sure it's running, then start SD Miner. This may avoid loading failures for LLM Miner.
+#### 5. **Operating Different Miners on the Same GPU**
+- **Sequential Startup:** If using both LLM Miner and SD Miners on the same GPU, start the LLM Miner first to prevent load failures, then proceed with starting the SD Miner.
 
 <details>
 <summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>

@@ -1,17 +1,31 @@
 import os
-from tqdm import tqdm
-import requests
 import logging
+import requests
+from tqdm import tqdm
+from itertools import chain
 
-def download_file(base_dir, file_url, file_name, total_size):
+def download_file(base_dir, file_url, file_name):
     try:
         response = requests.get(file_url, stream=True)
+        total_size = int(response.headers.get('Content-Length', 0))
+        
         file_path = os.path.join(base_dir, file_name)
         with open(file_path, 'wb') as f, tqdm(
-            total=total_size, unit='B', unit_scale=True, desc=file_name) as bar:
+            desc=file_name,
+            total=total_size,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            downloaded_size = 0
             for data in response.iter_content(chunk_size=1024):
                 size = f.write(data)
+                downloaded_size += size
                 bar.update(size)
+            
+            if total_size != 0 and downloaded_size != total_size:
+                print(f"Warning: Downloaded size ({downloaded_size}) does not match expected size ({total_size}) for {file_name}")
+        
         logging.info(f"Successfully downloaded {file_name}")
     except requests.exceptions.ConnectionError as ce:
         logging.error(f"Failed to connect to server: {ce}")
@@ -22,10 +36,13 @@ def fetch_and_download_config_files(config):
     try:
         models = requests.get(config.model_config_url).json()
         vaes = requests.get(config.vae_config_url).json()
+        loras = requests.get(config.lora_config_url).json()
+
         config.model_configs = {
-            model['name']: model
-            for model in models
-            if 'type' in model and 'sd' in model['type'] and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
+            model['name']: model for model in models
+            if 'type' in model and (
+                'sd' in model['type'] or model['type'].startswith('composite')
+            ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
         }
 
         config.vae_configs = {
@@ -33,10 +50,15 @@ def fetch_and_download_config_files(config):
             for vae in vaes
         }
 
+        config.lora_configs = { 
+            lora['name']: lora
+            for lora in loras 
+        }
+
         total_size = 0
         files_to_download = []
-        for model in config.model_configs.values():
-            if not 'type' in model or ('sd' not in model['type'] and 'vae' not in model['type']):
+        for model in chain(config.model_configs.values(), config.lora_configs.values()):
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora']):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
@@ -72,7 +94,7 @@ def fetch_and_download_config_files(config):
 
         for i, model in enumerate(files_to_download, 1):
             print(f"Downloading file {i}/{len(files_to_download)}")
-            download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors", model['size_mb'] * 1024 * 1024)
+            download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors")
             
     except requests.exceptions.ConnectionError as ce:
         logging.error(f"Failed to connect to server: {ce}")

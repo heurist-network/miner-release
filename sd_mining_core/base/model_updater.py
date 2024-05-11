@@ -1,10 +1,10 @@
 import os
-import logging
-from pathlib import Path
-import requests
-from tqdm import tqdm
-import schedule
 import time
+import logging
+import requests
+import schedule
+from tqdm import tqdm
+from pathlib import Path
 from ..utils.file_utils import download_file
 
 class ModelUpdater:
@@ -13,14 +13,14 @@ class ModelUpdater:
         self.models_directory = Path(self.config['base_dir'])
         self.model_config_url = self.config['model_config_url']
         self.vae_config_url = self.config['vae_config_url']
+        self.lora_config_url = self.config['lora_config_url']
         self.update_interval_seconds = update_interval_seconds
         self.session = requests.Session()  # Use a session for connection pooling
 
     def fetch_remote_model_list(self):
         """Fetch the combined list of models and VAEs from the configured URLs."""
         combined_models = []
-        urls = [self.model_config_url, self.vae_config_url]
-
+        urls = [self.model_config_url, self.vae_config_url, self.lora_config_url]
         for url in urls:
             try:
                 response = self.session.get(url)
@@ -33,7 +33,6 @@ class ModelUpdater:
             except requests.exceptions.RequestException as e:
                 logging.error(f"Failed to fetch data from {url}: {e}")
                 return None
-
         return combined_models
 
     def is_update_required(self, remote_model_list):
@@ -45,12 +44,13 @@ class ModelUpdater:
         # Incorporate exclusion logic for certain model types (e.g., "sdxl")
         remote_model_names = {
             model_info['name'] for model_info in remote_model_list
-            if 'type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']) 
+            if (('type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']))
+             or 'lora' in model_info['type'])
             and (not self.config['exclude_sdxl'] or not model_info['type'].startswith('sdxl'))
-    }
-
+        }
         # Determine if there are any models that are in the remote list but not locally
         missing_models = remote_model_names - local_model_names
+        
         if missing_models:
             print(f"Missing models that require download: {missing_models}")
             return True
@@ -60,12 +60,12 @@ class ModelUpdater:
     def download_new_models(self, remote_model_list):
         """Download new models from the remote list that are not present in the local directory."""
         for model_info in remote_model_list:
-            if not 'type' in model_info or ('sd' not in model_info['type'] and 'vae' not in model_info['type']):
+            if not (('type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']))
+                    or 'lora' in model_info['type']):
                 continue
             # Using 'name' and 'file_url' keys to identify and download models
             model_name = model_info['name']
             model_url = model_info['file_url']
-            model_size_mb = model_info['size_mb']
             file_name = f"{model_name}.safetensors"
 
             # The path where the model will be saved
@@ -74,19 +74,24 @@ class ModelUpdater:
             # Only download if the model file doesn't already exist
             if not os.path.exists(model_path):
                 print(f"Downloading new model: {model_name}")
-                download_file(self.models_directory, model_url, file_name, model_size_mb * 1024 * 1024)
+                download_file(self.models_directory, model_url, file_name)
     
     def update_configs(self, remote_model_list):
         """Update local configuration with new models from the remote list."""
-      # Iterate through the remote model list and update config.model_configs
+        # Iterate through the remote model list and update config.model_configs
         for model_info in remote_model_list:
             model_name = model_info['name']
             # Check if it's a model or a VAE based on some criteria, for example, the presence of a specific key
-            if 'vae' in model_info:
+            if 'vae' in model_info['type']:
                 # It's a VAE, update vae_configs
                 if model_name not in self.config['vae_configs']:
                     self.config['vae_configs'][model_name] = model_info
-            else:
+                    # Assuming 'base_type' presence indicates a LoRa configuration
+            elif 'lora' in model_info['type']:
+                # It's a LoRa configuration, update lora_configs
+                if model_name not in self.config['lora_configs']:
+                    self.config['lora_configs'][model_name] = model_info
+            elif 'sd' in model_info['type']:
                 # It's a regular model, update model_configs
                 if model_name not in self.config['model_configs']:
                     self.config['model_configs'][model_name] = model_info

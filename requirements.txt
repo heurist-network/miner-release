@@ -8,3 +8,6 @@ omegaconf==2.3.0
 transformers==4.37.0
 schedule==1.2.1
 python-dotenv==1.0.1
+web3==6.18.0
+mnemonic==0.21
+prettytable==3.10.0

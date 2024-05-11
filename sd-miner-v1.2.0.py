@@ -1,16 +1,17 @@
+import os
 import re
+import sys
 import time
 import torch
-import sys
-from itertools import cycle
-from pathlib import Path
-import os
 import logging
-from multiprocessing import Process, set_start_method
 import signal
 import threading
 import subprocess
+from pathlib import Path
+from itertools import cycle
 from dotenv import load_dotenv
+from multiprocessing import Process, set_start_method
+from auth.generator import WalletGenerator
 
 from sd_mining_core.base import BaseConfig, ModelUpdater
 from sd_mining_core.utils import (
@@ -24,6 +25,7 @@ from sd_mining_core.utils import (
 class MinerConfig(BaseConfig):
     def __init__(self, config_file, cuda_device_id=0):
         super().__init__(config_file, cuda_device_id)
+        self.wallet_generator = WalletGenerator(config_file, abi_file = os.path.join(os.path.dirname(__file__), 'auth', 'abi.json'))
         load_dotenv()  # Load the environment variables
         
         miner_ids = self._load_and_validate_miner_ids()
@@ -31,10 +33,10 @@ class MinerConfig(BaseConfig):
 
     def _load_and_validate_miner_ids(self):
         miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
+        self.wallet_generator.validate_miner_keys(miner_ids)
+
         composite_miner_ids = []
-
         evm_address_pattern = re.compile(r"^(0x[a-fA-F0-9]{40})(-[a-zA-Z0-9_]+)?$")
-
         for i, miner_id in enumerate(miner_ids):
             if miner_id is None:
                 print(f"ERROR: Miner ID for GPU {i} not found in .env. Exiting...")

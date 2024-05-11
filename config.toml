@@ -16,6 +16,7 @@ llm_version = "llm-v1.1.1"
 [storage]
 s3_bucket = 'heurist-images'
 base_dir = "~/.cache/heurist"
+keys_dir = "~/.heurist-keys"
 
 [model_config]
 model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models.json"
@@ -37,3 +38,7 @@ max_width = 1024
 max_height = 1024
 # Limit on the concurrent requests for LLM miner. Actual running requests may go over. Higher concurrency results in higher throughput but longer latency
 concurrency_soft_limit = 5
+
+[contract]
+rpc = "https://sepolia.era.zksync.dev/"
+address = "0xcA4fB4f7BaE46576c5030873cE4bc395C221Fa9c"

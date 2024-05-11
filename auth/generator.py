@@ -117,7 +117,7 @@ class WalletGenerator:
 
             if not os.path.exists(file_path):
                 print(f"ERROR: Identity wallet file missing for Miner ID {miner_id}. Exiting...")
-                raise ValueError(f"Text file missing for Miner ID {miner_id}.")
+                raise ValueError(f"Identity wallet file not found in ~/.heurist-keys for Miner ID {miner_id}.")
 
             seed_phrase, iw_address = self.read_wallet_file(file_path)
 
@@ -126,8 +126,8 @@ class WalletGenerator:
             else:
                 bind_iw_address = self.contract.functions.identityAddress(miner_id).call()
                 if iw_address.lower() != bind_iw_address.lower():
-                    print(f"ERROR: Mismatch found for Miner ID {miner_id}. Exiting...")
-                    raise ValueError(f"Mismatch found for Miner ID {miner_id}.")
+                    print(f"ERROR: Identity wallet mismatch found for Miner ID {miner_id}. Exiting...")
+                    raise ValueError(f"Identity wallet mismatch found for Miner ID {miner_id}.")
 
             print(f"MINER ID {miner_id} authenticated. Proceed to mining.")
 

@@ -67,7 +67,7 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
     identity_address, signature = config.wallet_generator.generate_signature(miner_id)
     # Construct result payload with latency data
     result = {
-        "miner_id": miner_id,
+        "miner_id": miner_id.lower(),
         "job_id": job['job_id'],
         "result": {
             "S3Key": s3_key,

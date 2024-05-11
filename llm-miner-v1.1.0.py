@@ -148,7 +148,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
             identity_address, signature = base_config.wallet_generator.generate_signature(miner_id)
             url = base_config.base_url + "/miner_submit"
             result = {
-                "miner_id": miner_id,
+                "miner_id": miner_id.lower(),
                 "job_id": job_id,
                 "result": {"Text": res},
                 "request_latency": request_latency,

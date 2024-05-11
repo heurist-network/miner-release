@@ -141,11 +141,11 @@ class WalletGenerator:
         current_time_secs = int(time.time())
         hourly_time = current_time_secs - (current_time_secs % 3600)  # Unix Timestamp Round down to the nearest hour
         
-        message = f"{miner_id.split('-')[0].lower()}-{hourly_time}"
+        message = f"{miner_id.split('-')[0].lower()}-{hourly_time}" # Always lower case
         signable_message = encode_defunct(text=message)
         signature = self.w3.eth.account.sign_message(signable_message, private_key=private_key)
         
-        return iw_address, signature.signature.hex()
+        return iw_address.lower(), signature.signature.hex()
 
 if __name__ == '__main__':
     abi_file = abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')

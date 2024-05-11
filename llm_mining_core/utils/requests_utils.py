@@ -135,6 +135,7 @@ def send_model_info_signal(config, miner_id, last_signal_time):
         response = post_request(config.signal_url + "/miner_signal", {
             "miner_id": miner_id,
             "model_type": "LLM",
+            "version": config.version, # format is like "llm-v1.2.0"
             "model_id": config.served_model_name
         }, miner_id)
 

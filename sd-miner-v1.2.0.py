@@ -130,6 +130,7 @@ def check_and_reload_model(config, last_signal_time):
             "miner_id": config.miner_id,
             "model_type": "SD",
             "model_id": next(iter(config.loaded_models.keys())),
+            "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }, config.miner_id)
 

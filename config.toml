@@ -43,4 +43,4 @@ concurrency_soft_limit = 5
 
 [contract]
 rpc = "https://sepolia.era.zksync.dev/"
-address = "0xcA4fB4f7BaE46576c5030873cE4bc395C221Fa9c"
+address = "0x7798de1aE119b76037299F9B063e39760D530C10"

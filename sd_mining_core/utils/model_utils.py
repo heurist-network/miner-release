@@ -36,6 +36,7 @@ def get_local_model_ids(config):
 def load_model(config, model_id):
     start_time = time.time()
 
+    # model_id may be a LoRa name. If so, we need to find the base model ID from models.json
     lora_config = config.lora_configs.get(model_id)
     model_config = config.model_configs.get(model_id)
 
@@ -102,7 +103,6 @@ def load_lora_weights(config, pipe, base_model_type, lora_id):
     try:
         pipe.load_lora_weights(lora_file_path)
         config.loaded_loras[lora_id] = pipe
-        print("Using lora weights", lora_id)
         return pipe
     except Exception as e:
         raise ValueError(f"Failed to load LoRa weights for '{lora_id}': {e}")
@@ -144,10 +144,10 @@ def reload_model(config, model_id_from_signal):
         for lora_id, loaded_pipe in config.loaded_loras.items():
             if loaded_pipe == config.loaded_models[model_to_unload]:
                 unload_lora_weights(config, loaded_pipe, lora_id)
-                logging.debug(f"Unloaded LoRa weights {lora_id} associated with model {model_to_unload}")
+                logging.info(f"Unloaded LoRa weights {lora_id} associated with model {model_to_unload}")
                 break
         unload_model(config, model_to_unload)
-        logging.debug(f"Unloaded model {model_to_unload} to make space for {model_id_from_signal}")
+        logging.info(f"Unloaded model {model_to_unload} to make space for {model_id_from_signal}")
 
     current_model, _ = load_model(config, model_id_from_signal)
     base_model_id_from_signal = config.model_configs[model_id_from_signal]['base'] if 'base' in config.model_configs[model_id_from_signal] else model_id_from_signal

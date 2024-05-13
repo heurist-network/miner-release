@@ -154,7 +154,7 @@ class WalletGenerator:
         return iw_address.lower(), signature.signature.hex()
 
 if __name__ == '__main__':
-    abi_file = abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')
+    abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')
     config_file = os.path.join(os.path.dirname(__file__), '..', 'config.toml')
     wallet_generator = WalletGenerator(config_file, abi_file)
     wallet_generator.generate_wallets()

@@ -3,6 +3,7 @@ import sys
 import json
 import toml
 import time
+import argparse
 from web3 import Web3
 from mnemonic import Mnemonic
 from dotenv import load_dotenv
@@ -152,9 +153,46 @@ class WalletGenerator:
         signature = self.w3.eth.account.sign_message(signable_message, private_key=private_key)
         
         return iw_address.lower(), signature.signature.hex()
+    
+    def create_new_identity_wallet(self, miner_id):
+        file_path = f'{miner_id}.txt'
+        if os.path.exists(file_path):
+            print(f"Identity wallet file already exists for {miner_id}. Skipping creation.")
+            return
+
+        mnemo = Mnemonic("english")
+        seed_phrase = mnemo.generate(strength=128)
+        self.w3.eth.account.enable_unaudited_hdwallet_features()
+        account = self.w3.eth.account.from_mnemonic(seed_phrase)
+        iw_address = account.address
+        self.write_wallet_file(file_path, seed_phrase, iw_address)
+
+        print("New Identity Wallet Created!")
+        print("===========================")
+        print(f"Address: {iw_address}")
+        print(f"Seed Phrase: {seed_phrase}")
+        print("\nNext Steps:")
+        print("1. Bind the identity wallet to your reward wallet:")
+        print("   - Visit the following URL and use your reward wallet to call the 'bind' function:")
+        print("     https://zksync.explorer/0x7798de1aE119b76037299F9B063e39760D530C10/writeContract")
+        print("   - Input the reward wallet address and identity wallet address as follows:")
+        print(f"     Reward Wallet Address: {evm_address}")
+        print(f"     Identity Wallet Address: {iw_address}")
+        print("   - This will override the on-chain binding.")
+        print("\n2. Move the identity wallet file to the correct directory:")
+        print(f"   Run the following command: mv {miner_id}.txt ~/.heurist-keys")
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Wallet Generator')
+    parser.add_argument('--new', type=str, help='Create a new identity wallet for the specified EVM address')
+    args = parser.parse_args()
+
     abi_file = os.path.join(os.path.dirname(__file__), 'abi.json')
     config_file = os.path.join(os.path.dirname(__file__), '..', 'config.toml')
     wallet_generator = WalletGenerator(config_file, abi_file)
-    wallet_generator.generate_wallets()
+
+    if args.new:
+        evm_address = args.new.lower()
+        wallet_generator.create_new_identity_wallet(evm_address)
+    else:
+        wallet_generator.generate_wallets()

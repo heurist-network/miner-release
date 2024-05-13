@@ -69,7 +69,7 @@ class WalletGenerator:
             if key.startswith('MINER_ID_'):
                 miner_id = value
                 rw_address = miner_id.split('-')[0].lower()  # Extract the address
-                file_path = os.path.join(self.keys_dir, f'{miner_id.lower()}.txt')
+                file_path = os.path.join(self.keys_dir, f'{rw_address.lower()}.txt')
 
                 if not self.is_bind(rw_address):
                     # Case: There's no binding

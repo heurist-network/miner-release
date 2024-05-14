@@ -110,7 +110,7 @@ def send_miner_request(config, model_id, min_deadline):
         print(f"WARNING: {warning_message}")
 
     response_data = log_response(response, config.miner_id)
-    
+
     try:
         # Check if the response contains a valid job and print the friendly message
         if response_data and 'job_id' in response_data and 'model_id' in response_data:
@@ -126,32 +126,31 @@ def check_and_reload_model(config, last_signal_time):
     current_time = time.time()
     # Only proceed if it's been at least 600 seconds
     if current_time - last_signal_time >= config.reload_interval:
-        loaded_loras_keys = list(config.loaded_loras.keys())
-        loaded_models_keys = list(config.loaded_models.keys())
-        model_id = loaded_loras_keys[0] if loaded_loras_keys else (loaded_models_keys[0] if loaded_models_keys else None)
-        
+        model_id = list(config.loaded_loras.keys())[0] if config.loaded_loras else list(config.loaded_models.keys())[0] if config.loaded_models else None
         if model_id is None:
-            logging.warning("No loaded models or LoRAs found.")
+            logging.warning("No loaded models found. Skipping model reload.")
             return last_signal_time
-
+        
         response = post_request(config.signal_url + "/miner_signal", {
             "miner_id": config.miner_id,
             "model_type": "SD",
             "model_id": model_id,
-            "version": config.version,  # format is like "sd-v1.2.0"
+            "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }, config.miner_id)
 
-        if response is not None and 'model_id' in response:
-            logging.info(f"Received model reload signal for '{response['model_id']}'.")
-            model_id_from_signal = response['model_id']
-            if model_id_from_signal in get_local_model_ids(config) and \
-               model_id_from_signal not in config.loaded_models and \
-               model_id_from_signal not in config.loaded_loras:
+        # Process the response only if it's valid
+        if response and response.status_code == 200:
+            model_id_from_signal = response.json().get('model_id')
+            # Proceed if the model is in local storage and not already loaded
+            if model_id_from_signal in get_local_model_ids(config) and model_id_from_signal not in config.loaded_models and model_id_from_signal not in config.loaded_loras:
                 reload_model(config, model_id_from_signal)
                 last_signal_time = current_time  # Update last_signal_time after reloading model
-
-    return last_signal_time
+        else:
+            logging.error(f"Failed to get a valid response from /miner_signal for miner_id {config.miner_id}.")
+    
+    # Return the updated or unchanged last_signal_time
+    return last_signal_time if current_time - last_signal_time < config.reload_interval else current_time
 
 def process_jobs(config):
     current_model_id = next(iter(config.loaded_models), None)

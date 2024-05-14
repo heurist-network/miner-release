@@ -30,7 +30,7 @@ def log_response(response, miner_id=None):
             else:
                 return None
         except ValueError as ve:
-            logging.error(f"Failed to parse JSON response{miner_id_info}: {ve}")
+            pass
     else:
         logging.warning(f"No response received{miner_id_info}")
     return None

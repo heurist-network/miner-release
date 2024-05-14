@@ -110,7 +110,7 @@ def send_miner_request(config, model_id, min_deadline):
         print(f"WARNING: {warning_message}")
 
     response_data = log_response(response, config.miner_id)
-
+    
     try:
         # Check if the response contains a valid job and print the friendly message
         if response_data and 'job_id' in response_data and 'model_id' in response_data:

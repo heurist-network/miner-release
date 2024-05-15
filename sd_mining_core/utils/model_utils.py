@@ -175,20 +175,19 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
             'negative_prompt': neg_prompt,
         }
 
+        if current_model == config.loaded_loras.get(model_id):
+            default_weight = model_config.get('default_weight')
+            if default_weight is not None:
+                kwargs['cross_attention_kwargs'] = {"scale": default_weight}
+
         if seed is not None and seed >= 0:
             kwargs['generator'] = torch.Generator().manual_seed(seed)
 
         logging.debug(f"Executing model {model_id} with parameters: {kwargs}")
 
-        # Start measuring inference time
         inference_start_time = time.time()
-
         images = current_model(prompt, **kwargs).images
-
-        # End measuring inference time
         inference_end_time = time.time()
-
-        # Calculate and log the inference latency
         inference_latency = inference_end_time - inference_start_time
 
         image_data = io.BytesIO()

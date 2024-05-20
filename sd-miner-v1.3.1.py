@@ -217,7 +217,8 @@ if __name__ == "__main__":
 
     # Initialize and start model updater before processing tasks
     model_updater = ModelUpdater(config=config.__dict__)  # Assuming config.__dict__ provides necessary settings
-    model_updater.compare_model_checksums()
+    if not config.skip_checksum:
+        model_updater.compare_model_checksums()
     # Start the model updater in a separate thread
     updater_thread = threading.Thread(target=model_updater.start_scheduled_updates)
     updater_thread.start()

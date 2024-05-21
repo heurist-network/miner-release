@@ -2,6 +2,7 @@ import os
 import sys
 import toml
 import time
+import requests
 from auth.generator import WalletGenerator
 
 class BaseConfig:
@@ -40,6 +41,7 @@ class BaseConfig:
         self.exclude_sdxl = exclude_sdxl
         self.skip_checksum = skip_checksum
         self.version = self.config['versions'].get('sd_version', 'unknown')
+        self.session = requests.Session()
 
         # Create an instance of WalletGenerator
         abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')

@@ -5,9 +5,10 @@ import time
 import boto3
 from .model_utils import execute_model
 
-def post_request(url, data, miner_id=None):
+session = requests.Session()
+def post_request(config, url, data, miner_id=None):
     try:
-        response = requests.post(url, json=data)
+        response = config.session.post(url, json=data)
         logging.debug(f"Request sent to {url} with data {data} received response: {response.status_code}")
         # Directly return the response object
         return response

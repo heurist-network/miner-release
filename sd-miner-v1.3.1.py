@@ -98,7 +98,7 @@ def send_miner_request(config, model_id, min_deadline):
         logging.debug(f"Heartbeat updated at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(config.last_heartbeat))} with hardware '{request_data['hardware']}' and version {config.version} for miner ID {config.miner_id}.")
     
     start_time = time.time()
-    response = post_request(config.base_url + "/miner_request", request_data, config.miner_id)
+    response = post_request(config, config.base_url + "/miner_request", request_data, config.miner_id)
     end_time = time.time()
     request_latency = end_time - start_time
 
@@ -131,7 +131,7 @@ def check_and_reload_model(config, last_signal_time):
             logging.warning("No loaded models found. Posting to miner_signal to load a new model.")
             # continue to get the next signal
         
-        response = post_request(config.signal_url + "/miner_signal", {
+        response = post_request(config, config.signal_url + "/miner_signal", {
             "miner_id": config.miner_id,
             "model_type": "SD",
             "version": config.version, # format is like "sd-v1.2.0"

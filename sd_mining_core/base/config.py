@@ -6,7 +6,7 @@ from auth.generator import WalletGenerator
 
 class BaseConfig:
 
-    def __init__(self, config_file, cuda_device_id=0, log_level="INFO", auto_confirm=False, exclude_sdxl=False):
+    def __init__(self, config_file, cuda_device_id=0, log_level="INFO", auto_confirm=False, exclude_sdxl=False, skip_signature=False):
         try:
             self.config = toml.load(config_file)
         except Exception as e:
@@ -38,6 +38,7 @@ class BaseConfig:
         self.log_level = log_level
         self.auto_confirm = auto_confirm
         self.exclude_sdxl = exclude_sdxl
+        self.skip_signature = skip_signature
         self.version = self.config['versions'].get('sd_version', 'unknown')
 
         # Create an instance of WalletGenerator

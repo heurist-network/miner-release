@@ -43,17 +43,20 @@ def parse_args():
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], type=str.upper, help="Set the logging level (default: INFO)")
     parser.add_argument("--auto-confirm", default="no", choices=["y", "yes", "no"], type=str.lower, help="Automatically proceed with the download without confirmation ('y', 'yes' to confirm, 'no' otherwise)")
     parser.add_argument("--exclude-sdxl", action="store_true", help="Exclude the sdxl model from downloading")
+    parser.add_argument("--skip-signature", action="store_true", help="Skip signature verification")
     args = parser.parse_args()
 
     # Convert auto-confirm argument to a boolean flag
     auto_confirm = True if args.auto_confirm in ["y", "yes"] else False
     exclude_sdxl = args.exclude_sdxl  # This will be True if the flag is used, False otherwise
+    skip_signature = args.skip_signature  # This will be True if the flag is used, False otherwise
 
     # Return a dictionary for easier access to each argument
     return {
         "log_level": args.log_level,
         "auto_confirm": auto_confirm,
-        "exclude_sdxl": exclude_sdxl
+        "exclude_sdxl": exclude_sdxl,
+        "skip_signature": skip_signature
     }
 
 def initialize_logging_and_args(config, cuda_device_id=None, miner_id=None):
@@ -64,6 +67,7 @@ def initialize_logging_and_args(config, cuda_device_id=None, miner_id=None):
         log_level = args["log_level"]
         auto_confirm = args["auto_confirm"]
         exclude_sdxl = args["exclude_sdxl"]
+        skip_signature = args["skip_signature"]
 
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if log_level not in valid_log_levels:
@@ -73,6 +77,7 @@ def initialize_logging_and_args(config, cuda_device_id=None, miner_id=None):
         config.log_level = log_level if log_level else "INFO"
         config.auto_confirm = auto_confirm
         config.exclude_sdxl = exclude_sdxl
+        config.skip_signature = skip_signature
 
         # Validate cuda_device_id
         if cuda_device_id is not None:

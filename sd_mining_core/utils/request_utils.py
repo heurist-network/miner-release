@@ -77,8 +77,9 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
         "inference_latency": inference_latency,
         "upload_latency": upload_latency,
         "identity_address": identity_address,
-        "signature": signature  # Include the signature in the result payload
     }
+    if not config.skip_signature:
+        result["signature"] = signature
 
     try:
         start_time = time.time()  # Start measuring time for miner_submit call

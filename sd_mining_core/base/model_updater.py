@@ -1,5 +1,6 @@
 import os
 import time
+import hashlib
 import logging
 import requests
 import schedule
@@ -16,6 +17,45 @@ class ModelUpdater:
         self.lora_config_url = self.config['lora_config_url']
         self.update_interval_seconds = update_interval_seconds
         self.session = requests.Session()  # Use a session for connection pooling
+
+    def calculate_model_checksum(self, file_path):
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            # Read and update hash string value in blocks of 4K
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    
+    def compare_model_checksums(self):
+        """Compare the checksums of locally installed models with the checksums from the remote model list."""
+        heurist_cache_dir = os.path.expanduser(self.config['base_dir'])
+        if not os.path.exists(heurist_cache_dir):
+            raise ValueError(f"Heurist cache directory does not exist: {heurist_cache_dir}")
+
+        remote_checksums = {model_info['name']: model_info.get('checksum') for model_info in self.fetch_remote_model_list()}
+        local_files = [file_name for file_name in os.listdir(heurist_cache_dir) if file_name.endswith(".safetensors")]
+
+        print("Checksum validation in progress(might take a few minutes)...")
+        successful_count = 0
+        for index, file_name in enumerate(local_files, start=1):
+            model_name = file_name[:-len(".safetensors")]  # Remove the file extension to get the model name
+            model_path = os.path.join(heurist_cache_dir, file_name)
+            local_checksum = self.calculate_model_checksum(model_path)
+
+            if model_name in remote_checksums:
+                remote_checksum = remote_checksums[model_name]
+                if remote_checksum:
+                    if local_checksum.lower() == remote_checksum.lower():
+                        successful_count += 1
+                        print(f"{index}/{len(local_files)} Successful checksum match for {model_name}... \033[92m✓\033[0m")
+                    else:
+                        logging.warning(f"Checksum mismatch for model: {model_name}")
+                else:
+                    logging.warning(f"No checksum found in remote model list for model: {model_name}")
+            else:
+                logging.warning(f"Model not found in remote model list: {model_name}")
+
+        print(f"Checksum validation completed. {successful_count}/{len(local_files)} models validated successfully.")
 
     def fetch_remote_model_list(self):
         """Fetch the combined list of models and VAEs from the configured URLs."""

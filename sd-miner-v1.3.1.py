@@ -25,7 +25,8 @@ from sd_mining_core.utils import (
 class MinerConfig(BaseConfig):
     def __init__(self, config_file, cuda_device_id=0):
         super().__init__(config_file, cuda_device_id)
-        self.wallet_generator = WalletGenerator(config_file, abi_file = os.path.join(os.path.dirname(__file__), 'auth', 'abi.json'))
+        if not self.skip_signature:
+            self.wallet_generator = WalletGenerator(config_file, abi_file = os.path.join(os.path.dirname(__file__), 'auth', 'abi.json'))
         load_dotenv()  # Load the environment variables
         
         miner_ids = self._load_and_validate_miner_ids()
@@ -33,7 +34,8 @@ class MinerConfig(BaseConfig):
 
     def _load_and_validate_miner_ids(self):
         miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
-        self.wallet_generator.validate_miner_keys(miner_ids)
+        if not self.skip_signature:
+            self.wallet_generator.validate_miner_keys(miner_ids)
 
         composite_miner_ids = []
         evm_address_pattern = re.compile(r"^(0x[a-fA-F0-9]{40})(-[a-zA-Z0-9_]+)?$")

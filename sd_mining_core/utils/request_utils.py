@@ -63,8 +63,6 @@ def execute_inference_and_upload(config, miner_id, job, temp_credentials):
 def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, request_latency):
     """Submits the job result after processing and logs the total and inference times."""
     s3_key, inference_latency, loading_latency, upload_latency = execute_inference_and_upload(config, miner_id, job, temp_credentials)
-
-    identity_address, signature = config.wallet_generator.generate_signature(miner_id)
     # Construct result payload with latency data
     result = {
         "miner_id": miner_id.lower(),
@@ -76,11 +74,11 @@ def submit_job_result(config, miner_id, job, temp_credentials, job_start_time, r
         "loading_latency": loading_latency,
         "inference_latency": inference_latency,
         "upload_latency": upload_latency,
-        "identity_address": identity_address,
     }
     if not config.skip_signature:
+        identity_address, signature = config.wallet_generator.generate_signature(miner_id)
         result["signature"] = signature
-
+        result["identity_address"] = identity_address
     try:
         start_time = time.time()  # Start measuring time for miner_submit call
         response = requests.post(config.base_url + "/miner_submit", json=result)

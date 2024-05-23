@@ -2,6 +2,9 @@ import os
 import sys
 import time
 import toml
+import requests
+from urllib3.util import Retry
+from requests.adapters import HTTPAdapter
 from collections import defaultdict
 from auth.generator import WalletGenerator
 from dotenv import load_dotenv
@@ -41,6 +44,23 @@ class BaseConfig:
             "<|im_start|>",
             "<|im_end|>",
         ]
+
+        # Create a session object and configure retry strategy
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=0,  # Disable retries
+            connect=0,  # Disable connect retries
+            read=0,  # Disable read retries
+            redirect=0,  # Disable redirect retries
+            status=0,  # Disable status retries
+            status_forcelist=[],  # No status codes to force retry
+            allowed_methods=[]  # Disable retries on all methods
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+
         # Create an instance of WalletGenerator
         abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')
         self.wallet_generator = WalletGenerator(config_file, abi_file)

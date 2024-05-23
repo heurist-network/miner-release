@@ -2,11 +2,12 @@ import os
 import sys
 import toml
 import time
+import requests
 from auth.generator import WalletGenerator
 
 class BaseConfig:
 
-    def __init__(self, config_file, cuda_device_id=0, log_level="INFO", auto_confirm=False, exclude_sdxl=False):
+    def __init__(self, config_file, cuda_device_id=0, log_level="INFO", auto_confirm=False, exclude_sdxl=False, skip_checksum=False):
         try:
             self.config = toml.load(config_file)
         except Exception as e:
@@ -38,7 +39,9 @@ class BaseConfig:
         self.log_level = log_level
         self.auto_confirm = auto_confirm
         self.exclude_sdxl = exclude_sdxl
+        self.skip_checksum = skip_checksum
         self.version = self.config['versions'].get('sd_version', 'unknown')
+        self.session = requests.Session()
 
         # Create an instance of WalletGenerator
         abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')

@@ -1,5 +1,4 @@
 import logging
-import argparse
 import warnings
 
 def setup_warning_logging():
@@ -38,40 +37,14 @@ def configure_logging(cuda_device_id, config, miner_id=None):
     for ext_logger in ['urllib3', 'botocore']:
         logging.getLogger(ext_logger).setLevel(logging.CRITICAL)
         
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run the miner with configurable settings.")
-    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], type=str.upper, help="Set the logging level (default: INFO)")
-    parser.add_argument("--auto-confirm", default="no", choices=["y", "yes", "no"], type=str.lower, help="Automatically proceed with the download without confirmation ('y', 'yes' to confirm, 'no' otherwise)")
-    parser.add_argument("--exclude-sdxl", action="store_true", help="Exclude the sdxl model from downloading")
-    parser.add_argument("--skip-signature", action="store_true", help="Skip signature verification")
-    parser.add_argument("--skip-checksum", action="store_true", help="Skip checksum validation")
-    args = parser.parse_args()
-
-    # Convert auto-confirm argument to a boolean flag
-    auto_confirm = True if args.auto_confirm in ["y", "yes"] else False
-    exclude_sdxl = args.exclude_sdxl  # This will be True if the flag is used, False otherwise
-    skip_signature = args.skip_signature  # This will be True if the flag is used, False otherwise
-    skip_checksum = args.skip_checksum  # This will be True if the flag is used, False otherwise
-
-    # Return a dictionary for easier access to each argument
-    return {
-        "log_level": args.log_level,
-        "auto_confirm": auto_confirm,
-        "exclude_sdxl": exclude_sdxl,
-        "skip_signature": skip_signature,
-        "skip_checksum": skip_checksum 
-    }
-
 def initialize_logging_and_args(config, cuda_device_id=None, miner_id=None):
     try:
-        args = parse_args()
-
-        # Validate log_level and auto_confirm from parsed arguments
-        log_level = args["log_level"]
-        auto_confirm = args["auto_confirm"]
-        exclude_sdxl = args["exclude_sdxl"]
-        skip_signature = args["skip_signature"]
-        skip_checksum = args["skip_checksum"]
+        # Retrieve parsed argument values from the config object
+        log_level = config.log_level
+        auto_confirm = config.auto_confirm
+        exclude_sdxl = config.exclude_sdxl
+        skip_signature = config.skip_signature
+        skip_checksum = config.skip_checksum
 
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if log_level not in valid_log_levels:

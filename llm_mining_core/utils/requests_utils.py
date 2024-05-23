@@ -38,6 +38,7 @@ def send_miner_request(config, miner_id, model_id):
     url = f"{config.base_url}/miner_request"
     if miner_id is None:
         miner_id = DEFAULT_MINER_ID
+
     request_data = {
         "miner_id": miner_id,
         "model_id": model_id,
@@ -50,46 +51,32 @@ def send_miner_request(config, miner_id, model_id):
         request_data['hardware'] = get_hardware_description()
         request_data['version'] = config.version
         config.last_heartbeat_per_miner[miner_id] = current_time
-    
-    retry_strategy = Retry(
-        total=0,  # Disable retries
-        connect=0,  # Disable connect retries
-        read=0,  # Disable read retries
-        redirect=0,  # Disable redirect retries
-        status=0,  # Disable status retries
-        status_forcelist=[],  # No status codes to force retry
-        allowed_methods=[]  # Disable retries on all methods
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
 
-    with requests.Session() as session:
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        try:
-            response = session.post(url, json=request_data)
-            # Assuming response.text contains the full text response from the server
-            warning_indicator = "Warning:"
-            if response and warning_indicator in response.text:
-                # Extract the warning message and use strip() to remove any trailing quotation marks
-                warning_message = response.text.split(warning_indicator)[1].strip('"')
-                print(f"WARNING: {warning_message}")
-                return None, None
-        
-            try:
-                data = response.json()
-                end_time = time.time()
-                request_latency = end_time - current_time
-                if isinstance(data, dict):
-                    return data, request_latency
-                else:
-                    return None, None
-            except Exception as e:
-                # fail silently
-                # print(f"Error parsing response: {e}")
-                return None, None
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Error sending request: {e}")
+    try:
+        response = config.session.post(url, json=request_data)
+        # Assuming response.text contains the full text response from the server
+        warning_indicator = "Warning:"
+        if response and warning_indicator in response.text:
+            # Extract the warning message and use strip() to remove any trailing quotation marks
+            warning_message = response.text.split(warning_indicator)[1].strip('"')
+            print(f"WARNING: {warning_message}")
             return None, None
+
+        try:
+            data = response.json()
+            end_time = time.time()
+            request_latency = end_time - current_time
+            if isinstance(data, dict):
+                return data, request_latency
+            else:
+                return None, None
+        except Exception as e:
+            # fail silently
+            # print(f"Error parsing response: {e}")
+            return None, None
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error sending request: {e}")
+        return None, None
     
 def get_metric_value(metric_name, base_config):
     """
@@ -132,7 +119,7 @@ def send_model_info_signal(config, miner_id, last_signal_time):
     current_time = time.time()
     # Only proceed if it's been at least signal_interval in seconds
     if current_time - last_signal_time >= config.signal_interval:
-        response = post_request(config.signal_url + "/miner_signal", {
+        response = post_request(config, config.signal_url + "/miner_signal", {
             "miner_id": miner_id,
             "model_type": "LLM",
             "version": config.version, # format is like "llm-v1.2.0"
@@ -147,9 +134,9 @@ def send_model_info_signal(config, miner_id, last_signal_time):
         
     return last_signal_time if current_time - last_signal_time < config.signal_interval else current_time
 
-def post_request(url, data, miner_id=None):
+def post_request(config, url, data, miner_id=None):
     try:
-        response = requests.post(url, json=data)
+        response = config.session.post(url, json=data)
         logging.debug(f"Request sent to {url} with data {data} received response: {response.status_code}")
         # Directly return the response object
         return response

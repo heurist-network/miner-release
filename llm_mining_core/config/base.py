@@ -60,7 +60,8 @@ class BaseConfig:
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
-
+        # Get the skip_signature argument from the command-line arguments
+        self.skip_signature = sys.argv[9].lower() == 'true'
         # Create an instance of WalletGenerator
         abi_file = os.path.join(os.path.dirname(__file__), '..', '..', 'auth', 'abi.json')
         self.wallet_generator = WalletGenerator(config_file, abi_file)

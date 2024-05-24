@@ -5,7 +5,6 @@ import time
 import boto3
 from .model_utils import execute_model
 
-session = requests.Session()
 def post_request(config, url, data, miner_id=None):
     try:
         response = config.session.post(url, json=data)

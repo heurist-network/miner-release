@@ -320,6 +320,7 @@ main() {
     local miner_id_index=0
     local port=8000
     local gpu_ids="0" # User can specify GPUs to use. Example: "0,1" for GPUs 0 and 1.
+    local skip_signature=false 
 
     # Fetch model details including the model ID, required VRAM size, quantization method, and model name
     heurist_model_id=$(getModelId "$1") || exit 1
@@ -341,6 +342,10 @@ main() {
                 gpu_ids=$2
                 shift 2
                 ;;
+            --skip-signature)
+                skip_signature=true
+                shift
+                ;;
             *) # unrecognized argument
                 break
                 ;;
@@ -349,7 +354,10 @@ main() {
 
     # Extract the miner ID from the .env file based on the miner_id_index
     miner_id=$(sed -n "s/^MINER_ID_$miner_id_index=//p" .env)
-    validateMinerId "$miner_id" "config.toml" "auth/abi.json"
+    # Validate the miner ID only if skip_signature is false
+    if ! $skip_signature; then
+        validateMinerId "$miner_id" "config.toml" "auth/abi.json"
+    fi
 
     # Check if the model details were not properly fetched
     if [ -z "$size_gb" ] || [ -z "$quantization" ] || [ -z "$hf_model_id" ] || [ -z "$revision" ]; then
@@ -365,7 +373,7 @@ main() {
     log_info "Executing Python script with Heurist model ID: $heurist_model_id, Quantization: $quantization, HuggingFace model ID: $hf_model_id, Revision: $revision, Miner ID Index: $miner_id_index, Port: $port, GPU IDs: $gpu_ids"
     local python_script=$(ls llm-miner-*.py | head -n 1)
     if [[ -n "$python_script" ]]; then
-        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids"
+        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids" "$skip_signature"
         log_info "Python script executed successfully."
     else
         log_error "No Python script matching 'llm-miner-*.py' found."

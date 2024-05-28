@@ -145,18 +145,20 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
                     res = res[:res.index(word)]
                     break
             
-            identity_address, signature = base_config.wallet_generator.generate_signature(miner_id)
             url = base_config.base_url + "/miner_submit"
             result = {
                 "miner_id": miner_id.lower(),
                 "job_id": job_id,
                 "result": {"Text": res},
                 "request_latency": request_latency,
-                "inference_latency": inference_latency,
-                "identity_address": identity_address,
-                "signature": signature  # Include the signature in the result payload
+                "inference_latency": inference_latency
             }
-            res = requests.post(url, json=result)
+            if not base_config.skip_signature:
+                identity_address, signature = base_config.wallet_generator.generate_signature(miner_id)
+                result["signature"] = signature
+                result["identity_address"] = identity_address
+            res = base_config.session.post(url, json=result)
+
             if(res.status_code == 200):
                 logging.info(f"Result submitted successfully for job_id: {job_id}")
                 print(f"Result submitted successfully for job_id: {job_id}")

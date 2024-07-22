@@ -133,20 +133,28 @@ def check_and_reload_model(config, last_signal_time):
             logging.warning("No loaded models found. Posting to miner_signal to load a new model.")
             # continue to get the next signal
         
-        response = post_request(config, config.signal_url + "/miner_signal", {
+        request_data = {
             "miner_id": config.miner_id,
             "model_type": "SD",
             "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
-        }, config.miner_id)
+        }
+
+        # Add skip_update if a specific model is set
+        if config.specified_model_id:
+            request_data["skip_update"] = True
+
+        response = post_request(config, config.signal_url + "/miner_signal", request_data, config.miner_id)
 
         # Process the response only if it's valid
         if response and response.status_code == 200:
             model_id_from_signal = response.json().get('model_id')
             # Proceed if the model is in local storage and not already loaded
             if model_id_from_signal in get_local_model_ids(config) and model_id_from_signal not in config.loaded_models and model_id_from_signal not in config.loaded_loras:
-                reload_model(config, model_id_from_signal)
-                last_signal_time = current_time  # Update last_signal_time after reloading model
+                # Only reload if no specific model is set
+                if not config.specified_model_id:
+                    reload_model(config, model_id_from_signal)
+                    last_signal_time = current_time  # Update last_signal_time after reloading model
         else:
             logging.error(f"Failed to get a valid response from /miner_signal for miner_id {config.miner_id}.")
     
@@ -188,7 +196,8 @@ def main(cuda_device_id):
     last_signal_time = time.time()
     while True:
         try:
-            last_signal_time = check_and_reload_model(config, last_signal_time)
+            if not config.specified_model_id:
+                last_signal_time = check_and_reload_model(config, last_signal_time)
             executed = process_jobs(config)
         except Exception as e:
             logging.error("Error occurred:", exc_info=True)

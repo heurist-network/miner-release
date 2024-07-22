@@ -131,12 +131,11 @@ def check_and_reload_model(config, last_signal_time):
         model_id = list(config.loaded_loras.keys())[0] if config.loaded_loras else list(config.loaded_models.keys())[0] if config.loaded_models else None
         if model_id is None:
             logging.warning("No loaded models found. Posting to miner_signal to load a new model.")
-            # continue to get the next signal
         
         request_data = {
             "miner_id": config.miner_id,
             "model_type": "SD",
-            "version": config.version, # format is like "sd-v1.2.0"
+            "version": config.version,
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }
 
@@ -151,10 +150,8 @@ def check_and_reload_model(config, last_signal_time):
             model_id_from_signal = response.json().get('model_id')
             # Proceed if the model is in local storage and not already loaded
             if model_id_from_signal in get_local_model_ids(config) and model_id_from_signal not in config.loaded_models and model_id_from_signal not in config.loaded_loras:
-                # Only reload if no specific model is set
-                if not config.specified_model_id:
-                    reload_model(config, model_id_from_signal)
-                    last_signal_time = current_time  # Update last_signal_time after reloading model
+                reload_model(config, model_id_from_signal)
+                last_signal_time = current_time  # Update last_signal_time after reloading model
         else:
             logging.error(f"Failed to get a valid response from /miner_signal for miner_id {config.miner_id}.")
     

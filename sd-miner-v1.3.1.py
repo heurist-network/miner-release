@@ -234,12 +234,19 @@ if __name__ == "__main__":
     # TODO: There appear to be 1 leaked semaphore objects to clean up at shutdown
     # Launch a separate process for each CUDA device
     try:
-        for i in range(config.num_cuda_devices):
-            p = Process(target=main, args=(i,))
+        if config.cuda_device_id is None:
+            for i in range(config.num_cuda_devices):
+                p = Process(target=main, args=(i,))
+                p.start()
+                processes.append(p)
+
+            for p in processes:
+                p.join()
+        else:
+            # If cuda_device_id is specified, only run on this GPU
+            p = Process(target=main, args=(config.cuda_device_id,))
             p.start()
             processes.append(p)
-
-        for p in processes:
             p.join()
 
     except KeyboardInterrupt:

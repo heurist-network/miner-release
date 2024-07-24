@@ -21,7 +21,7 @@ keys_dir = "~/.heurist-keys"
 [model_config]
 model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models-new.json"
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
-lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora.json"
+lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora-new.json"
 default_sd_model_index = 1
 
 [system]

@@ -53,7 +53,13 @@ def load_model(config, model_id):
     if base_model_config is None:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
-    if config.exclude_sdxl and base_model_id.startswith("SDXL"):
+    base_model_type = base_model_config.get('type')
+    if base_model_type is None:
+        raise ValueError(f"Model type not found for {base_model_id}.")
+    if base_model_type not in ["sd15", "sdxl10"]:
+        raise ValueError(f"Model type '{base_model_type}' is not supported.")
+    
+    if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
 
     base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
@@ -85,6 +91,7 @@ def load_model(config, model_id):
 
     end_time = time.time()
     loading_latency = end_time - start_time
+    print(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
 
     return pipe, loading_latency
 

@@ -208,5 +208,7 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         return image_data, inference_latency, loading_latency
     
     except Exception as e:
-        logging.error(f"Error executing model {model_id}: {e}")
+        err_msg = f"Error executing model {model_id}: {e}"
+        logging.error(err_msg)
+        print(err_msg)
         raise

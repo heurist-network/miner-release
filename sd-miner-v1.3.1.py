@@ -131,14 +131,19 @@ def check_and_reload_model(config, last_signal_time):
         model_id = list(config.loaded_loras.keys())[0] if config.loaded_loras else list(config.loaded_models.keys())[0] if config.loaded_models else None
         if model_id is None:
             logging.warning("No loaded models found. Posting to miner_signal to load a new model.")
-            # continue to get the next signal
         
-        response = post_request(config, config.signal_url + "/miner_signal", {
+        request_data = {
             "miner_id": config.miner_id,
             "model_type": "SD",
-            "version": config.version, # format is like "sd-v1.2.0"
+            "version": config.version,
             "options": {"exclude_sdxl": config.exclude_sdxl}
-        }, config.miner_id)
+        }
+
+        # Add skip_update if a specific model is set
+        if config.specified_model_id:
+            request_data["skip_update"] = True
+
+        response = post_request(config, config.signal_url + "/miner_signal", request_data, config.miner_id)
 
         # Process the response only if it's valid
         if response and response.status_code == 200:
@@ -188,7 +193,8 @@ def main(cuda_device_id):
     last_signal_time = time.time()
     while True:
         try:
-            last_signal_time = check_and_reload_model(config, last_signal_time)
+            if not config.specified_model_id:
+                last_signal_time = check_and_reload_model(config, last_signal_time)
             executed = process_jobs(config)
         except Exception as e:
             logging.error("Error occurred:", exc_info=True)
@@ -228,12 +234,19 @@ if __name__ == "__main__":
     # TODO: There appear to be 1 leaked semaphore objects to clean up at shutdown
     # Launch a separate process for each CUDA device
     try:
-        for i in range(config.num_cuda_devices):
-            p = Process(target=main, args=(i,))
+        if config.cuda_device_id is None:
+            for i in range(config.num_cuda_devices):
+                p = Process(target=main, args=(i,))
+                p.start()
+                processes.append(p)
+
+            for p in processes:
+                p.join()
+        else:
+            # If cuda_device_id is specified, only run on this GPU
+            p = Process(target=main, args=(config.cuda_device_id,))
             p.start()
             processes.append(p)
-
-        for p in processes:
             p.join()
 
     except KeyboardInterrupt:

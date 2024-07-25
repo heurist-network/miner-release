@@ -48,6 +48,8 @@ class BaseConfig:
         self.exclude_sdxl = args["exclude_sdxl"]
         self.skip_signature = args["skip_signature"]
         self.skip_checksum = args["skip_checksum"]
+        self.specified_model_id = args["model_id"]
+        self.cuda_device_id = args["cuda_device_id"]
 
         self.version = self.config['versions'].get('sd_version', 'unknown')
         self.session = requests.Session()
@@ -63,6 +65,8 @@ class BaseConfig:
         parser.add_argument("--exclude-sdxl", action="store_true", help="Exclude the sdxl model from downloading")
         parser.add_argument("--skip-signature", action="store_true", help="Skip signature verification")
         parser.add_argument("--skip-checksum", action="store_true", help="Skip checksum validation")
+        parser.add_argument("--model-id", type=str, help="Specify the model ID to host (default: None)")
+        parser.add_argument("--cuda-device-id", type=int, help="Specify the CUDA device ID to run SD miner (default: None)")
         args = parser.parse_args()
 
         # Convert auto-confirm argument to a boolean flag
@@ -77,5 +81,7 @@ class BaseConfig:
             "auto_confirm": auto_confirm,
             "exclude_sdxl": exclude_sdxl,
             "skip_signature": skip_signature,
-            "skip_checksum": skip_checksum
+            "skip_checksum": skip_checksum,
+            "model_id": args.model_id,
+            "cuda_device_id": args.cuda_device_id
         }

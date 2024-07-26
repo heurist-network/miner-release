@@ -179,7 +179,10 @@ def worker(miner_id):
             sys.exit(1)
         try:
             # Check if the number of running requests exceeds the maximum concurrent requests
-            if get_metric_value("num_requests_running", base_config) >= base_config.concurrency_soft_limit:
+            num_requests = get_metric_value("num_requests_running", base_config)
+            if num_requests is None:
+                num_requests = 0  # Set to 0 if None
+            if num_requests >= base_config.concurrency_soft_limit:
                 # Pass silently if too many requests are running
                 # print("Too many requests running, waiting for a while")
                 time.sleep(base_config.sleep_duration)

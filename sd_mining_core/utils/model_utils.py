@@ -53,13 +53,7 @@ def load_model(config, model_id):
     if base_model_config is None:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
-    base_model_type = base_model_config.get('type')
-    if base_model_type is None:
-        raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10"]:
-        raise ValueError(f"Model type '{base_model_type}' is not supported.")
-    
-    if config.exclude_sdxl and base_model_type.startswith("sdxl"):
+    if config.exclude_sdxl and base_model_id.startswith("SDXL"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
 
     base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
@@ -91,7 +85,6 @@ def load_model(config, model_id):
 
     end_time = time.time()
     loading_latency = end_time - start_time
-    print(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
 
     return pipe, loading_latency
 
@@ -131,22 +124,18 @@ def load_default_model(config):
     model_ids = get_local_model_ids(config)
     if not model_ids:
         logging.error("No local models found. Exiting...")
-        sys.exit(1)
-    
-    if config.specified_model_id:
-        if config.specified_model_id not in model_ids:
-            print(f"Specified model ID {config.specified_model_id} not found locally. Exiting...")
-            sys.exit(1)
-        default_model_id = config.specified_model_id
-    else:
-        default_model_id = model_ids[config.default_model_id] if config.default_model_id < len(model_ids) else model_ids[0]
+        sys.exit(1)  # Exit if no models are available locally
 
+    default_model_id = model_ids[config.default_model_id] if config.default_model_id < len(model_ids) else model_ids[0]
     base_model_id = config.model_configs[default_model_id]['base'] if 'base' in config.model_configs[default_model_id] else default_model_id
 
     if base_model_id not in config.loaded_models:
         current_model, _ = load_model(config, default_model_id)
         config.loaded_models[base_model_id] = current_model
-        logging.info(f"Default model {default_model_id} (base: {base_model_id}) loaded successfully.")
+        if base_model_id != default_model_id:
+            logging.info(f"Default model {default_model_id} (base: {base_model_id}) loaded successfully.")
+        else:
+            logging.info(f"Default model {default_model_id} loaded successfully.")
 
 def reload_model(config, model_id_from_signal):
     if config.loaded_models:
@@ -208,7 +197,5 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         return image_data, inference_latency, loading_latency
     
     except Exception as e:
-        err_msg = f"Error executing model {model_id}: {e}"
-        logging.error(err_msg)
-        print(err_msg)
+        logging.error(f"Error executing model {model_id}: {e}")
         raise

@@ -22,7 +22,7 @@ For those eager to dive in, here's a quick overview of the setup process:
 
 ## ⚠️ Important Notices
 
-- **Preview Version**: You're working with a preview version of the Heurist Miner. Expect some bumps along the way. For assistance, join [Heurist Discord #miner-chat channel]( https://discord.com/invite/heuristai)
+- **Preview Version**: You're working with a preview version of the Heurist Miner. Expect some bumps along the way. For assistance, join [Heurist Discord #miner-chat channel]( https://discord.com/channels/1183784452674039919/1203508038246600744)
 - **System Requirements**: Advanced users may skip steps they've already completed, but compatibility checks are recommended.
 - **CUDA Compatibility**: CUDA versions 12.1 or 12.2 are advised for compatibility with PyTorch.
 

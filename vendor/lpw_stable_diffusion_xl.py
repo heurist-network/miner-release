@@ -164,7 +164,7 @@ def get_prompts_tokens_with_weights(clip_tokenizer: CLIPTokenizer, prompt: str):
         text_tokens (list)
             A list contains token ids
         text_weight (list)
-            A list contains the correspodent weight of token ids
+            A list contains the correspondent weight of token ids
 
     Example:
         import torch
@@ -1255,7 +1255,7 @@ class StableDiffusionXLLongPromptWeightingPipeline(
                 torch.cat([masked_image_latents] * 2) if do_classifier_free_guidance else masked_image_latents
             )
 
-            # aligning device to prevent device errors when concating it with the latent model input
+            # aligning device to prevent device errors when concatenating it with the latent model input
             masked_image_latents = masked_image_latents.to(device=device, dtype=dtype)
 
         return mask, masked_image_latents
@@ -1531,7 +1531,7 @@ class StableDiffusionXLLongPromptWeightingPipeline(
             callback_on_step_end_tensor_inputs (`List`, *optional*):
                 The list of tensor inputs for the `callback_on_step_end` function. The tensors specified in the list
                 will be passed as `callback_kwargs` argument. You will only be able to include variables listed in the
-                `._callback_tensor_inputs` attribute of your pipeine class.
+                `._callback_tensor_inputs` attribute of your pipeline class.
 
         Examples:
 
@@ -2131,7 +2131,7 @@ class StableDiffusionXLLongPromptWeightingPipeline(
             **kwargs,
         )
 
-    # Overrride to properly handle the loading and unloading of the additional text encoder.
+    # Override to properly handle the loading and unloading of the additional text encoder.
     def load_lora_weights(self, pretrained_model_name_or_path_or_dict: Union[str, Dict[str, torch.Tensor]], **kwargs):
         # We could have accessed the unet config from `lora_state_dict()` too. We pass
         # it here explicitly to be able to tell that it's coming from an SDXL

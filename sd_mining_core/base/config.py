@@ -29,6 +29,7 @@ class BaseConfig:
         self.vae_config_url = self.config['model_config']['vae_config_url']
         self.lora_config_url = self.config['model_config']['lora_config_url']
         self.default_model_id = self.config['model_config']['default_sd_model_index']
+        self.flux_dev_file_downloads = self.config['model_config']['flux_dev_file_downloads']
 
         os.makedirs(self.base_dir, exist_ok=True)
 

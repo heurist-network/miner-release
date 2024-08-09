@@ -5,16 +5,18 @@ import io
 import gc
 import logging
 import time
-from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
+from diffusers import AutoencoderKL, DPMSolverMultistepScheduler,FluxPipeline
 from vendor.lpw_stable_diffusion_xl import StableDiffusionXLLongPromptWeightingPipeline
 from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
+    print("local_files: ",local_files)
     local_model_ids = []
-    
+    print("config.model_configs.values(): ",list(config.model_configs.values()))
     for model in config.model_configs.values():
         model_id = model['name']
+        print("model_id: ",model_id)
         if 'base' in model:
             base_file = model['base'] + ".safetensors"
             name_file = model['name'] + ".safetensors"
@@ -25,11 +27,14 @@ def get_local_model_ids(config):
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                 if name_file not in local_files:
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
-        else:
-            if model_id + ".safetensors" in local_files:
-                local_model_ids.append(model_id)
-            else:
-                logging.warning(f"Model file for '{model['name']}' not found in local directory.")
+            continue 
+        if model_id + ".safetensors" in local_files:
+            local_model_ids.append(model_id)
+            continue 
+        if "flux-dev-model" in local_files and "FLUX.1-dev"  not in local_model_ids:
+                local_model_ids.append("FLUX.1-dev")
+                continue 
+        logging.warning(f"Model file for '{model['name']}' not found in local directory.")
     
     return local_model_ids
 
@@ -56,7 +61,7 @@ def load_model(config, model_id):
     base_model_type = base_model_config.get('type')
     if base_model_type is None:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux-dev"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
     
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
@@ -71,6 +76,12 @@ def load_model(config, model_id):
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(
             pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
         )
+    elif base_model_config['type'] =="flux-dev":
+        model_path = os.path.join(config.base_dir, "flux-dev-model" )
+        print("config.base_dir: ",config.base_dir)
+        print("model_path: ",model_path)
+        pipe = FluxPipeline.from_pretrained(model_path, torch_dtype=torch.bfloat16).to('cuda:' + str(config.cuda_device_id))
+
     else:
         pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(
             base_model_file_path, torch_dtype=torch.float16
@@ -129,6 +140,7 @@ def unload_lora_weights(config, pipe, lora_id):
 
 def load_default_model(config):
     model_ids = get_local_model_ids(config)
+    print("load_default_model_model_ids: ",model_ids)
     if not model_ids:
         logging.error("No local models found. Exiting...")
         sys.exit(1)
@@ -140,6 +152,9 @@ def load_default_model(config):
         default_model_id = config.specified_model_id
     else:
         default_model_id = model_ids[config.default_model_id] if config.default_model_id < len(model_ids) else model_ids[0]
+    
+    # print("config.model_configs: ",config.model_configs)
+    print("default_model_id: ",default_model_id)
 
     base_model_id = config.model_configs[default_model_id]['base'] if 'base' in config.model_configs[default_model_id] else default_model_id
 

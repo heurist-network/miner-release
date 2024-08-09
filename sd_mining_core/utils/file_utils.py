@@ -4,6 +4,41 @@ import requests
 from tqdm import tqdm
 from itertools import chain
 
+
+def download_flux_dev_file(url, local_path):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(local_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+    print(f"Downloaded: {url} -> {local_path}")
+
+def download_flux_dev(base_dir, original_file_url, flux_dev_file_downloads):
+    print("Downloading flux-dev model")
+    print("Original file_url:", original_file_url)
+
+    local_dir = os.path.join(base_dir, "flux-dev-model")
+    print("local_dir:", local_dir)
+    print("flux_dev_file_downloads:", flux_dev_file_downloads)
+
+    for file in flux_dev_file_downloads:
+        try:
+            file_url = original_file_url + file  # Reset file_url for each file
+            local_file_path = os.path.join(local_dir, file)
+            print(f"Attempting to download: {file}")
+            print("local_file_path:", local_file_path)
+            local_file_dir = os.path.dirname(local_file_path)
+            
+            os.makedirs(local_file_dir, exist_ok=True)
+            
+            download_flux_dev_file(file_url, local_file_path)
+            print(f"Successfully downloaded: {file}")
+        except Exception as e:
+            print(f"Error downloading {file}: {str(e)}")
+
+    print("Finished downloading flux-dev model files")
+
 def download_file(base_dir, file_url, file_name):
     try:
         response = requests.get(file_url, stream=True)
@@ -34,14 +69,15 @@ def download_file(base_dir, file_url, file_name):
 
 def fetch_and_download_config_files(config):
     try:
+        print("config.model_config_url: ",config.model_config_url)
         models = requests.get(config.model_config_url).json()
         vaes = requests.get(config.vae_config_url).json()
         loras = requests.get(config.lora_config_url).json()
-
+       
         config.model_configs = {
             model['name']: model for model in models
             if 'type' in model and (
-                'sd' in model['type'] or model['type'].startswith('composite')
+                'sd' in model['type'] or model['type'].startswith('composite') or  "flux" in model['type']
             ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
         }
 
@@ -58,7 +94,7 @@ def fetch_and_download_config_files(config):
         total_size = 0
         files_to_download = []
         for model in chain(config.model_configs.values(), config.lora_configs.values()):
-            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora']):
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora','flux']):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
@@ -91,10 +127,15 @@ def fetch_and_download_config_files(config):
         if confirm.strip().lower() not in ['yes', 'y']:
             print("Download canceled.")
             return
-
+        print("files_to_download: ",files_to_download)
         for i, model in enumerate(files_to_download, 1):
-            print(f"Downloading file {i}/{len(files_to_download)}")
-            download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors")
+            print("i,model: ",i,model)
+            if model["name"] != "FLUX.1-dev":
+                print(f"Downloading file {i}/{len(files_to_download)}")
+                download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors")
+            else: 
+                download_flux_dev(config.base_dir, model['file_url'],config.flux_dev_file_downloads)
+        
             
     except requests.exceptions.ConnectionError as ce:
         logging.error(f"Failed to connect to server: {ce}")

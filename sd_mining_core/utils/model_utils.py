@@ -191,15 +191,22 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
 
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
-
-        kwargs = {
-            # For better/stable image quality, consider using larger height x weight values
-            'height': min(height - height % 8, config.config['processing_limits']['max_height']),
-            'width': min(width - width % 8, config.config['processing_limits']['max_width']),
-            'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
-            'guidance_scale': guidance_scale,
-            'negative_prompt': neg_prompt,
-        }
+        if model_id == "FLUX.1-dev":
+            kwargs = {
+                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+                'num_inference_steps': min(20, config.config['processing_limits']['max_iterations']),
+                'guidance_scale': guidance_scale,
+            }
+        else:
+            kwargs = {
+                # For better/stable image quality, consider using larger height x weight values
+                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+                'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
+                'guidance_scale': guidance_scale,
+                'negative_prompt': neg_prompt,
+            }
 
         if current_model == config.loaded_loras.get(model_id):
             default_weight = model_config.get('default_weight')
@@ -215,6 +222,7 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         images = current_model(prompt, **kwargs).images
         inference_end_time = time.time()
         inference_latency = inference_end_time - inference_start_time
+        logging.info(f"Inference latency for model {model_id}: {inference_latency} seconds")
 
         image_data = io.BytesIO()
         images[0].save(image_data, format='PNG')

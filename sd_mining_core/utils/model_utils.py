@@ -31,7 +31,7 @@ def get_local_model_ids(config):
         if model_id + ".safetensors" in local_files:
             local_model_ids.append(model_id)
             continue 
-        if "flux-dev-model" in local_files and "FLUX.1-dev"  not in local_model_ids:
+        if "FLUX.1-dev" in local_files and "FLUX.1-dev"  not in local_model_ids:
                 local_model_ids.append("FLUX.1-dev")
                 continue 
         logging.warning(f"Model file for '{model['name']}' not found in local directory.")
@@ -77,7 +77,7 @@ def load_model(config, model_id):
             pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
         )
     elif base_model_config['type'] =="flux-dev":
-        model_path = os.path.join(config.base_dir, "flux-dev-model" )
+        model_path = os.path.join(config.base_dir, "FLUX.1-dev" )
         print("config.base_dir: ",config.base_dir)
         print("model_path: ",model_path)
         pipe = FluxPipeline.from_pretrained(model_path, torch_dtype=torch.bfloat16).to('cuda:' + str(config.cuda_device_id))

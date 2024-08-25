@@ -19,11 +19,10 @@ base_dir = "~/.cache/heurist"
 keys_dir = "~/.heurist-keys"
 
 [model_config]
-model_config_url = "https://cdn.heurist-flux.org/models.json"
+model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models-new.json"
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
 lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora.json"
 default_sd_model_index = 1
-flux_dev_model_url = "https://cdn.heurist-flux.org/flux-dev-model/"
 flux_dev_file_downloads = [
     ".gitattributes",
     "LICENSE.md",

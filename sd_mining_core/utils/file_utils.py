@@ -18,7 +18,7 @@ def download_flux_dev(base_dir, original_file_url, flux_dev_file_downloads):
     print("Downloading flux-dev model")
     print("Original file_url:", original_file_url)
 
-    local_dir = os.path.join(base_dir, "flux-dev-model")
+    local_dir = os.path.join(base_dir, "FLUX.1-dev")
     print("local_dir:", local_dir)
     print("flux_dev_file_downloads:", flux_dev_file_downloads)
 
@@ -94,7 +94,9 @@ def fetch_and_download_config_files(config):
         total_size = 0
         files_to_download = []
         for model in chain(config.model_configs.values(), config.lora_configs.values()):
-            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora','flux']):
+            print("model: ",model)
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora','flux-dev']):
+                print(f"Warning: Model {model['name']} is not a valid model type. Skipping.") 
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
@@ -104,6 +106,7 @@ def fetch_and_download_config_files(config):
                 size_mb = model['size_mb']
                 total_size += size_mb
                 files_to_download.append(model)
+                print("added model to files_to_download: ",model)
             vae_name = model.get('vae', None)
             if vae_name is not None:
                 vae_path = os.path.join(config.base_dir, model['vae'] + ".safetensors")
@@ -115,6 +118,7 @@ def fetch_and_download_config_files(config):
                         files_to_download.append(vae_config)
                     else:
                         logging.error(f"VAE config for {vae_name} not found.")
+            
 
         if len(files_to_download) == 0:
             print("All model files are up to date. Miner is ready.")

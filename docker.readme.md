@@ -81,7 +81,7 @@ RUN apt-get update && apt-get install -y \
 
 If you want to pass optional arguments to the sd-miner script, you can do so by appending them to the docker run command. For example:
 
-docker run --gpus all -v $(pwd):/app sd-miner:v1.3.1 --log-level DEBUG --auto-confirm yes
+docker run --gpus all -v $(pwd):/app sd-miner:v1.3.1 --log-level DEBUG --auto-confirm yes --skip-checksum --cuda-device-id 0 --model-id FLUX.1-dev --log-level DEBUG
 
 ## 
 python3 sd-miner-v1.3.1.py --skip-checksum --cuda-device-id 0 --model-id FLUX.1-dev --log-level DEBUG
@@ -96,5 +96,10 @@ c. Create a file (let's call it env.list) with your environment variables:
 0xYourSecondWalletAddressHere
 Then run Docker using this file:
 file
+
+docker run --env-file env.list your-image-name
+
 This approach allows you to pass the necessary variables to the Docker container without needing the .env file inside the container. The sd-miner script inside the container will be able to access these variables as environment variables.
 Remember to replace 0xYourFirstWalletAddressHere and 0xYourSecondWalletAddressHere with your actual miner IDs, and add any additional environment variables that your sd-miner script needs.
+
+docker run --env-file .env --gpus all -v $(pwd):/app sd-miner:v1.3.1 --log-level DEBUG --auto-confirm yes --skip-checksum --cuda-device-id 0 --model-id FLUX.1-dev --log-level DEBUG

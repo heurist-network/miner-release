@@ -1,0 +1,4 @@
+.git
+.gitignore
+*.log
+# Remove .env from here if it was previously included

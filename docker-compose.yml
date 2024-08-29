@@ -1,0 +1,19 @@
+version: '3'
+services:
+  sd-miner:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      # Add your environment variables here
+      - MINER_ID_0=${MINER_ID_0}
+      - MINER_ID_1=${MINER_ID_1}
+      # Add more environment variables as needed
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -1,5 +1,5 @@
-# Use NVIDIA CUDA base image
-FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04
+# Stage 1: Build stage
+FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04 AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     python3.10 \
     python3.10-dev \
     python3.10-distutils \
+    python3-pip \
     git \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,12 +32,27 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Install PyTorch with CUDA support
 RUN pip3 install torch==2.4.0 torchvision==0.19.0+cu121 torchaudio==2.4.0+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
 
-# Copy the rest of the application
+# Stage 2: Runtime stage
+FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the installed dependencies from the builder stage
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /usr/bin/python3.10 /usr/bin/python3.10
+COPY --from=builder /usr/lib/python3.10 /usr/lib/python3.10
+
+# Copy the application code
 COPY . /app
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV NVIDIA_VISIBLE_DEVICES=all
+
+# Create a non-root user and switch to it
+RUN useradd -m appuser
+USER appuser
 
 # Set up volumes
 VOLUME ["/root/.heurist-keys", "/root/.cache"]

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  sd-miner:
+    build: .
+    volumes:
+      - ./:/app
+      - ./.env:/app/.env
+      - ./config.toml:/app/config.toml
+      - ~/.heurist-keys:/root/.heurist-keys
+      - ~/.cache:/root/.cache
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -35,10 +35,10 @@ Heurist Miner is a revolutionary software that allows you to contribute your GPU
 
 ### How It Works 🛠️
 
-- **Setup** 📥: Install the miner on your system and configure your wallet.
-- **Contribution** 💪: Your GPU processes AI tasks as requested by the network.
-- **Rewards** 🏆: Earn points for each successfully completed task.
-- **Scaling** 📈: Optionally, run multiple miners on different GPUs to increase your contribution and rewards.
+- 📥 **Setup** : Install the miner on your system and configure your wallet.
+- 💪 **Contribution** : Your GPU processes AI tasks as requested by the network.
+- 🏆 **Rewards** : Earn points for each successfully completed task.
+- 📈 **Scaling** : Optionally, run multiple miners on different GPUs to increase your contribution and rewards.
 
 ## System Requirements
 

@@ -180,7 +180,7 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    conda activate gpu-3-11
    ```
 4. **Install CUDA Toolkit**:
-   - Follow instructions on NVIDIA CUDA Installation Guide
+- Follow instructions on NVIDIA CUDA Installation Guide
 5. **Install PyTorch with GPU Support**:
    ```bash
    conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
@@ -213,12 +213,12 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    ./llm-miner-starter.sh <model_id> --miner-id-index 0 --port 8000 --gpu-ids 0
    ```
    Options:
-   - `--miner-id-index`: Index of miner_id in `.env` (default: 0)
-   - `--port`: Port for vLLM process (default: 8000)
-   - `--gpu-ids`: GPU ID to use (default: 0)
+- `--miner-id-index`: Index of miner_id in `.env` (default: 0)
+- `--port`: Port for vLLM process (default: 8000)
+- `--gpu-ids`: GPU ID to use (default: 0)
 4. **Wait for Model Download**:
-   - First run will download the model (can take time)
-   - Models are saved in `$HOME/.cache/huggingface`
+- First run will download the model (can take time)
+- Models are saved in `$HOME/.cache/huggingface`
 
 Note: 8x7b, 34b, and 70b models may take up to an hour to load on some devices.
 

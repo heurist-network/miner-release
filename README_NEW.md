@@ -67,7 +67,7 @@ Before you begin, ensure your system meets the following requirements:
 - Ensure your system is up-to-date with the latest GPU drivers. 🔄
 - Stable Diffusion models typically need 8-10GB VRAM, while LLMs can require 12GB to 40GB+ depending on the model size. 📈
 
-## Quick Start Guide
+## Quick Start Guide 🚀
 
 For experienced users, here's a quick overview to get you mining:
 
@@ -105,9 +105,9 @@ python sd-miner-v1.3.1.py
 For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
 
 
-## Detailed Setup Instructions
+## Detailed Setup Instructions 🛠️
 
-### Configuring Miner ID and Identity Wallet
+### Configuring Miner ID and Identity Wallet 🆔💼
 
 Heurist Miner uses a dual-wallet system for security and reward distribution:
 
@@ -133,9 +133,9 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    ```
    Follow the prompts to create new wallets or import existing ones.
 
-## Stable Diffusion Miner Setup
+## Stable Diffusion Miner Setup 🖼️
 
-### Windows Setup
+### Windows Setup 🪟
 
 1. **Install Miniconda**:
    - Download from Miniconda website
@@ -163,7 +163,7 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    python3 sd-miner-v1.3.1.py
    ```
 
-### Linux Setup
+### Linux Setup 🐧
 
 1. **Update GPU Drivers (if necessary)**:
    ```bash
@@ -197,7 +197,7 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    python3 sd-miner-v1.3.1.py
    ```
 
-## Large Language Model Miner Setup
+## Large Language Model Miner Setup 📚
 
 ### Setup Process
 
@@ -224,11 +224,11 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
 Note: 8x7b, 34b, and 70b models may take up to an hour to load on some devices.
 
 
-## Advanced Configuration for Heurist Miners
+## Advanced Configuration for Heurist Miners ⚙️
 
-### Command Line Interface (CLI) Options
+### Command Line Interface (CLI) Options 💻
 
-#### Stable Diffusion Miner
+#### Stable Diffusion Miner 🎨
 
 When running the SD miner, you can use various CLI options to customize its behavior:
 
@@ -264,7 +264,7 @@ When running the SD miner, you can use various CLI options to customize its beha
      python3 sd-miner-v1.3.1.py --cuda-device-id 0
      ```
 
-#### Large Language Model Miner
+#### Large Language Model Miner 🗣️
 
 For LLM miner, use the following CLI options to customize its behavior:
 
@@ -301,7 +301,7 @@ For LLM miner, use the following CLI options to customize its behavior:
      ./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq --miner-id-index 1 --port 8001 --gpu-ids 1
      ```
 
-### Multiple GPU Configuration
+### Multiple GPU Configuration 🖥️🖥️
 
 To utilize multiple GPUs:
 
@@ -317,20 +317,6 @@ To utilize multiple GPUs:
    ```
 3. Run the miner without specifying a CUDA device ID to use all available GPUs.
 
-
-## Troubleshooting
-
-### Installation Issues
-
-1. **CUDA not found**
-   - Ensure CUDA is properly installed
-   - Check if the CUDA version matches PyTorch requirements
-   - Solution: Reinstall CUDA or update PyTorch
-
-2. **Dependencies installation fails**
-   - Check your Python version (should be 3.10 or 3.11)
-   - Ensure you're in the correct Conda environment
-   - Solution: Create a new Conda environment and reinstall dependencies
 
 ## Troubleshooting 🔧
 

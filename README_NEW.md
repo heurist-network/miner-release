@@ -40,31 +40,32 @@ Heurist Miner is a revolutionary software that allows you to contribute your GPU
 - 🏆 **Rewards** : Earn points for each successfully completed task.
 - 📈 **Scaling** : Optionally, run multiple miners on different GPUs to increase your contribution and rewards.
 
-## System Requirements
+## System Requirements 📋
 
 Before you begin, ensure your system meets the following requirements:
 
-### Hardware
-- **GPU**: NVIDIA GPU with at least 8GB VRAM (12GB+ recommended for optimal performance)
-- **CPU**: Multi-core processor (4+ cores recommended)
-- **RAM**: 16GB+ system RAM
-- **Storage**: At least 50GB free space (SSD recommended for faster model loading)
+### Hardware 🖥️
+- **GPU**: NVIDIA GPU with at least 8GB VRAM (12GB+ recommended for optimal performance) 🎮
+- **CPU**: Multi-core processor (4+ cores recommended) 💻
+- **RAM**: 16GB+ system RAM 🧠
+- **Storage**: At least 50GB free space (SSD recommended for faster model loading) 💽
 
-### Software
+### Software 💾
 - **Operating System**: 
-  - Windows 10/11 (64-bit)
-  - Linux (Ubuntu 20.04 LTS or later recommended)
-- **CUDA**: Version 11.7, 12.1, or 12.2
-- **Python**: Version 3.10 or 3.11
-- **Git**: For cloning the repository
+  - Windows 10/11 (64-bit) 🪟
+  - Linux (Ubuntu 20.04 LTS or later recommended) 🐧
+- **CUDA**: Version 11.7, 12.1, or 12.2 🚀
+- **Python**: Version 3.10 or 3.11 🐍
+- **Git**: For cloning the repository 📦
 
-### Network
-- Stable internet connection (5 Mbps+ recommended)
-- Ability to access HuggingFace and GitHub repositories
+### Network 🌐
+- Stable internet connection (5 Mbps+ recommended) 🔌
+- Ability to access HuggingFace and GitHub repositories 🔓
 
-### Additional Notes
-- Some models (especially larger LLMs) may require more VRAM. Check the model-specific requirements in the detailed setup sections.
-- Ensure your system is up-to-date with the latest GPU drivers.
+### Additional Notes ℹ️
+- Some models (especially larger LLMs) may require more VRAM. Check the model-specific requirements in the detailed setup sections. 📊
+- Ensure your system is up-to-date with the latest GPU drivers. 🔄
+- Stable Diffusion models typically need 8-10GB VRAM, while LLMs can require 12GB to 40GB+ depending on the model size. 📈
 
 ## Quick Start Guide
 
@@ -331,63 +332,85 @@ To utilize multiple GPUs:
    - Ensure you're in the correct Conda environment
    - Solution: Create a new Conda environment and reinstall dependencies
 
-### Runtime Issues
+## Troubleshooting 🔧
 
-1. **CUDA out of memory error**
+Running into issues? Don't worry, we've got you covered! Here are some common problems and their solutions:
+
+### Installation Issues 🛠️
+
+1. 🚨 **CUDA not found**
+   - Ensure CUDA is properly installed
+   - Check if the CUDA version matches PyTorch requirements<br>
+   ✅ Solution: Reinstall CUDA or update PyTorch to match your CUDA version
+
+2. 🚨 **Dependencies installation fails**
+   - Check your Python version (should be 3.10 or 3.11)
+   - Ensure you're in the correct Conda environment<br>
+   ✅ Solution: Create a new Conda environment and reinstall dependencies
+
+### Runtime Issues 🏃‍♂️
+
+1. 🚨 **CUDA out of memory error**
    - Check available GPU memory using `nvidia-smi`
-   - Reduce batch size or use a smaller model
-   - Solution: Add `--exclude-sdxl` flag for SD miner or choose a smaller LLM
+   - Reduce batch size or use a smaller model<br>
+   ✅ Solution: Add `--exclude-sdxl` flag for SD miner or choose a smaller LLM
 
-2. **Miner not receiving tasks**
+2. 🚨 **Miner not receiving tasks**
    - Check your internet connection
-   - Verify your Miner ID is correctly set in the `.env` file
-   - Solution: Restart the miner and check logs for connection issues
+   - Verify your Miner ID is correctly set in the `.env` file<br>
+   ✅ Solution: Restart the miner and check logs for connection issues
 
-3. **Model loading takes too long**
+3. 🚨 **Model loading takes too long**
    - This is normal for large models, especially on first run
-   - Check disk space and internet speed
-   - Solution: Be patient, or choose a smaller model
+   - Check disk space and internet speed<br>
+   ✅ Solution: Be patient (grab a coffee! ☕), or choose a smaller model
 
-## FAQ
+### Additional Tips 💡
 
-1. **Q: Can I run both SD and LLM miners simultaneously?**
-   A: Yes, but ensure you have sufficient GPU memory and use different CUDA device IDs.
+- 🔍 Always check the console output for specific error messages
+- 🔄 Ensure you're using the latest version of the miner software
+- 💬 If problems persist, don't hesitate to ask for help in our Discord community!
 
-2. **Q: How do I know if I'm earning rewards?**
-   A: Check the miner logs for successful task completions. Rewards are tracked on our backend.
+## FAQ 🤔
 
-3. **Q: What's the difference between Identity Wallet and Reward Wallet?**
-   A: The Identity Wallet is for authentication, while the Reward Wallet (Miner ID) receives points and potential rewards.
+Got questions? We've got answers!
 
-4. **Q: Can I use my gaming PC for mining when I'm not gaming?**
-   A: Yes, just make sure to stop the miner before starting resource-intensive games.
+1️⃣ **Can I run both SD and LLM miners simultaneously?** 🖥️🖥️<br>
+   🅰️ Absolutely! Just make sure you have enough GPU memory and use different CUDA device IDs. It's like running two powerful engines at once!
 
-5. **Q: How often should I update the miner software?**
-   A: Check our Discord channel or GitHub repository regularly for updates. We recommend updating whenever a new version is released.
+2️⃣ **How do I know if I'm earning rewards?** 💰<br>
+   🅰️ Keep an eye on your miner logs for successful task completions. We're tracking your rewards behind the scenes, like a silent scoreboard!
 
-6. **Q: What should I do if my antivirus flags the miner?**
-   A: This is likely a false positive. Add an exception for the miner in your antivirus software, or verify the download from our official GitHub repository.
+3️⃣ **What's the difference between Identity Wallet and Reward Wallet?** 🎭💼<br>
+   🅰️ Think of the Identity Wallet as your miner's passport (for authentication), and the Reward Wallet (Miner ID) as its piggy bank (for receiving points and rewards).
 
-## Support and Community
+4️⃣ **Can I use my gaming PC for mining when I'm not gaming?** 🎮➡️💻<br>
+   🅰️ You bet! Just remember to pause your mining adventure before diving into your gaming quests. Your GPU can't be in two places at once!
 
-### Discord Channel
-Join our vibrant community on Discord for real-time support, discussions, and updates:
-[Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
+5️⃣ **How often should I update the miner software?** 🔄<br>
+   🅰️ Stay tuned to our Discord channel and GitHub for the latest updates. We recommend updating whenever a new version drops - it's like getting a free power-up!
 
-### Reporting Issues
-1. Check the Troubleshooting section and FAQ first
-2. If the issue persists, report it on our GitHub Issues page:
-   [Heurist Miner Issues](https://github.com/heurist-network/miner-release/issues)
-3. Provide detailed information including:
-   - Miner version
-   - Operating System
-   - Full error message
-   - Steps to reproduce the issue
+6️⃣ **What if my antivirus flags the miner?** 🦠<br>
+   🅰️ No worries! It's likely just being overprotective. Add an exception for our miner, or double-check you downloaded from our official GitHub. We're the good guys, promise! 😇
 
-### Updates and Announcements
-Stay informed about the latest updates and announcements through:
-1. Our official GitHub repository: [Heurist Miner Releases](https://github.com/heurist-network/miner-release/releases)
-2. The #announcements channel on our Discord server
-3. Follow us on Twitter: [@HeuristAI](https://x.com/heurist_ai)
+## Support and Community 🤝
 
-For any additional questions or support, don't hesitate to reach out to our community managers on Discord.
+### Discord Channel 💬
+Join our lively community on Discord - it's where all the cool miners hang out!
+🔗 [Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
+
+### Reporting Issues 🐛
+1. 📚 Check our Troubleshooting guide and FAQ - you might find a quick fix!
+2. 🆘 Still stuck? Head over to our GitHub Issues page:
+   🔗 [Heurist Miner Issues](https://github.com/heurist-network/miner-release/issues)
+3. 📝 When reporting, remember to include:
+   - Miner version (what model of spaceship are you flying?)
+   - Operating System (what planet are you on?)
+   - Full error message (what alien language is it speaking?)
+   - Steps to reproduce (how do we summon this bug?)
+
+### Stay in the Loop 📢
+Keep up with the latest Heurist happenings:
+1. 🐙 GitHub: [Heurist Miner Releases](https://github.com/heurist-network/miner-release/releases)
+2. 📣 Discord: Tune into our #announcements channel
+3. 🐦 Twitter: Follow [@HeuristAI](https://x.com/heurist_ai) for the latest tweets and chirps

@@ -1,15 +1,24 @@
 version: '3'
 services:
   sd-miner:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./:/app
       - ./.env:/app/.env
       - ./config.toml:/app/config.toml
-      - ~/.heurist-keys:/root/.heurist-keys
-      - ~/.cache:/root/.cache
+      - ~/.heurist-keys:/home/appuser/.heurist-keys
+      - ~/.cache:/home/appuser/.cache
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - LOG_LEVEL=INFO
+      - AUTO_CONFIRM=no
+      - EXCLUDE_SDXL=
+      - SKIP_SIGNATURE=
+      - SKIP_CHECKSUM=
+      - MODEL_ID=
+      - CUDA_DEVICE_ID=
     deploy:
       resources:
         reservations:
@@ -17,3 +26,5 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    user: appuser
+    init: true

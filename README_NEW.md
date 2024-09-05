@@ -3,6 +3,8 @@
 1. [Introduction](#introduction)
 2. [System Requirements](#system-requirements)
 3. [Quick Start Guide](#quick-start-guide)
+   - [Docker Setup](#docker-setup)
+   - [Local Setup](#local-setup)
 4. [Detailed Setup Instructions](#detailed-setup-instructions)
    - [Configuring Miner ID and Identity Wallet](#configuring-miner-id-and-identity-wallet)
    - [Stable Diffusion Miner Setup](#stable-diffusion-miner-setup)
@@ -18,7 +20,7 @@
 7. [FAQ](#faq)
 8. [Support and Community](#support-and-community)
 
-## Introduction 🚀
+## Introduction
 
 Welcome to the Heurist Miner, a cutting-edge tool for participating in the Heurist testnet mining program. Whether you're an experienced miner or new to the world of AI and cryptocurrency, this guide will help you get started on an exciting journey!
 
@@ -40,7 +42,7 @@ Heurist Miner is a revolutionary software that allows you to contribute your GPU
 - 🏆 **Rewards** : Earn points for each successfully completed task.
 - 📈 **Scaling** : Optionally, run multiple miners on different GPUs to increase your contribution and rewards.
 
-## System Requirements 📋
+## System Requirements
 
 Before you begin, ensure your system meets the following requirements:
 
@@ -67,7 +69,40 @@ Before you begin, ensure your system meets the following requirements:
 - Ensure your system is up-to-date with the latest GPU drivers. 🔄
 - Stable Diffusion models typically need 8-10GB VRAM, while LLMs can require 12GB to 40GB+ depending on the model size. 📈
 
-## Quick Start Guide 🚀
+## Quick Start Guide
+
+### Docker Setup
+
+For users who prefer using Docker, follow these steps:
+
+1. **Build the Docker Image**
+```bash
+docker build -t heurist-miner:latest .
+```
+2. **Run the Docker Container**
+```bash
+sudo docker run -d --gpus all \
+  -e MINER_ID_0=0xYourFirstWalletAddressHere \
+  -e MINER_ID_1=0xYourSecondWalletAddressHere \
+  -e MINER_ID_2=0xYourThirdWalletAddressHere \
+  -e LOG_LEVEL=INFO \
+  -v $HOME/.cache:/home/appuser/.cache \
+  heurist-miner:latest
+```
+
+Replace `0xYourFirstWalletAddressHere`, `0xYourSecondWalletAddressHere`, and `0xYourThirdWalletAddressHere` with your actual wallet addresses.
+
+This command:
+- Runs the container in detached mode (`-d`)
+- Allows access to all GPUs (`--gpus all`)
+- Sets environment variables for miner IDs and log level
+- Mounts a volume for persistent cache storage
+- Uses the image we just built (`heurist-miner:latest`)
+
+Note: Ensure you have the NVIDIA Container Toolkit installed for GPU support in Docker.
+
+
+### Local Setup
 
 For experienced users, here's a quick overview to get you mining:
 
@@ -105,9 +140,9 @@ python sd-miner-v1.3.1.py
 For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
 
 
-## Detailed Setup Instructions 🛠️
+## Detailed Setup Instructions
 
-### Configuring Miner ID and Identity Wallet 🆔💼
+### Configuring Miner ID and Identity Wallet
 
 Heurist Miner uses a dual-wallet system for security and reward distribution:
 
@@ -133,9 +168,9 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    ```
    Follow the prompts to create new wallets or import existing ones.
 
-## Stable Diffusion Miner Setup 🖼️
+## Stable Diffusion Miner Setup
 
-### Windows Setup 🪟
+### Windows Setup
 
 1. **Install Miniconda**:
    - Download from Miniconda website
@@ -163,7 +198,7 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    python3 sd-miner-v1.3.1.py
    ```
 
-### Linux Setup 🐧
+### Linux Setup
 
 1. **Update GPU Drivers (if necessary)**:
    ```bash
@@ -197,7 +232,7 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    python3 sd-miner-v1.3.1.py
    ```
 
-## Large Language Model Miner Setup 📚
+## Large Language Model Miner Setup
 
 ### Setup Process
 
@@ -224,11 +259,11 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
 Note: 8x7b, 34b, and 70b models may take up to an hour to load on some devices.
 
 
-## Advanced Configuration for Heurist Miners ⚙️
+## Advanced Configuration for Heurist Miners
 
-### Command Line Interface (CLI) Options 💻
+### Command Line Interface (CLI) Options
 
-#### Stable Diffusion Miner 🎨
+#### Stable Diffusion Miner
 
 When running the SD miner, you can use various CLI options to customize its behavior:
 
@@ -264,7 +299,7 @@ When running the SD miner, you can use various CLI options to customize its beha
      python3 sd-miner-v1.3.1.py --cuda-device-id 0
      ```
 
-#### Large Language Model Miner 🗣️
+#### Large Language Model Miner
 
 For LLM miner, use the following CLI options to customize its behavior:
 
@@ -301,7 +336,7 @@ For LLM miner, use the following CLI options to customize its behavior:
      ./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq --miner-id-index 1 --port 8001 --gpu-ids 1
      ```
 
-### Multiple GPU Configuration 🖥️🖥️
+### Multiple GPU Configuration
 
 To utilize multiple GPUs:
 
@@ -318,11 +353,11 @@ To utilize multiple GPUs:
 3. Run the miner without specifying a CUDA device ID to use all available GPUs.
 
 
-## Troubleshooting 🔧
+## Troubleshooting
 
 Running into issues? Don't worry, we've got you covered! Here are some common problems and their solutions:
 
-### Installation Issues 🛠️
+### Installation Issues
 
 1. 🚨 **CUDA not found**
    - Ensure CUDA is properly installed
@@ -334,7 +369,7 @@ Running into issues? Don't worry, we've got you covered! Here are some common pr
    - Ensure you're in the correct Conda environment<br>
    ✅ Solution: Create a new Conda environment and reinstall dependencies
 
-### Runtime Issues 🏃‍♂️
+### Runtime Issues 
 
 1. 🚨 **CUDA out of memory error**
    - Check available GPU memory using `nvidia-smi`
@@ -351,13 +386,13 @@ Running into issues? Don't worry, we've got you covered! Here are some common pr
    - Check disk space and internet speed<br>
    ✅ Solution: Be patient (grab a coffee! ☕), or choose a smaller model
 
-### Additional Tips 💡
+### Additional Tips
 
 - 🔍 Always check the console output for specific error messages
 - 🔄 Ensure you're using the latest version of the miner software
 - 💬 If problems persist, don't hesitate to ask for help in our Discord community!
 
-## FAQ 🤔
+## FAQ
 
 Got questions? We've got answers!
 
@@ -379,13 +414,13 @@ Got questions? We've got answers!
 6️⃣ **What if my antivirus flags the miner?** 🦠<br>
    🅰️ No worries! It's likely just being overprotective. Add an exception for our miner, or double-check you downloaded from our official GitHub. We're the good guys, promise! 😇
 
-## Support and Community 🤝
+## Support and Community
 
-### Discord Channel 💬
+### Discord Channel
 Join our lively community on Discord - it's where all the cool miners hang out!
 🔗 [Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
 
-### Reporting Issues 🐛
+### Reporting Issues
 1. 📚 Check our Troubleshooting guide and FAQ - you might find a quick fix!
 2. 🆘 Still stuck? Head over to our GitHub Issues page:
    🔗 [Heurist Miner Issues](https://github.com/heurist-network/miner-release/issues)
@@ -395,7 +430,7 @@ Join our lively community on Discord - it's where all the cool miners hang out!
    - Full error message (what alien language is it speaking?)
    - Steps to reproduce (how do we summon this bug?)
 
-### Stay in the Loop 📢
+### Stay in the Loop
 Keep up with the latest Heurist happenings:
 1. 🐙 GitHub: [Heurist Miner Releases](https://github.com/heurist-network/miner-release/releases)
 2. 📣 Discord: Tune into our #announcements channel

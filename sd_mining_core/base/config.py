@@ -16,17 +16,6 @@ class BaseConfig:
         # Parse all arguments
         args = self.parse_args()
 
-        # Update the base_dir to use HF_HOME if set, otherwise use the config value
-        hf_home = os.getenv('HF_HOME')
-        if hf_home:
-            self.base_dir = os.path.abspath(hf_home)
-        else:
-            # Keep the original base_dir setting
-            self.base_dir = os.path.expanduser(self.config['storage'].get('base_dir', '.'))
-        # Ensure the directory exists
-        os.makedirs(self.base_dir, exist_ok=True)
-        print(f"Base directory: {self.base_dir}")
-
         self.cuda_device_id = cuda_device_id
         self.num_cuda_devices = int(self.config['system'].get('num_cuda_devices', 1))
         self.log_filename = self.config['logging'].get('sd_log_filename', 'sd_miner.log')
@@ -34,7 +23,7 @@ class BaseConfig:
         self.signal_url = self.config['service']['signal_url']
         self.sd_timeout_seconds = self.config['service']['sd_timeout_seconds']
         self.s3_bucket = self.config['storage']['s3_bucket']
-        # self.base_dir = os.path.expanduser(self.config['storage'].get('base_dir', '.'))
+        self.base_dir = os.path.expanduser(self.config['storage'].get('base_dir', '.'))
         self.keys_dir = os.path.expanduser(self.config['storage'].get('keys_dir', '.'))
         self.model_config_url = self.config['model_config']['model_config_url']
         self.vae_config_url = self.config['model_config']['vae_config_url']

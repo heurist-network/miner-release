@@ -14,8 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the repository
-RUN git clone -b feature/containerize-sd-miner https://github.com/heurist-network/miner-release.git . && \
-    git checkout feature/containerize-sd-miner
+RUN git clone https://github.com/heurist-network/miner-release.git .
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -40,7 +39,7 @@ RUN useradd -m appuser && \
 USER appuser
 
 # Set up volumes
-VOLUME ["/app/models", "/home/appuser/.heurist-keys", "/home/appuser/.cache"]
+VOLUME ["/home/appuser/.heurist-keys", "/home/appuser/.cache"]
 
 # Set the entrypoint
 ENTRYPOINT ["/app/sd-miner-starter.sh"]

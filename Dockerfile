@@ -30,16 +30,11 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 COPY sd-miner-starter.sh /app/sd-miner-starter.sh
 RUN chmod +x /app/sd-miner-starter.sh
 
-# Create a non-root user and set up volumes
-RUN useradd -m appuser && \
-    mkdir -p /home/appuser/.heurist-keys /home/appuser/.cache && \
-    chown -R appuser:appuser /home/appuser/.heurist-keys /home/appuser/.cache /app
-
-# Switch to non-root user
-USER appuser
+# Create directories for root user
+RUN mkdir -p /root/.heurist-keys /root/.cache
 
 # Set up volumes
-VOLUME ["/home/appuser/.heurist-keys", "/home/appuser/.cache"]
+VOLUME ["/root/.heurist-keys", "/root/.cache"]
 
 # Set the entrypoint
 ENTRYPOINT ["/app/sd-miner-starter.sh"]

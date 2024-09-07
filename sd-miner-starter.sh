@@ -11,6 +11,8 @@ for i in {0..9}; do
     fi
 done
 
+export HF_HOME=/app/models
+
 # Update num_cuda_devices in config.toml
 sed -i "s/num_cuda_devices = .*/num_cuda_devices = $MINER_COUNT/" /app/config.toml
 

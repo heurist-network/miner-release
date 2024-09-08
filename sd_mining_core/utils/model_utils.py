@@ -8,6 +8,7 @@ import time
 from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
 from vendor.lpw_stable_diffusion_xl import StableDiffusionXLLongPromptWeightingPipeline
 from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
+from vendor.flux_4bit_inference import load_flux_model
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
@@ -36,61 +37,52 @@ def get_local_model_ids(config):
 def load_model(config, model_id):
     start_time = time.time()
 
-    # model_id may be a LoRa name. If so, we need to find the base model ID from models.json
-    lora_config = config.lora_configs.get(model_id)
-    model_config = config.model_configs.get(model_id)
+    def get_model_config(model_id):
+        lora_config = config.lora_configs.get(model_id)
+        model_config = config.model_configs.get(model_id)
+        if lora_config and model_config:
+            if 'base' not in model_config:
+                raise ValueError(f"Model configuration for {model_id} is missing the 'base' field.")
+            return model_config, model_config['base']
+        return None, model_id
 
-    if lora_config is not None and model_config is not None:
-        composite_model_config = model_config
-        if 'base' not in composite_model_config:
-            raise ValueError(f"Model configuration for {model_id} is missing the 'base' field.")
-        base_model_id = composite_model_config['base']
-    else:
-        composite_model_config = None
-        base_model_id = model_id
-
+    composite_model_config, base_model_id = get_model_config(model_id)
     base_model_config = config.model_configs.get(base_model_id)
-    if base_model_config is None:
+    if not base_model_config:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
     base_model_type = base_model_config.get('type')
-    if base_model_type is None:
+    if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
-    
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
 
-    base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
-
-    if base_model_config['type'] == "sd15":
-        pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(
-            base_model_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
-            pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
-        )
+    device = f'cuda:{config.cuda_device_id}'
+    
+    if base_model_type == "flux":
+        pipe = load_flux_model(device=device)
     else:
-        pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(
-            base_model_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
+        base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
+        PipelineClass = StableDiffusionLongPromptWeightingPipeline if base_model_type == "sd15" else StableDiffusionXLLongPromptWeightingPipeline
+        pipe = PipelineClass.from_single_file(base_model_file_path, torch_dtype=torch.float16).to(device)
+        
+        if base_model_type == "sd15":
+            pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+                pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
+            )
 
     pipe.safety_checker = None
 
     if 'vae' in base_model_config:
-        vae_name = base_model_config['vae']
-        vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
-        vae = AutoencoderKL.from_single_file(
-            vae_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
-        pipe.vae = vae
+        vae_file_path = os.path.join(config.base_dir, f"{base_model_config['vae']}.safetensors")
+        pipe.vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to(device)
 
-    if composite_model_config is not None:
-        pipe = load_lora_weights(config, pipe, base_model_config['type'], model_id)
+    if composite_model_config:
+        pipe = load_lora_weights(config, pipe, base_model_type, model_id)
 
-    end_time = time.time()
-    loading_latency = end_time - start_time
+    loading_latency = time.time() - start_time
     print(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
 
     return pipe, loading_latency

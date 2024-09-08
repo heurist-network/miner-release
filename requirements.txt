@@ -15,3 +15,6 @@ web3==6.18.0
 mnemonic==0.21
 sentencepiece==0.2.0
 prettytable==3.10.0
+hqq @ git+https://github.com/mobiusml/hqq@306e30d
+bitsandbytes==0.43.1
+

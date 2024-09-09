@@ -15,7 +15,6 @@ def get_local_model_ids(config):
     local_model_ids = []
     
     for model in config.model_configs.values():
-        print(f"model: {model}")
         model_id = model['name']
         if 'base' in model:
             base_file = model['base'] + ".safetensors"
@@ -27,8 +26,7 @@ def get_local_model_ids(config):
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                 if name_file not in local_files:
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
-        elif model_id == "Flux-Dev-4bit":
-            print(f"found flux")
+        elif model_id == "FLUX.1-dev-4bit" and model_id not in local_model_ids:
             local_model_ids.append(model_id)
         else:
             if model_id + ".safetensors" in local_files:
@@ -52,12 +50,10 @@ def load_model(config, model_id):
 
     composite_model_config, base_model_id = get_model_config(model_id)
     base_model_config = config.model_configs.get(base_model_id)
-    print(f"base_model_config: {base_model_config}")
     if not base_model_config:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
     base_model_type = base_model_config.get('type')
-    print(f"base_model_type: {base_model_type}")
     if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
     if base_model_type not in ["sd15", "sdxl10", "flux-dev-4bit"]:
@@ -68,7 +64,8 @@ def load_model(config, model_id):
     device = f'cuda:{config.cuda_device_id}'
     
     if base_model_type == "flux-dev-4bit":
-        pipe = load_flux_model(device=device)
+        pipe = load_flux_model(config, device=device)
+        
     else:
         base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
         PipelineClass = StableDiffusionLongPromptWeightingPipeline if base_model_type == "sd15" else StableDiffusionXLLongPromptWeightingPipeline
@@ -89,7 +86,7 @@ def load_model(config, model_id):
         pipe = load_lora_weights(config, pipe, base_model_type, model_id)
 
     loading_latency = time.time() - start_time
-    print(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
+    logging.info(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
 
     return pipe, loading_latency
 
@@ -133,7 +130,7 @@ def load_default_model(config):
     
     if config.specified_model_id:
         if config.specified_model_id not in model_ids:
-            print(f"Specified model ID {config.specified_model_id} not found locally. Exiting...")
+            logging.error(f"Specified model ID {config.specified_model_id} not found locally. Exiting...")
             sys.exit(1)
         default_model_id = config.specified_model_id
     else:
@@ -175,14 +172,22 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
-        kwargs = {
-            # For better/stable image quality, consider using larger height x weight values
-            'height': min(height - height % 8, config.config['processing_limits']['max_height']),
-            'width': min(width - width % 8, config.config['processing_limits']['max_width']),
-            'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
-            'guidance_scale': guidance_scale,
-            'negative_prompt': neg_prompt,
-        }
+        if model_id == "FLUX.1-dev-4bit":
+            kwargs = {
+                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+                'num_inference_steps': min(20, config.config['processing_limits']['max_iterations']),
+                'guidance_scale': guidance_scale,
+            }
+        else:
+            kwargs = {
+                # For better/stable image quality, consider using larger height x weight values
+                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+                'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
+                'guidance_scale': guidance_scale,
+                'negative_prompt': neg_prompt,
+            }
 
         if current_model == config.loaded_loras.get(model_id):
             default_weight = model_config.get('default_weight')
@@ -208,5 +213,4 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
     except Exception as e:
         err_msg = f"Error executing model {model_id}: {e}"
         logging.error(err_msg)
-        print(err_msg)
         raise

@@ -23,6 +23,37 @@ model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-mo
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
 lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora.json"
 default_sd_model_index = 1
+flux_dev_file_downloads = [
+    ".gitattributes",
+    "LICENSE.md",
+    "README.md",
+    "ae.safetensors",
+    "dev_grid.jpg",
+    "flux1-dev.safetensors",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "text_encoder_2/config.json",
+    "text_encoder_2/model-00001-of-00002.safetensors",
+    "text_encoder_2/model-00002-of-00002.safetensors",
+    "text_encoder_2/model.safetensors.index.json",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "tokenizer_2/special_tokens_map.json",
+    "tokenizer_2/spiece.model",
+    "tokenizer_2/tokenizer.json",
+    "tokenizer_2/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+]
 
 [system]
 # Make sure to increase num_cuda_devices for SD miner if your machine has multiple GPUs

@@ -176,7 +176,7 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
             kwargs = {
                 'height': min(height - height % 8, config.config['processing_limits']['max_height']),
                 'width': min(width - width % 8, config.config['processing_limits']['max_width']),
-                'num_inference_steps': min(20, config.config['processing_limits']['max_iterations']),
+                'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
                 'guidance_scale': guidance_scale,
             }
         else:

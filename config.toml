@@ -1,5 +1,5 @@
 [service]
-base_url = "http://sequencer.heurist.xyz"
+base_url = "http://sequencer-na.heurist.xyz"
 llm_url = "http://localhost"
 signal_url = "https://d2k7cjzmjgpm6p.cloudfront.net/prod"
 sd_timeout_seconds = 22

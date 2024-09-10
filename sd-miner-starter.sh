@@ -24,7 +24,7 @@ MODEL_ID=${MODEL_ID:-"FLUX.1-dev-4bit "}
 CUDA_DEVICE_ID=${CUDA_DEVICE_ID:-""}
 
 # Construct the command
-CMD="python3 sd-miner-v1.3.1.py --log-level $LOG_LEVEL"
+CMD="python3 sd-miner.py --log-level $LOG_LEVEL"
 
 # Add optional flags
 [ "$AUTO_CONFIRM" = "yes" ] && CMD="$CMD --auto-confirm yes"

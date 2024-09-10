@@ -1,308 +1,445 @@
 # ⚙️ Heurist Miner Setup Guide
+## Table of Contents
+1. [Introduction](#introduction)
+2. [System Requirements](#system-requirements)
+3. [Quick Start Guide](#quick-start-guide)
+   - [Docker Setup](#docker-setup)
+   - [Local Setup](#local-setup)
+4. [Detailed Setup Instructions](#detailed-setup-instructions)
+   - [Configuring Miner ID and Identity Wallet](#configuring-miner-id-and-identity-wallet)
+   - [Stable Diffusion Miner Setup](#stable-diffusion-miner-setup)
+     - [Windows Setup](#windows-setup)
+     - [Linux Setup](#linux-setup)
+   - [Large Language Model Miner Setup](#large-language-model-miner-setup)
+5. [Advanced Configuration](#advanced-configuration)
+   - [Command Line Interface (CLI) Options](#command-line-interface-cli-options)
+     - [Stable Diffusion Miner](#stable-diffusion-miner)
+     - [Large Language Model Miner](#large-language-model-miner)
+   - [Multiple GPU Configuration](#multiple-gpu-configuration)
+6. [Troubleshooting](#troubleshooting)
+7. [FAQ](#faq)
+8. [Support and Community](#support-and-community)
 
-Welcome to the Heurist Miner setup guide. This document is designed to help you get started with the Heurist Miner, a tool for participating in the Heurist testnet mining program. Whether you're a seasoned miner or new to cryptocurrency mining, we've structured this guide to make the setup process as straightforward as possible.
+## Introduction
 
-## 📖 Introduction
+Welcome to the Heurist Miner, the entrance to decentralized generative AI. Whether you have a high-end gaming PC with NVIDIA GPU or you're a datacenter owner ready to explor the world of AI and cryptocurrency, this guide will help you get started on an exciting journey!
 
-Heurist Miner allows users to contribute to the Heurist network by performing AI inference tasks in exchange for rewards. This guide will take you through the necessary steps to set up your mining operation.
+### What is Heurist Miner? 🤔
 
-For curious readers to learn more about the hardware requirements for AI inference, read [Heurist's Guide to AI article](https://heuristai.medium.com/heurists-guide-to-ai-beginner-s-series-part-2-db77458a62dd).
+Heurist Miner allows you to contribute your GPU to perform AI inference tasks on the Heurist network. By running this miner, you'll earn rewards by hosting AI models and supporting various applications in Heurist ecosystem. 😎
 
-## 🚀 Quick Start Guide
+### Key Features ✨
 
-For those eager to dive in, here's a quick overview of the setup process:
+- 🖼️ **Dual Mining Capabilities**: Support for both image generation models and Large Language Models.
+- 🖥️ **Flexible Setup**: Run on Windows or Linux, with support for multiple GPUs.
+- 🔐 **Secure Rewards**: Utilizes a dual-wallet system for enhanced security.
+- 🌐 **Open Source**: The code is fully open and transparant. Download and run with ease.
 
-1. Check system requirements and compatibility notes.
-2. Configure your Miner ID(s).
-3. Generate or import identity wallets.
-4. Install necessary software (CUDA, Python).
-5. Choose your setup: Windows or Linux guide.
-6. Install miner scripts and dependencies.
-7. Run the miner program.
+## System Requirements
 
-## ⚠️ Important Notices
+Before you begin, ensure your system meets the following requirements:
 
-- **Preview Version**: You're working with a preview version of the Heurist Miner. Expect some bumps along the way. For assistance, join [Heurist Discord #miner-chat channel]( https://discord.com/channels/1183784452674039919/1203508038246600744)
-- **System Requirements**: Advanced users may skip steps they've already completed, but compatibility checks are recommended.
-- **CUDA Compatibility**: CUDA versions 12.1 or 12.2 are advised for compatibility with PyTorch.
+### Hardware 🖥️
+- **GPU**: NVIDIA GPU with at least 12GB VRAM (24GB+ recommended for optimal performance) 🎮
+- **CPU**: Multi-core processor (4+ cores recommended) 💻
+- **RAM**: 16GB+ system RAM 🧠
+- **Storage**: At least 50GB free space (NVMe recommended for faster model loading) 💽
 
-## 🛠️ Detailed Setup Guides
+### Software 💾
+- **Operating System**: 
+  - Windows 10/11 (64-bit) 🪟
+  - Linux (Ubuntu 20.04 LTS or later recommended) 🐧
+- **CUDA**: Version 12.1, or 12.2 🚀
+- **Python**: Version 3.10 or 3.11 🐍
+- **Git**: For cloning the repository 📦
 
-### Pre-setup Recommendations
+### Network 🌐
+- Stable internet connection (100 Mbps+ recommended) 🔌
+- Ability to access HuggingFace and GitHub repositories 🔓
 
-- Python Installation: If Python 3.x is already installed on your system, you may not need to reinstall Miniconda and Python. However, managing dependencies via a Conda environment is recommended.
-- CUDA Installation: For those with CUDA pre-installed, ensure that the PyTorch version (`pytorch-cuda`) installed matches your CUDA version.
+### Additional Notes ℹ️
+- Some models (especially larger LLMs) may require more VRAM. Check the model-specific requirements in the detailed setup sections. 📊
+- Ensure your system is up-to-date with the latest NVIDIA GPU drivers. 🔄
+- Stable Diffusion models need at least 8-10GB VRAM, while LLMs can require 16GB to 40GB+ depending on the model size. 📈
 
-### Authentication
+## Quick Start Guide
 
-To prevent impersonation, every miner should have a pair of wallets.
+### Docker Setup
 
-- Identity wallet: It should not hold any funds. The private key should be stored in the miner locally. The wallet is generated by script `auth/generator.py`.
+For users who prefer using Docker, follow these steps:
 
-- Reward wallet (Miner ID): It is the wallet to receive points. It may hold NFT to boost the rewards. The address is shared publicly.
-
-We use a Soul-Bound Token (SBT) to store 1:1 relationship between an identity wallet and a reward wallet. The SBT contract is currently active on the zkSync Era testnet and can be found at [here](https://sepolia.explorer.zksync.io/address/0x7798de1aE119b76037299F9B063e39760D530C10). It will be migrated to zkSync mainnet in the future. The identity-reward wallet binding is established automatically after your miner processes some jobs.
-
-Each miner request must be accompanied by a signature from the identity wallet to prevent unauthorized actions.
-
-### Configuring Your Miner ID and Identity Wallet
-
-#### 1. **Setting Up Environment Variables**
-- **Create a `.env` File:** In the root of your `miner-release` directory, create a file named `.env`. This will store the miner IDs for your operation, formatted as shown in the provided `env.example`.
-
-#### 2. **Assigning Miner IDs**
-- **Ethereum Addresses as IDs:** In the `.env` file, assign an Ethereum wallet address as a miner ID for each GPU. These IDs are essential for tracking contributions and ensuring accurate reward distribution. If using multiple GPUs, assign each a unique or common address depending on your preference.
-- **Add Custom Tags:** Enhance monitoring by adding a suffix to your miner ID. This allows for individual performance tracking of GPUs.
-
-  **Default Tags Example:**
-  ```plaintext
-  MINER_ID_0=0xYourFirstWalletAddressHere
-  MINER_ID_1=0xYourSecondWalletAddressHere
-  ```
-
-  **Custom Tags Example:**
-  ```plaintext
-  MINER_ID_0=0xYourFirstWalletAddressHere-GamingPC4090
-  MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
-  ```
-
-#### 3. **Configuring GPU Usage**
-- **Adjust GPU Settings:** For operations using multiple GPUs, set `num_cuda_devices` in `config.toml` to match the total GPUs reflected by the miner IDs in your `.env` file.
-
-#### 4. **Managing Identity Wallets**
-- **Configuring the Virtual Environment:** For SD miners, the `gpu-3-11` conda environment is pre-configured. Ensure you activate this environment and rerun `pip install -r requirements` to install any new dependencies required for authentication. For LLM miners, the initialization script manages this setup automatically.
-- **Creating New Wallets:** Run `python3 ./auth/generator.py` if no identity wallet exists for a miner ID. This script generates a new wallet for each miner ID.
-- **Existing Wallets on Another Machine:** If your identity wallet was created elsewhere, run `python3 ./auth/generator.py` and enter the seed phrase when prompted. Alternatively, manually place the wallet file in the `~/.heurist-keys` directory.
-
-#### 5. **Operating Different Miners on the Same GPU**
-- **Sequential Startup:** If using both LLM Miner and SD Miners on the same GPU, start the LLM Miner first to prevent load failures, then proceed with starting the SD Miner.
-
-<details>
-<summary><b>Stable Diffusion Miner Guide (Windows)</b></summary>
-
-#### Step 1. (Optional) Update GPU drivers
-
-1. Go to the [NVIDIA Driver Downloads](https://www.nvidia.com/Download/index.aspx) page.
-
-2. Select your GPU model and OS.
-
-3. Download and install the latest driver. Restart your PC if necessary.
-
-#### Step 2. Install Miniconda
-
-1. Download the Miniconda Installer. 
-- Visit the [Miniconda Downloads page](https://docs.conda.io/projects/miniconda/en/latest/). 
-- Get the latest Windows 64-bit version for Python 3.11.
-conda activate pytorch-gpu-python-3-10.
-#### Step 3. Create a Conda Environment
-
-1. Open a command prompt (Win + X > “Command Prompt”).
-
-2. Create the Environment:
-- Type `conda create --name gpu-3-11 python=3.11` (or choose your Python version).
-- Press Enter and wait for the process to finish.
-
-3. Activate the Environment
-- Type `conda activate gpu-3-11`
-
-#### Step 4: Install CUDA Toolkit
-1. Download and Install CUDA:
-- Visit the [CUDA Toolkit 12.1 download page](https://developer.nvidia.com/cuda-12-1-0-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local).
-- Select your OS version.
-- Download and install it by following the prompts.
-
-#### Step 5: Install PyTorch with GPU Support
-1. Go to the [PyTorch Install Page](https://pytorch.org/get-started/locally/).
-- Set Your Preferences: Choose PyTorch, Conda, CUDA 12.1
-- Install PyTorch: Copy the generated command (like `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`). Paste it in the Command Prompt and hit Enter.
-
-#### Step 6: Download Miner Scripts
-1. Run `git clone https://github.com/heurist-network/miner-release` in command prompt. Or Click "Code -> Download ZIP" in this [Github repo - miner-release](https://github.com/heurist-network/miner-release) to download miner scripts.
-
-#### Step 7: Install Dependencies from `requirements.txt`
-
-1. Open Your Command Prompt
-- Make sure you're still in your Conda environment. If not, activate it again with `conda activate gpu-3-11`
-
-2. Navigate to `miner-release` folder
-- Use the cd command to change directories to where `requirements.txt` is located. For example, `cd C:\Users\YourUsername\Documents\miner-release`.
-
-3. Install Dependencies:
-- Run the command `pip install -r requirements.txt`. This command tells pip (Python's package installer) to install all the packages listed in your requirements.txt file.
-
-#### Step 8. Configuring Your Miner ID with a .env File
-See the top of this guide.
-
-#### Step 9. Run the miner program
-1. Run `python3 sd-miner-v1.x.x.py` (select the latest version of file) in Conda environment command prompt.
-
-2. Type `yes` when the program prompts you to download model files. It will take a while to download all models. The program will start processing automatically once it completes downloading.
-
-#### Step 10. (Optional) Enhancing Your Mining Experience with CLI Options
-To optimize and customize your mining operations, you can utilize the following command line interface (CLI) options when starting the miner:
-
-#### `--log-level`
-Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
-#### `--auto-confirm`
-Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
-#### `--exclude-sdxl`
-Exclude SDXL models. Recommended for Laptop GPUs, 3060, 4060, or if you are running LLM miner alongside SD miner on a same GPU, or if your available VRAM is less than 10GB. SDXL models consumes more resources (and they also earn more rewards). Turning it off will prevent performance issues or crashes on slower GPUs.
-
-**Usage Example:**
-
-To enable debug-level logging and auto-confirm:
+1. **Build the Docker Image**
 ```bash
-python sd-miner.py --log-level DEBUG --auto-confirm yes
+docker build -t heurist-miner:latest .
+```
+2. **Run the Docker Container**
+
+Single GPU:
+
+```bash
+sudo docker run -d --gpus all \
+  -e MINER_ID_0=0xWalletAddressHere \
+  -e LOG_LEVEL=INFO \
+  -v $HOME/.cache:/home/appuser/.cache \
+  heurist-miner:latest
 ```
 
-To exclude SDXL models:
+Replace `0xYourtWalletAddressHere` with your wallet address to receive rewards.
+
+Multiple GPUs:
+
 ```bash
-python sd-miner.py --exclude-sdxl
+sudo docker run -d --gpus all \
+  -e MINER_ID_0=0xYourFirstWalletAddressHere \
+  -e MINER_ID_1=0xYourSecondWalletAddressHere \
+  -e MINER_ID_2=0xYourThirdWalletAddressHere \
+  -e LOG_LEVEL=INFO \
+  -v $HOME/.cache:/home/appuser/.cache \
+  heurist-miner:latest
 ```
 
-Congratulations! 🌟 You're now set to serve image generation requests. You don't need to keep it up 24/7. Feel free to close the program whenever you need your GPU like playing video games or streaming videos.
+Replace `0xYourFirstWalletAddressHere`, `0xYourSecondWalletAddressHere`, and `0xYourThirdWalletAddressHere` with your actual wallet addresses.
 
-</details>
+This command:
+- Runs the container in detached mode (`-d`)
+- Allows access to all GPUs (`--gpus all`)
+- Sets environment variables for miner IDs and log level
+- Mounts a volume for persistent cache storage
+- Uses the image we just built (`heurist-miner:latest`)
 
-<details>
-<summary><b>Stable Diffusion Miner Guide (Linux)</b></summary>
-This guide assumes you're familiar with the terminal and basic Linux commands. Most steps are similar to the Windows setup, with adjustments for Linux-specific commands and environments.
+Note: Ensure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed for GPU support in Docker.
 
-- Python Installation: If Python 3.x is already installed, you can skip the Miniconda installation. However, using Miniconda or Conda to manage dependencies is still recommended.
-- CUDA: If CUDA is previously installed, ensure the PyTorch installation matches your CUDA version.
+### Local Setup
 
-### Step 1. Update GPU drivers (Optional)
-- Use your Linux distribution's package manager or download drivers directly from the [NVIDIA Driver Downloads](https://www.nvidia.com/Download/index.aspx). For Ubuntu, you might use commands like `sudo apt update` and `sudo ubuntu-drivers autoinstall`.
+For experienced users, here's a quick overview to get you mining:
 
-### Step 2. Install Miniconda or Conda (Optional)
-- Download the Miniconda installer for Linux from the [Miniconda Downloads page](https://docs.anaconda.com/free/miniconda/).
-- Use the command line to run the installer.
-  
-### Step 3. Create a Conda Environment
-- Open a terminal.
-- Create a new environment with `conda create --name gpu-3-11 python=3.11`.
-- Activate the environment using `conda activate gpu-3-11`.
-
-### Step 4: Install CUDA Toolkit
-- Install CUDA from the [CUDA Toolkit download page](https://developer.nvidia.com/cuda-12-1-0-download-archive) appropriate for your Linux distribution. Follow the installation instructions provided on the NVIDIA website.
-
-### Step 5: Install PyTorch with GPU Support
-- Visit the [PyTorch installation guide](https://pytorch.org/get-started/locally/), set preferences for Linux, Conda, and the appropriate CUDA version.
-- Use the provided command in the page, such as `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`, in your terminal.
-
-### Step 6: Download Miner Scripts
-- Use Git to clone the miner scripts repository with `git clone https://github.com/heurist-network/miner-release`. Alternatively, download the ZIP from the GitHub page and extract it.
-  
-### Step 7: Install Dependencies from requirements.txt
-- Ensure you're in the Conda environment (`conda activate gpu-3-11`).
-- Navigate to the miner-release directory.
-- Install dependencies with `pip install -r requirements.txt`.
-
-### Step 8. Configure your Miner ID
-Use `.env` in the miner-release folder to set a unique miner_id for each GPU. (See the top of this guide. This is very important for tracking your contribution!)
-
-### Step 9. Run the miner program
-- Execute the miner script with `python3 sd-miner-v1.x.x.py` (select the latest version) in your terminal. Agree to download model files when prompted.
-
-### Step 10. (Optional) Enhancing Your Mining Experience with CLI Options
-To optimize and customize your mining operations, you can utilize the following command line interface (CLI) options when starting the miner:
-
-#### `--log-level`
-Control the verbosity of the miner's log messages by setting the log level. Available options are `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, and `CRITICAL`.
-#### `--auto-confirm`
-Automate the download confirmation process, especially useful in automated setups. Use `yes` to auto-confirm or stick with `no` (default) for manual confirmation.
-#### `--exclude-sdxl`
-Exclude SDXL models. Recommended for Laptop GPUs, 3060, 4060, or if you are running LLM miner alongside SD miner on a same GPU, or if your available VRAM is less than 10GB. SDXL models consumes more resources (and they also earn more rewards). Turning it off will prevent performance issues or crashes on slower GPUs.
-
-**Usage Example:**
-
-To enable debug-level logging and auto-confirm:
+1. **Clone the Repository**
 ```bash
-python sd-miner.py --log-level DEBUG --auto-confirm yes
+git clone https://github.com/heurist-network/miner-release.git
+cd miner-release
+```
+2. **Set Up Environment**
+- Install Miniconda (if not already installed)
+- Create and activate a new conda environment:
+```bash
+conda create --name heurist-miner python=3.11
+conda activate heurist-miner
+```
+3. **Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
+4. **Configure Miner ID**
+- Create a `.env` file in the root directory
+- Add your Ethereum wallet address:
+```bash
+MINER_ID_0=0xYourWalletAddressHere
 ```
 
-To exclude SDXL models:
+Follow "Multiple GPU Configuration" section if you have multiple GPUs.
+
+5. **Choose Your Miner**
+- For Stable Diffusion:
 ```bash
-python sd-miner.py --exclude-sdxl
+python sd-miner.py
 ```
-  
-### Additional Linux-Specific Tips:
-- Use `screen` or `tmux` to keep the miner running in the background, especially when connected via SSH.
-
-</details>
-
-<details>
-<summary><b>Large Language Model Miner Guide</b></summary>
-
-We use [vLLM](https://docs.vllm.ai/en/latest/), a fast and easy-to-use library for LLM inference and serving. We have only tested the miner program on Linux.
-
-### Prerequisites
-- Make sure you have CUDA driver installed. We recommend using NVIDIA drivers with CUDA version 12.1 or 12.2. Other versions may probably work fine. Use `nvidia-smi` command to check CUDA version.
-- You need enough disk space. You can find model size in [heurist-models repo](https://github.com/heurist-network/heurist-models/blob/main/models.json). Use `df -h` to see available disk space.
-- You must be able to access [HuggingFace](https://huggingface.co/) from internet.
-
-### Select a Model ID
-LLMs typically consume a large amount of VRAM (Video Memory) of your GPU. Larger models have higher VRAM requirements and also have higher rewards. Read [Miner Guide Docs](https://docs.heurist.ai/guides/miner-guide) to choose a model that fits your hardware.
-
-### Run the Setup Script
+- For LLM:
 ```bash
-chmod +x llm-miner-starter.sh
-./llm-miner-starter.sh <model_id> --miner-id-index 0 --port 8000 --gpu-ids 0
+./llm-miner-starter.sh <model_id>
 ```
+For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
 
-`model_id` is mandatory. For example, `openhermes-2.5-mistral-7b-gptq` is the smallest model that we support. It requires 12GB VRAM.
 
-#### Meaning of Optional CLI arguments
-- `--miner-id-index` specifies the index of miner_id in `.env` file to use. Default is 0 (using the first address configured)
-- `--port` specifies the port to communicate with vLLM process. Default is 8000. Change this if this port is occupied.
-- `--gpu-ids` specifies the GPU ID to use. Default is 0. Change this if you have multiple GPUs and want to use a different one.
+## Detailed Setup Instructions
 
-#### Example startup command
+### Configuring Miner ID and Identity Wallet
 
-To use default options:
-```bash
-./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq
-```
+Heurist Miner uses a dual-wallet system for security and reward distribution:
 
-To use the second address with custom port and GPU ID
-```bash
-./llm-miner-starter.sh openhermes-2.5-mistral-7b-gptq --miner-id-index 1 --port 8001 --gpu-ids 1
-```
+1. **Identity Wallet**: Used for authentication, stored locally. Do not store funds here.
+2. **Reward Wallet (Miner ID)**: Receives points, Heurist Token rewards, potential ecosystem benefits.
 
-### If you have trouble downloading
-The first time that the miner program starts up will take a long time because it needs to download the model file. You should see progress bars in the command line output. Models are saved in `$HOME/.cache/huggingface` by default. If download progress is interrupted or throws an error, press "Ctrl+C" to stop the starter script and retry. If it's still stuck, delete `$HOME/.cache/huggingface` and try again.
+#### Setting Up Your Wallets
 
-### If you are running 8x7b or 34b or 70b model
-We notice that 8x7b, 34b, 70b model loading might take very long time (up to 1 hour) on some devices. If you keep seeing "Model is not ready" and if you don't see any error during downloading, you should wait for some more time.
+1. Create a `.env` file in the root directory of your miner installation.
+2. Add your Ethereum wallet address(es) as Miner ID(s):
+   ```
+   MINER_ID_0=0xYourFirstWalletAddressHere
+   MINER_ID_1=0xYourSecondWalletAddressHere
+   ```
+3. (Optional) Add custom tags for tracking:
+   ```
+   MINER_ID_0=0xYourFirstWalletAddressHere-GamingPC4090
+   MINER_ID_1=0xYourSecondWalletAddressHere-GoogleCloudT4
+   ```
+4. Generate or import identity wallets:
+   ```bash
+   python3 ./auth/generator.py
+   ```
+   Follow the prompts to create new wallets or import existing ones.
 
-### Reference table demonstrating model id and vram usage
-| Model ID | VRAM Usage (GB) |
-|----------|-----------------|
-| openhermes-2.5-mistral-7b-gptq  | 10               |
-| mistralai/mistral-7b-instruct-v0.2       | 15               |
-| openhermes-2-pro-mistral-7b     | 15               |
-| (recommended) dolphin-2.9-llama3-8b     | 17               |
-| mistralai/mixtral-8x7b-instruct-v0.1 | 28               | 
-| (recommended) openhermes-mixtral-8x7b-gptq | 28        |
-| openhermes-2-yi-34b-gptq       | 37               |
-| meta-llama/llama-2-70b-chat              | 41               |
+## Stable Diffusion Miner Detailed Setup
 
-</details>
+### Windows Setup
 
-## ❓ Troubleshooting and FAQs
+1. **Install Miniconda**:
+   - Download from Miniconda website
+   - Choose the latest Windows 64-bit version for Python 3.11
+2. **Create Conda Environment**:
+   ```bash
+   conda create --name gpu-3-11 python=3.11
+   conda activate gpu-3-11
+   ```
+3. **Install CUDA Toolkit**:
+   - Download CUDA 12.1 from NVIDIA website
+   - Follow the installation prompts
+4. **Install PyTorch with GPU Support**:
+   ```bash
+   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+   ```
+5. **Clone Miner Repository and Install Dependencies**:
+   ```bash
+   git clone https://github.com/heurist-network/miner-release
+   cd miner-release
+   pip install -r requirements.txt
+   ```
+6. **Run the Miner**:
+   ```bash
+   python3 sd-miner.py
+   ```
 
-## General Questions
+### Linux Setup
 
-**Q: Can I run LLM miner on Windows?** 
+1. **Update GPU Drivers (if necessary)**:
+   ```bash
+   sudo apt update
+   sudo ubuntu-drivers autoinstall
+   ```
+2. **Install Miniconda**:
+   ```bash
+   wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   bash Miniconda3-latest-Linux-x86_64.sh
+   ```
+3. **Create Conda Environment**:
+   ```bash
+   conda create --name gpu-3-11 python=3.11
+   conda activate gpu-3-11
+   ```
+4. **Install CUDA Toolkit**:
+- Follow instructions on NVIDIA CUDA Installation Guide
+5. **Install PyTorch with GPU Support**:
+   ```bash
+   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+   ```
+6. **Clone Miner Repository and Install Dependencies**:
+   ```bash
+   git clone https://github.com/heurist-network/miner-release
+   cd miner-release
+   pip install -r requirements.txt
+   ```
+7. **Run the Miner**:
+   ```bash
+   python3 sd-miner.py
+   ```
 
-**A:** You may run the miner program with WSL, but we haven't tested it yet. There may be unexpected issues.
+## Large Language Model Miner Detailed Setup
 
-## Technical Issues
+### Setup Process
 
-**Q: Why do I see "Model is not ready. Waiting for LLM Server to finish loading the model to start."?**  
+1. **Ensure CUDA Driver is Installed**:
+   - Check with `nvidia-smi`
+2. **Select a Model ID**:
+   - Choose based on your GPU's VRAM capacity
+   - Example models:
+     - `dolphin-2.9-llama3-8b` (24GB VRAM)
+     - `openhermes-mixtral-8x7b-gptq` (40GB VRAM)
+3. **Run the Setup Script**:
+   ```bash
+   chmod +x llm-miner-starter.sh
+   ./llm-miner-starter.sh <model_id> --miner-id-index 0 --port 8000 --gpu-ids 0
+   ```
+   Options:
+- `--miner-id-index`: Index of miner_id in `.env` (default: 0)
+- `--port`: Port for vLLM process (default: 8000)
+- `--gpu-ids`: GPU ID to use (default: 0)
+4. **Wait for Model Download**:
+- First run will download the model (can take time)
+- Models are saved in `$HOME/.cache/huggingface`
 
-**A:** It takes some time to download and load model files before it starts serving requests. Please confirm the downloading progress bar is showing up. Otherwise, it may indicate that your internet is having issues connecting to HuggingFace where the model files are stored. We plan to host the model at a different location soon.
+Note: 8x7b, 34b, and 70b models may take up to an hour to load on some devices.
 
-**Q: Why do I see "CUDA out of memory error"?**  
 
-**A:** Use `nvidia-smi` to see available memory. Check if there are any other processes using the GPU. Confirm that your available GPU memory satisfies the minimum requirement for the model. If you have multiple GPUs, make sure you configure `--gpu-ids` to specify a GPU with sufficient free VRAM.
+## Advanced Configuration for Heurist Miners
+
+### Command Line Interface (CLI) Options
+
+#### Stable Diffusion Miner
+
+When running the SD miner, you can use various CLI options to customize its behavior:
+
+1. **Log Level**
+   - Set the verbosity of log messages:
+     ```bash
+     python3 sd-miner.py --log-level DEBUG
+     ```
+   - Options: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
+
+2. **Auto-Confirm**
+   - Automatically confirm model downloads:
+     ```bash
+     python3 sd-miner.py --auto-confirm yes
+     ```
+   - Options: yes, no (default: no)
+
+3. **Exclude SDXL**
+   - Exclude SDXL models to reduce VRAM usage:
+     ```bash
+     python3 sd-miner.py --exclude-sdxl
+     ```
+
+4. **Specify Model ID**
+   - Run the miner with a specific model:
+     ```bash
+     python3 sd-miner.py --model-id <model_id>
+     ```
+
+5. **CUDA Device ID**
+   - Specify which GPU to use:
+     ```bash
+     python3 sd-miner.py --cuda-device-id 0
+     ```
+
+#### Large Language Model Miner
+
+For LLM miner, use the following CLI options to customize its behavior:
+
+1. **Specify Model ID**
+   - Run the miner with a specific model (mandatory):
+     ```bash
+     ./llm-miner-starter.sh <model_id>
+     ```
+   - Example: `dolphin-2.9-llama3-8b` (requires 24GB VRAM)
+
+2. **Miner ID Index**
+   - Specify which miner ID from the `.env` file to use:
+     ```bash
+     ./llm-miner-starter.sh <model_id> --miner-id-index 1
+     ```
+   - Default: 0 (uses the first address configured)
+
+3. **Port**
+   - Set the port for communication with the vLLM process:
+     ```bash
+     ./llm-miner-starter.sh <model_id> --port 8001
+     ```
+   - Default: 8000
+
+4. **GPU IDs**
+   - Specify which GPU(s) to use:
+     ```bash
+     ./llm-miner-starter.sh <model_id> --gpu-ids 1
+     ```
+   - Default: 0
+
+   - Example combining multiple options:
+     ```bash
+     ./llm-miner-starter.sh dolphin-2.9-llama3-8b --miner-id-index 1 --port 8001 --gpu-ids 1
+     ```
+
+### Multiple GPU Configuration
+
+To utilize multiple GPUs:
+
+1. Assign unique Miner IDs in your `.env` file:
+   ```
+   MINER_ID_0=0xWalletAddress1
+   MINER_ID_1=0xWalletAddress2
+   ```
+2. Set `num_cuda_devices` in `config.toml`:
+   ```toml
+   [system]
+   num_cuda_devices = 2
+   ```
+3. Run the miner without specifying a CUDA device ID to use all available GPUs.
+
+
+## Troubleshooting
+
+Running into issues? Don't worry, we've got you covered! Here are some common problems and their solutions:
+
+### Installation Issues
+
+1. 🚨 **CUDA not found**
+   - Ensure CUDA is properly installed
+   - Check if the CUDA version matches PyTorch requirements<br>
+   ✅ Solution: Reinstall CUDA or update PyTorch to match your CUDA version
+
+2. 🚨 **Dependencies installation fails**
+   - Check your Python version (should be 3.10 or 3.11)
+   - Ensure you're in the correct Conda environment<br>
+   ✅ Solution: Create a new Conda environment and reinstall dependencies
+
+### Runtime Issues 
+
+1. 🚨 **CUDA out of memory error**
+   - Check available GPU memory using `nvidia-smi`
+   - Stop other programs occupying VRAM, or use a smaller model<br>
+   ✅ Solution: Add `--exclude-sdxl` flag for SD miner or choose a smaller LLM
+
+2. 🚨 **Miner not receiving tasks**
+   - Check your internet connection
+   - Verify your Miner ID is correctly set in the `.env` file<br>
+   ✅ Solution: Restart the miner and check logs for connection issues
+
+3. 🚨 **Model loading takes too long**
+   - This is normal for large models, especially on first run
+   - Check disk space and internet speed<br>
+   ✅ Solution: Be patient (grab a coffee! ☕), or choose a smaller model
+
+### Additional Tips
+
+- 🔍 Always check the console output for specific error messages
+- 🔄 Ensure you're using the latest version of the miner software
+- 💬 If problems persist, don't hesitate to ask for help in our Discord community!
+
+## FAQ
+
+Got questions? We've got answers!
+
+1️⃣ **Can I run both SD and LLM miners simultaneously?** 🖥️🖥️<br>
+   🅰️ Absolutely! Just make sure you have enough GPU memory and use different CUDA device IDs.
+
+2️⃣ **How do I know if I'm earning rewards?** 💰<br>
+   🅰️ Keep an eye on your miner logs for successful task completions. We're tracking your rewards behind the scenes, and updates should be reflected on https://heurist.ai/portal within minutes.
+
+3️⃣ **What's the difference between Identity Wallet and Reward Wallet?** 🎭💼<br>
+   🅰️ Think of the Identity Wallet as your miner's passport (for authentication), and the Reward Wallet (Miner ID) as its piggy bank (for receiving points and rewards).
+
+4️⃣ **Can I use my gaming PC for mining when I'm not gaming?** 🎮➡️💻<br>
+   🅰️ Yes! Just remember to pause mining before starting the games. Your GPU can't be in two places at once!
+
+5️⃣ **How often should I update the miner software?** 🔄<br>
+   🅰️ Stay tuned to our Discord miner-announcement channel and GitHub for the latest updates. We recommend updating whenever a new version drops.
+
+## Support and Community
+
+### Discord Channel
+Join our lively community on Discord - it's where all the cool miners hang out!
+🔗 [Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
+
+### Reporting Issues
+1. 📚 Check our Troubleshooting guide and FAQ - you might find a quick fix!
+2. 🆘 Still stuck? Head over to our GitHub Issues page:
+   🔗 [Heurist Miner Issues](https://github.com/heurist-network/miner-release/issues)
+3. 📝 When reporting, remember to include:
+   - Miner version
+   - Model
+   - Operating System
+   - Console error messages and log files
+   - Steps to reproduce
+
+### Stay in the Loop
+Keep up with the latest Heurist happenings:
+1. 📖 Medium: [Heurist Blogs](https://medium.com/@heuristai)
+2. 📣 Discord: Tune into our #miner-announcements channel
+3. 🐦 X/Twitter: Follow [Heurist](https://x.com/heurist_ai) for the latest updates

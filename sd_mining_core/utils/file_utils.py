@@ -20,30 +20,18 @@ def download_flux_dev_file(url, local_path):
     print(f"Downloaded: {url} -> {local_path}")
 
 def download_flux_dev(base_dir, original_file_url, flux_dev_file_downloads):
-    print("Downloading flux-dev model")
-    print("Original file_url:", original_file_url)
-
     local_dir = os.path.join(base_dir, "FLUX.1-dev")
     os.makedirs(local_dir, exist_ok=True)
-    print("local_dir:", local_dir)
 
     for file in flux_dev_file_downloads:
         try:
             file_url = original_file_url + file  # Reset file_url for each file
             local_file_path = os.path.join(local_dir, file)
-            print(f"Attempting to download: {file}")
-            print("local_file_path:", local_file_path)
             local_file_dir = os.path.dirname(local_file_path)
-            
             os.makedirs(local_file_dir, exist_ok=True)
-            
             download_flux_dev_file(file_url, local_file_path)
-            print(f"Successfully downloaded: {file}")
         except Exception as e:
             print(f"Error downloading {file}: {str(e)}")
-
-    print("Finished downloading flux-dev model files")
-
 
 def download_file(base_dir, file_url, file_name):
     try:
@@ -76,7 +64,6 @@ def download_file(base_dir, file_url, file_name):
         logging.error(f"Unexpected error downloading {file_name}: {e}")
 
 def fetch_and_download_config_files(config):
-    print("config.flux_dev_file_downloads",config.flux_dev_file_downloads)
     try:
         # Fetch configurations
         models = requests.get(config.model_config_url, timeout=30).json()

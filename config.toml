@@ -67,8 +67,8 @@ signal_interval = 600
 
 [processing_limits]
 max_iterations = 50
-max_width = 1024
-max_height = 1024
+max_width = 2048
+max_height = 2048
 # Limit on the concurrent requests for LLM miner. Actual running requests may go over. Higher concurrency results in higher throughput but longer latency
 concurrency_soft_limit = 5
 

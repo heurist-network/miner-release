@@ -76,7 +76,7 @@ def fetch_and_download_config_files(config):
             if 'type' in model and (
                 'sd' in model['type'] or 
                 model['type'].startswith('composite') or
-                model['type'] == 'flux-dev-4bit'
+                model['type'] == 'flux-dev'
             ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
         }
 
@@ -93,7 +93,7 @@ def fetch_and_download_config_files(config):
         total_size = 0
         files_to_download = []
         for model in chain(config.model_configs.values(), config.lora_configs.values()):
-            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora', 'flux-dev-4bit']):
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora', 'flux-dev']):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
@@ -129,11 +129,11 @@ def fetch_and_download_config_files(config):
         print("files_to_download: ",files_to_download)
         for i, model in enumerate(files_to_download, 1):
             print("i,model: ",i,model)
-            if model["name"] != "FLUX.1-dev-4bit":
+            if model["name"] != "FLUX.1-dev":
                 print(f"Downloading file {i}/{len(files_to_download)}")
                 download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors")
             else: 
-                print(f"downloading flux dev 4bit: {len(config.flux_dev_file_downloads)} files")
+                print(f"downloading flux dev: {len(config.flux_dev_file_downloads)} files")
                 download_flux_dev(config.base_dir, model['file_url'],config.flux_dev_file_downloads)
             
     except requests.exceptions.ConnectionError as ce:

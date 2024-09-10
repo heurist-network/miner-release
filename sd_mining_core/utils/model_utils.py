@@ -26,7 +26,7 @@ def get_local_model_ids(config):
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                 if name_file not in local_files:
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
-        elif model_id == "FLUX.1-dev-4bit" and model_id not in local_model_ids:
+        elif model_id == "FLUX.1-dev" and model_id not in local_model_ids:
             local_model_ids.append(model_id)
         else:
             if model_id + ".safetensors" in local_files:
@@ -56,14 +56,14 @@ def load_model(config, model_id):
     base_model_type = base_model_config.get('type')
     if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10", "flux-dev-4bit"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux-dev"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
 
     device = f'cuda:{config.cuda_device_id}'
     
-    if base_model_type == "flux-dev-4bit":
+    if base_model_type == "flux-dev":
         pipe = load_flux_model(config, device=device)
         
     else:
@@ -172,7 +172,7 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
-        if model_id == "FLUX.1-dev-4bit":
+        if model_id == "FLUX.1-dev":
             kwargs = {
                 'height': min(height - height % 8, config.config['processing_limits']['max_height']),
                 'width': min(width - width % 8, config.config['processing_limits']['max_width']),

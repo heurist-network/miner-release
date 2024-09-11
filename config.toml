@@ -1,5 +1,5 @@
 [service]
-base_url = "http://sequencer-na.heurist.xyz"
+base_url = "http://82.197.67.151:5000"
 llm_url = "http://localhost"
 signal_url = "https://d2k7cjzmjgpm6p.cloudfront.net/prod"
 sd_timeout_seconds = 22
@@ -21,7 +21,7 @@ keys_dir = "~/.heurist-keys"
 [model_config]
 model_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/models-new.json"
 vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/vae.json"
-lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora.json"
+lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora-new.json"
 default_sd_model_index = 1
 flux_dev_file_downloads = [
     ".gitattributes",
@@ -57,7 +57,7 @@ flux_dev_file_downloads = [
 
 [system]
 # Make sure to increase num_cuda_devices for SD miner if your machine has multiple GPUs
-num_cuda_devices = 1
+num_cuda_devices = 8
 # Number of children processes is only applicable to LLM miner
 num_child_process = 4
 sleep_duration = 2

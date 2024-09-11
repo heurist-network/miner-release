@@ -117,8 +117,7 @@ def fetch_and_download_config_files(config):
                 model['name']: model for model in models
                 if 'type' in model and (
                     'sd' in model['type'] or 
-                    model['type'].startswith('composite') or
-                    model['type'] == 'flux-dev-4bit'
+                    model['type'].startswith('composite')
                 ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
             }
             config.lora_configs = { 
@@ -159,13 +158,16 @@ def fetch_and_download_config_files(config):
             
             if model['type'] == 'flux-dev':
                 if not check_flux_dev_files(config.base_dir, config.flux_dev_file_downloads):
-                    total_size += model['size_mb']
-                    files_to_download.append(model)
+                    if not any(m['name'] == model['name'] for m in files_to_download):
+                        total_size += model['size_mb']
+                        files_to_download.append(model)
             else:
                 file_path = os.path.join(config.base_dir, model['name'] + ".safetensors")
                 if not os.path.exists(file_path):
-                    total_size += model['size_mb']
-                    files_to_download.append(model)
+                    if not any(m['name'] == model['name'] for m in files_to_download):
+                        total_size += model['size_mb']
+                        files_to_download.append(model)
+            
             # Check for associated VAE
             vae_name = model.get('vae')
             if vae_name:
@@ -173,8 +175,9 @@ def fetch_and_download_config_files(config):
                 if not os.path.exists(vae_path):
                     vae_config = config.vae_configs.get(vae_name)
                     if vae_config:
-                        total_size += vae_config['size_mb']
-                        files_to_download.append(vae_config)
+                        if not any(m['name'] == vae_name for m in files_to_download):
+                            total_size += vae_config['size_mb']
+                            files_to_download.append(vae_config)
                     else:
                         logging.error(f"VAE config for {vae_name} not found.")
 

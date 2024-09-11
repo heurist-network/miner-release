@@ -71,7 +71,7 @@ class ModelUpdater:
                 else:
                     logging.warning(f"Unexpected format received from {url}")
             except requests.exceptions.RequestException as e:
-                logging.error(f"Failed to fetch data from {url}: {e}")
+                print(f"Failed to fetch data from {url}: {e}")
                 return None
         return combined_models
 

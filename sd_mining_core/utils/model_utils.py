@@ -128,12 +128,12 @@ def unload_lora_weights(config, pipe, lora_id):
 def load_default_model(config):
     model_ids = get_local_model_ids(config)
     if not model_ids:
-        logging.error("No local models found. Exiting...")
+        print("No local models found. Exiting...")
         sys.exit(1)
     
     if config.specified_model_id:
         if config.specified_model_id not in model_ids:
-            logging.error(f"Specified model ID {config.specified_model_id} not found locally. Exiting...")
+            print(f"Specified model ID {config.specified_model_id} not found locally. Exiting...")
             sys.exit(1)
         default_model_id = config.specified_model_id
     else:
@@ -175,22 +175,15 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         model_config = config.model_configs.get(model_id, {})
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
-        if model_id == "FLUX.1-dev":
-            kwargs = {
-                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
-                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
-                'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
-                'guidance_scale': guidance_scale,
-            }
-        else:
-            kwargs = {
-                # For better/stable image quality, consider using larger height x weight values
-                'height': min(height - height % 8, config.config['processing_limits']['max_height']),
-                'width': min(width - width % 8, config.config['processing_limits']['max_width']),
-                'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
-                'guidance_scale': guidance_scale,
-                'negative_prompt': neg_prompt,
-            }
+        kwargs = {
+            'height': min(height - height % 8, config.config['processing_limits']['max_height']),
+            'width': min(width - width % 8, config.config['processing_limits']['max_width']),
+            'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
+            'guidance_scale': guidance_scale,
+        }
+
+        if model_id != "FLUX.1-dev":
+            kwargs['negative_prompt'] = neg_prompt
 
         if current_model == config.loaded_loras.get(model_id):
             default_weight = model_config.get('default_weight')
@@ -215,5 +208,5 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
     
     except Exception as e:
         err_msg = f"Error executing model {model_id}: {e}"
-        logging.error(err_msg)
+        print(err_msg)
         raise

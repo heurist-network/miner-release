@@ -93,7 +93,7 @@ def fetch_and_download_config_files(config):
         total_size = 0
         files_to_download = []
         for model in chain(config.model_configs.values(), config.lora_configs.values()):
-            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora', 'flux-dev']):
+            if 'type' not in model or (model['type'] not in ['sd15', 'sdxl10', 'vae', 'lora', 'flux-dev',"compositexl"]):
                 continue
             if not 'size_mb' in model:
                 print(f"Warning: Model {model['name']} does not have a size_mb field. models.json is misconfgured. Skipping.")
@@ -125,10 +125,8 @@ def fetch_and_download_config_files(config):
         confirm = 'yes' if config.auto_confirm else input("Do you want to proceed with the download? (yes/no): ")
         if confirm.strip().lower() not in ['yes', 'y']:
             print("Download canceled.")
-            return
-        print("files_to_download: ",files_to_download)
+            return  
         for i, model in enumerate(files_to_download, 1):
-            print("i,model: ",i,model)
             if model["name"] != "FLUX.1-dev":
                 print(f"Downloading file {i}/{len(files_to_download)}")
                 download_file(config.base_dir, model['file_url'], model['name'] + ".safetensors")

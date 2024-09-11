@@ -64,7 +64,7 @@ Before you begin, ensure your system meets the following requirements:
 
 ## Quick Start Guide
 
-### Docker Setup
+### Docker Setup (current version only supports flux image generation model)
 
 For users who prefer using Docker, follow these steps:
 
@@ -187,8 +187,8 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    - Choose the latest Windows 64-bit version for Python 3.11
 2. **Create Conda Environment**:
    ```bash
-   conda create --name gpu-3-11 python=3.11
-   conda activate gpu-3-11
+   conda create --name heurist-miner python=3.11
+   conda activate heurist-miner
    ```
 3. **Install CUDA Toolkit**:
    - Download CUDA 12.1 from NVIDIA website
@@ -222,8 +222,8 @@ Heurist Miner uses a dual-wallet system for security and reward distribution:
    ```
 3. **Create Conda Environment**:
    ```bash
-   conda create --name gpu-3-11 python=3.11
-   conda activate gpu-3-11
+   conda create --name heurist-miner python=3.11
+   conda activate heurist-miner
    ```
 4. **Install CUDA Toolkit**:
 - Follow instructions on NVIDIA CUDA Installation Guide

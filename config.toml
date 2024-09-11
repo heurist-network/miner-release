@@ -24,7 +24,6 @@ vae_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-mode
 lora_config_url = "https://raw.githubusercontent.com/heurist-network/heurist-models/main/lora-new.json"
 default_sd_model_index = 1
 flux_dev_file_downloads = [
-    ".gitattributes",
     "LICENSE.md",
     "README.md",
     "ae.safetensors",
@@ -57,7 +56,7 @@ flux_dev_file_downloads = [
 
 [system]
 # Make sure to increase num_cuda_devices for SD miner if your machine has multiple GPUs
-num_cuda_devices = 8
+num_cuda_devices = 1
 # Number of children processes is only applicable to LLM miner
 num_child_process = 4
 sleep_duration = 2

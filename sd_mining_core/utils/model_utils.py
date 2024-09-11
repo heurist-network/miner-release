@@ -40,12 +40,16 @@ def load_model(config, model_id):
     start_time = time.time()
 
     def get_model_config(model_id):
-        lora_config = config.lora_configs.get(model_id)
         model_config = config.model_configs.get(model_id)
-        if lora_config and model_config:
-            if 'base' not in model_config:
-                raise ValueError(f"Model configuration for {model_id} is missing the 'base' field.")
+        lora_config = config.lora_configs.get(model_id)
+        
+        if model_config and model_config.get('type') in ['composite15', 'compositexl']:
             return model_config, model_config['base']
+        elif lora_config:
+            base_model_id = lora_config.get('base')
+            if base_model_id:
+                return lora_config, base_model_id
+        
         return None, model_id
 
     composite_model_config, base_model_id = get_model_config(model_id)
@@ -56,7 +60,7 @@ def load_model(config, model_id):
     base_model_type = base_model_config.get('type')
     if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10", "flux-dev","compositexl"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux-dev", "compositexl", "composite15"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
@@ -65,7 +69,6 @@ def load_model(config, model_id):
     
     if base_model_type == "flux-dev":
         pipe = load_flux_model(config, device=device)
-        
     else:
         base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
         PipelineClass = StableDiffusionLongPromptWeightingPipeline if base_model_type == "sd15" else StableDiffusionXLLongPromptWeightingPipeline

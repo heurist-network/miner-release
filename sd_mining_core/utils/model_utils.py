@@ -56,7 +56,7 @@ def load_model(config, model_id):
     base_model_type = base_model_config.get('type')
     if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10", "flux-dev"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux-dev","compositexl"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")

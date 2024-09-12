@@ -230,8 +230,9 @@ if __name__ == "__main__":
     if not config.skip_checksum:
         model_updater.compare_model_checksums()
     # Start the model updater in a separate thread
-    updater_thread = threading.Thread(target=model_updater.start_scheduled_updates)
-    updater_thread.start()
+    if not config.specified_model_id:
+        updater_thread = threading.Thread(target=model_updater.start_scheduled_updates)
+        updater_thread.start()
     
     # TODO: There appear to be 1 leaked semaphore objects to clean up at shutdown
     # Launch a separate process for each CUDA device

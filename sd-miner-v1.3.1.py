@@ -136,6 +136,7 @@ def check_and_reload_model(config, last_signal_time):
         request_data = {
             "miner_id": config.miner_id,
             "model_type": "SD",
+            "hardware": get_hardware_description(config),
             "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }

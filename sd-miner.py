@@ -133,6 +133,7 @@ def check_and_reload_model(config, last_signal_time):
         request_data = {
             "miner_id": config.miner_id,
             "model_type": "SD",
+            "hardware": get_hardware_description(config),
             "version": config.version, # format is like "sd-v1.2.0"
             "options": {"exclude_sdxl": config.exclude_sdxl}
         }
@@ -209,6 +210,7 @@ if __name__ == "__main__":
     def signal_handler(signum, frame):
         for p in processes:
             p.terminate()
+            p.join()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)

@@ -210,6 +210,7 @@ if __name__ == "__main__":
     def signal_handler(signum, frame):
         for p in processes:
             p.terminate()
+            p.join()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)

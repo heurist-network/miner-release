@@ -41,7 +41,6 @@ class MinerConfig(BaseConfig):
         evm_address_pattern = re.compile(r"^(0x[a-fA-F0-9]{40})(-[a-zA-Z0-9_]+)?$")
         for i, miner_id in enumerate(miner_ids):
             if miner_id is None:
-                print(f"ERROR: Miner ID for GPU {i} not found in .env. Exiting...")
                 raise ValueError(f"Miner ID for GPU {i} not found in .env.")
             
             match = evm_address_pattern.match(miner_id)
@@ -79,7 +78,6 @@ class MinerConfig(BaseConfig):
         elif miner_ids[0]:
             return miner_ids[0]
         else:
-            print("ERROR: miner_id not found in .env. Exiting...")
             raise ValueError("miner_id not found in .env.")
 
 def load_config(filename='config.toml', cuda_device_id=0):
@@ -118,7 +116,6 @@ def send_miner_request(config, model_id, min_deadline):
         if response_data and 'job_id' in response_data and 'model_id' in response_data:
             job_id = response_data['job_id']
             model_id = response_data['model_id']
-            print(f"Processing Request ID: {job_id}. Model ID: {model_id}.")
     except Exception as e:
         logging.error(f"Failed to process response data: {e}")
 
@@ -180,35 +177,40 @@ def process_jobs(config):
     return True
 
 def main(cuda_device_id):
+    try:
+        torch.cuda.set_device(cuda_device_id)
+        config = load_config(cuda_device_id=cuda_device_id)
+        config = initialize_logging_and_args(config, cuda_device_id, miner_id=config.miner_id)
+        
+        # The parent process should have already downloaded the model files
+        # Now we just need to load them into memory
+        fetch_and_download_config_files(config)
 
-    torch.cuda.set_device(cuda_device_id)
-    config = load_config(cuda_device_id=cuda_device_id)
-    config = initialize_logging_and_args(config, cuda_device_id, miner_id=config.miner_id)
+        # Load the default model before entering the loop
+        load_default_model(config)
 
-    # The parent process should have already downloaded the model files
-    # Now we just need to load them into memory
-    fetch_and_download_config_files(config)
-
-    # Load the default model before entering the loop
-    load_default_model(config)
-
-    last_signal_time = time.time()
-    while True:
-        try:
-            if not config.specified_model_id:
-                last_signal_time = check_and_reload_model(config, last_signal_time)
-            executed = process_jobs(config)
-        except Exception as e:
-            logging.error("Error occurred:", exc_info=True)
-            executed = False
-        if not executed:
-            time.sleep(config.sleep_duration)
+        last_signal_time = time.time()
+        while True:
+            try:
+                if not config.specified_model_id:
+                    last_signal_time = check_and_reload_model(config, last_signal_time)
+                executed = process_jobs(config)
+            except Exception as e:
+                logging.error("Error occurred:", exc_info=True)
+                executed = False
+            if not executed:
+                time.sleep(config.sleep_duration)
             
+    except Exception as e:
+        print(f"Error in main function for cuda_device_id {cuda_device_id}: {str(e)}")
+        raise  # Re-raise the exception to see the full traceback
+
 if __name__ == "__main__":
     processes = []
     def signal_handler(signum, frame):
         for p in processes:
             p.terminate()
+            p.join()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -230,14 +232,17 @@ if __name__ == "__main__":
     if not config.skip_checksum:
         model_updater.compare_model_checksums()
     # Start the model updater in a separate thread
-    updater_thread = threading.Thread(target=model_updater.start_scheduled_updates)
-    updater_thread.start()
+    if not config.specified_model_id:
+        updater_thread = threading.Thread(target=model_updater.start_scheduled_updates)
+        updater_thread.start()
     
     # TODO: There appear to be 1 leaked semaphore objects to clean up at shutdown
     # Launch a separate process for each CUDA device
     try:
         if config.specified_device_id is None:
+            print(f"Creating processes for {config.num_cuda_devices} CUDA devices")
             for i in range(config.num_cuda_devices):
+                print(f"Creating process for CUDA device {i}")
                 p = Process(target=main, args=(i,))
                 p.start()
                 processes.append(p)
@@ -245,14 +250,11 @@ if __name__ == "__main__":
             for p in processes:
                 p.join()
         else:
-            # If cuda_device_id is specified, only run on this GPU
+            print(f"Creating process for specified CUDA device {config.specified_device_id}")
             p = Process(target=main, args=(config.specified_device_id,))
             p.start()
             processes.append(p)
             p.join()
-
-    except KeyboardInterrupt:
-        print("Main process interrupted. Terminating child processes.")
-        for p in processes:
-            p.terminate()
-            p.join()
+    except Exception as e:
+        print(f"Error in process creation: {str(e)}")
+        raise  # Re-raise the exception to see the full traceback

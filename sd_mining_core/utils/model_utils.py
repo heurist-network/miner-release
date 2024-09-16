@@ -8,6 +8,7 @@ import time
 from diffusers import AutoencoderKL, DPMSolverMultistepScheduler
 from vendor.lpw_stable_diffusion_xl import StableDiffusionXLLongPromptWeightingPipeline
 from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeline
+from vendor.flux_4bit_inference import load_flux_model
 
 def get_local_model_ids(config):
     local_files = os.listdir(config.base_dir)
@@ -25,6 +26,8 @@ def get_local_model_ids(config):
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                 if name_file not in local_files:
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
+        elif model_id == "FLUX.1-dev" and model_id not in local_model_ids:
+            local_model_ids.append(model_id)
         else:
             if model_id + ".safetensors" in local_files:
                 local_model_ids.append(model_id)
@@ -36,62 +39,57 @@ def get_local_model_ids(config):
 def load_model(config, model_id):
     start_time = time.time()
 
-    # model_id may be a LoRa name. If so, we need to find the base model ID from models.json
-    lora_config = config.lora_configs.get(model_id)
-    model_config = config.model_configs.get(model_id)
+    def get_model_config(model_id):
+        model_config = config.model_configs.get(model_id)
+        lora_config = config.lora_configs.get(model_id)
+        
+        if model_config and model_config.get('type') in ['composite15', 'compositexl']:
+            return model_config, model_config['base']
+        elif lora_config:
+            base_model_id = lora_config.get('base')
+            if base_model_id:
+                return lora_config, base_model_id
+        
+        return None, model_id
 
-    if lora_config is not None and model_config is not None:
-        composite_model_config = model_config
-        if 'base' not in composite_model_config:
-            raise ValueError(f"Model configuration for {model_id} is missing the 'base' field.")
-        base_model_id = composite_model_config['base']
-    else:
-        composite_model_config = None
-        base_model_id = model_id
-
+    composite_model_config, base_model_id = get_model_config(model_id)
     base_model_config = config.model_configs.get(base_model_id)
-    if base_model_config is None:
+    if not base_model_config:
         raise ValueError(f"Model configuration for {base_model_id} not found.")
 
     base_model_type = base_model_config.get('type')
-    if base_model_type is None:
+    if not base_model_type:
         raise ValueError(f"Model type not found for {base_model_id}.")
-    if base_model_type not in ["sd15", "sdxl10"]:
+    if base_model_type not in ["sd15", "sdxl10", "flux-dev", "compositexl", "composite15"]:
         raise ValueError(f"Model type '{base_model_type}' is not supported.")
-    
     if config.exclude_sdxl and base_model_type.startswith("sdxl"):
         raise ValueError(f"Loading of 'sdxl' models is disabled. Model '{base_model_id}' cannot be loaded as per configuration.")
 
-    base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
-
-    if base_model_config['type'] == "sd15":
-        pipe = StableDiffusionLongPromptWeightingPipeline.from_single_file(
-            base_model_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
-            pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
-        )
+    device = f'cuda:{config.cuda_device_id}'
+    
+    if base_model_type == "flux-dev":
+        pipe = load_flux_model(config, device=device)
     else:
-        pipe = StableDiffusionXLLongPromptWeightingPipeline.from_single_file(
-            base_model_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
+        base_model_file_path = os.path.join(config.base_dir, f"{base_model_id}.safetensors")
+        PipelineClass = StableDiffusionLongPromptWeightingPipeline if base_model_type == "sd15" else StableDiffusionXLLongPromptWeightingPipeline
+        pipe = PipelineClass.from_single_file(base_model_file_path, torch_dtype=torch.float16).to(device)
+        
+        if base_model_type == "sd15":
+            pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+                pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="sde-dpmsolver++"
+            )
 
     pipe.safety_checker = None
 
     if 'vae' in base_model_config:
-        vae_name = base_model_config['vae']
-        vae_file_path = os.path.join(config.base_dir, f"{vae_name}.safetensors")
-        vae = AutoencoderKL.from_single_file(
-            vae_file_path, torch_dtype=torch.float16
-        ).to('cuda:' + str(config.cuda_device_id))
-        pipe.vae = vae
+        vae_file_path = os.path.join(config.base_dir, f"{base_model_config['vae']}.safetensors")
+        pipe.vae = AutoencoderKL.from_single_file(vae_file_path, torch_dtype=torch.float16).to(device)
 
-    if composite_model_config is not None:
-        pipe = load_lora_weights(config, pipe, base_model_config['type'], model_id)
+    if composite_model_config:
+        pipe = load_lora_weights(config, pipe, base_model_type, model_id)
 
-    end_time = time.time()
-    loading_latency = end_time - start_time
-    print(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
+    loading_latency = time.time() - start_time
+    logging.info(f"Model {model_id} loaded in {loading_latency:.2f} seconds.")
 
     return pipe, loading_latency
 
@@ -130,7 +128,7 @@ def unload_lora_weights(config, pipe, lora_id):
 def load_default_model(config):
     model_ids = get_local_model_ids(config)
     if not model_ids:
-        logging.error("No local models found. Exiting...")
+        print("No local models found. Exiting...")
         sys.exit(1)
     
     if config.specified_model_id:
@@ -178,13 +176,14 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
         loading_latency = None  # Indicates no loading occurred if the model was already loaded
 
         kwargs = {
-            # For better/stable image quality, consider using larger height x weight values
             'height': min(height - height % 8, config.config['processing_limits']['max_height']),
             'width': min(width - width % 8, config.config['processing_limits']['max_width']),
             'num_inference_steps': min(num_iterations, config.config['processing_limits']['max_iterations']),
             'guidance_scale': guidance_scale,
-            'negative_prompt': neg_prompt,
         }
+
+        if model_id != "FLUX.1-dev":
+            kwargs['negative_prompt'] = neg_prompt
 
         if current_model == config.loaded_loras.get(model_id):
             default_weight = model_config.get('default_weight')
@@ -209,6 +208,5 @@ def execute_model(config, model_id, prompt, neg_prompt, height, width, num_itera
     
     except Exception as e:
         err_msg = f"Error executing model {model_id}: {e}"
-        logging.error(err_msg)
         print(err_msg)
         raise

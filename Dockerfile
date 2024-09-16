@@ -14,10 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the repository
-# RUN git clone https://github.com/heurist-network/miner-release.git .
-
-RUN git clone -b feature/containerize-sd-miner https://github.com/heurist-network/miner-release.git .
-
+RUN git clone https://github.com/heurist-network/miner-release.git .
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -33,11 +30,16 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 COPY sd-miner-starter.sh /app/sd-miner-starter.sh
 RUN chmod +x /app/sd-miner-starter.sh
 
-# Create directories for root user
-RUN mkdir -p /root/.heurist-keys /root/.cache
+# Create a non-root user and set up volumes
+RUN useradd -m appuser && \
+    mkdir -p /home/appuser/.heurist-keys /home/appuser/.cache && \
+    chown -R appuser:appuser /home/appuser/.heurist-keys /home/appuser/.cache /app
+
+# Switch to non-root user
+USER appuser
 
 # Set up volumes
-VOLUME ["/root/.heurist-keys", "/root/.cache"]
+VOLUME ["/home/appuser/.heurist-keys", "/home/appuser/.cache"]
 
 # Set the entrypoint
 ENTRYPOINT ["/app/sd-miner-starter.sh"]

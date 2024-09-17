@@ -78,10 +78,6 @@ def fetch_and_download_config_files(config):
         vaes = requests.get(config.vae_config_url, timeout=30).json()
         loras = requests.get(config.lora_config_url, timeout=30).json()
 
-        print(f"Models: {models}")
-        print(f"Vaes: {vaes}")
-        print(f"Loras: {loras}")
-
         # If a specific model_id is provided, filter the configurations
         if config.specified_model_id:
             specified_model = next((model for model in models if model['name'] == config.specified_model_id), None)
@@ -124,14 +120,16 @@ def fetch_and_download_config_files(config):
                     model['type'].startswith('composite')
                 ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
             }
+            print(f"Model configs: {config.model_configs}")
             config.lora_configs = { 
                 lora['name']: lora for lora in loras 
             }
+            print(f"Lora configs: {config.lora_configs}")
 
         config.vae_configs = {
             vae['name']: vae for vae in vaes
         }
-
+        print(f"Vae configs: {config.vae_configs}")
         total_size = 0
         files_to_download = []
         

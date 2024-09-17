@@ -16,8 +16,6 @@ RUN apt-get update && apt-get install -y \
 # Clone the repository
 RUN git clone https://github.com/heurist-network/miner-release.git .
 
-
-
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 

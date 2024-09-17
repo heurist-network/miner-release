@@ -80,7 +80,7 @@ Single GPU:
 sudo docker run -d --gpus all \
   -e MINER_ID_0=0xWalletAddressHere \
   -e LOG_LEVEL=INFO \
-  -v $HOME/.cache:/home/appuser/.cache \
+  -v $HOME/.cache/heurist:/home/appuser/.cache/heurist \
   heurist-miner:latest
 ```
 

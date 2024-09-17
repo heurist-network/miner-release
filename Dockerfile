@@ -14,9 +14,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the repository
-# RUN git clone https://github.com/heurist-network/miner-release.git .
+RUN git clone https://github.com/heurist-network/miner-release.git .
 
-RUN git clone -b feature/containerize-sd-miner https://github.com/heurist-network/miner-release.git .
 
 
 # Install Python dependencies

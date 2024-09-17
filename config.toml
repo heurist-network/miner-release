@@ -2,15 +2,15 @@
 base_url = "http://sequencer.heurist.xyz"
 llm_url = "http://localhost"
 signal_url = "https://d2k7cjzmjgpm6p.cloudfront.net/prod"
-sd_timeout_seconds = 22
-llm_timeout_seconds = 210
+sd_timeout_seconds = 18
+llm_timeout_seconds = 180
 
 [logging]
 sd_log_filename = "sd-miner.log"
 llm_log_filename = "llm-miner.log"
 
 [versions]
-sd_version = "sd-v1.3.2"
+sd_version = "sd-v1.4.0"
 llm_version = "llm-v1.1.1"
 
 [storage]

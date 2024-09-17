@@ -78,6 +78,7 @@ def fetch_and_download_config_files(config):
         vaes = requests.get(config.vae_config_url, timeout=30).json()
         loras = requests.get(config.lora_config_url, timeout=30).json()
 
+        print("config.specified_model_id: ", config.specified_model_id)
         # If a specific model_id is provided, filter the configurations
         if config.specified_model_id:
             specified_model = next((model for model in models if model['name'] == config.specified_model_id), None)
@@ -113,6 +114,7 @@ def fetch_and_download_config_files(config):
                     raise ValueError(f"Specified model ID '{config.specified_model_id}' not found in model or LoRA configurations.")
         else:
             # Original logic for handling all models
+            print("Original logic for handling all models")
             config.model_configs = {
                 model['name']: model for model in models
                 if 'type' in model and (
@@ -120,16 +122,16 @@ def fetch_and_download_config_files(config):
                     model['type'].startswith('composite')
                 ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
             }
-            print(f"Model configs: {config.model_configs}")
+            print(f"model configs: {config.model_configs}")
             config.lora_configs = { 
                 lora['name']: lora for lora in loras 
             }
-            print(f"Lora configs: {config.lora_configs}")
+            print(f"lora configs: {config.lora_configs}")
 
         config.vae_configs = {
             vae['name']: vae for vae in vaes
         }
-        print(f"Vae configs: {config.vae_configs}")
+        print(f"vae configs: {config.vae_configs}")
         total_size = 0
         files_to_download = []
         

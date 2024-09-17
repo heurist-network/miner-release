@@ -22,6 +22,10 @@ from sd_mining_core.utils import (
     load_default_model, reload_model,
 )
 
+print(f"Current working directory: {os.getcwd()}")
+print(f"Contents of current directory: {os.listdir()}")
+print(f"Contents of /app/.cache/heurist: {os.listdir('/app/.cache/heurist')}")
+
 class MinerConfig(BaseConfig):
     def __init__(self, config_file, cuda_device_id=0):
         super().__init__(config_file, cuda_device_id)

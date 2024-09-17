@@ -11,6 +11,7 @@ from vendor.lpw_stable_diffusion import StableDiffusionLongPromptWeightingPipeli
 from vendor.flux_4bit_inference import load_flux_model
 
 def get_local_model_ids(config):
+    print(f"Searching for models in: {config.base_dir}")
     local_files = os.listdir(config.base_dir)
     local_model_ids = []
     

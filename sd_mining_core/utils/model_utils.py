@@ -27,7 +27,7 @@ def get_local_model_ids(config):
                 if base_file not in local_files:
                     print(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
-                if name_file not in local_files:``
+                if name_file not in local_files:
                     print(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
         elif model_id == "FLUX.1-dev" and model_id not in local_model_ids:

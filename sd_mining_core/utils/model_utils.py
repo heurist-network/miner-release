@@ -13,8 +13,9 @@ from vendor.flux_4bit_inference import load_flux_model
 def get_local_model_ids(config):
     print(f"Searching for models in: {config.base_dir}")
     local_files = os.listdir(config.base_dir)
+    print(f"Files found in {config.base_dir}: {local_files}")
     local_model_ids = []
-    
+    print(f"Model configs: {config.model_configs}")
     for model in config.model_configs.values():
         model_id = model['name']
         if 'base' in model:
@@ -24,15 +25,19 @@ def get_local_model_ids(config):
                 local_model_ids.append(model_id)
             else:
                 if base_file not in local_files:
+                    print(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
                     logging.warning(f"Base model file '{model['base']}' not found for model '{model['name']}'.")
-                if name_file not in local_files:
+                if name_file not in local_files:``
+                    print(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
                     logging.warning(f"LoRA weights file '{model['name']}' not found for model '{model['name']}'.")
         elif model_id == "FLUX.1-dev" and model_id not in local_model_ids:
             local_model_ids.append(model_id)
         else:
             if model_id + ".safetensors" in local_files:
+                print(f"Model file '{model_id}' found for model '{model['name']}'.")
                 local_model_ids.append(model_id)
             else:
+                print(f"Model file for '{model['name']}' not found in local directory.")
                 logging.warning(f"Model file for '{model['name']}' not found in local directory.")
     
     return local_model_ids

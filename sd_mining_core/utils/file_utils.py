@@ -78,6 +78,10 @@ def fetch_and_download_config_files(config):
         vaes = requests.get(config.vae_config_url, timeout=30).json()
         loras = requests.get(config.lora_config_url, timeout=30).json()
 
+        print(f"Models: {models}")
+        print(f"Vaes: {vaes}")
+        print(f"Loras: {loras}")
+
         # If a specific model_id is provided, filter the configurations
         if config.specified_model_id:
             specified_model = next((model for model in models if model['name'] == config.specified_model_id), None)

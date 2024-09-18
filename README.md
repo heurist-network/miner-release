@@ -24,9 +24,9 @@
 
 Welcome to the Heurist Miner, the entrance to decentralized generative AI. Whether you have a high-end gaming PC with NVIDIA GPU or you're a datacenter owner ready to explor the world of AI and cryptocurrency, this guide will help you get started on an exciting journey!
 
-### What is Heurist Miner? 🤔
+### What is Heurist Miner? 
 
-Heurist Miner allows you to contribute your GPU to perform AI inference tasks on the Heurist network. By running this miner, you'll earn rewards by hosting AI models and supporting various applications in Heurist ecosystem. 😎
+Heurist Miner allows you to contribute your GPU to perform AI inference tasks on the Heurist network. By running this miner, you'll earn rewards by hosting AI models and supporting various applications in Heurist ecosystem.
 
 ### Key Features ✨
 
@@ -40,31 +40,71 @@ Heurist Miner allows you to contribute your GPU to perform AI inference tasks on
 Before you begin, ensure your system meets the following requirements:
 
 ### Hardware 🖥️
-- **GPU**: NVIDIA GPU with at least 12GB VRAM (24GB+ recommended for optimal performance) 🎮
-- **CPU**: Multi-core processor (4+ cores recommended) 💻
-- **RAM**: 16GB+ system RAM 🧠
-- **Storage**: At least 50GB free space (NVMe recommended for faster model loading) 💽
+- **GPU**: NVIDIA GPU with at least 12GB VRAM (24GB+ recommended for optimal performance)
+- **CPU**: Multi-core processor (4+ cores recommended)
+- **RAM**: 16GB+ system RAM
+- **Storage**: At least 50GB free space (NVMe recommended for faster model loading)
 
 ### Software 💾
 - **Operating System**: 
-  - Windows 10/11 (64-bit) 🪟
-  - Linux (Ubuntu 20.04 LTS or later recommended) 🐧
-- **CUDA**: Version 12.1, or 12.2 🚀
-- **Python**: Version 3.10 or 3.11 🐍
-- **Git**: For cloning the repository 📦
+  - Windows 10/11 (64-bit)
+  - Linux (Ubuntu 20.04 LTS or later recommended)
+- **CUDA**: Version 12.1, or 12.2
+- **Python**: Version 3.10 or 3.11
+- **Git**: For cloning the repository
 
 ### Network 🌐
-- Stable internet connection (100 Mbps+ recommended) 🔌
-- Ability to access HuggingFace and GitHub repositories 🔓
+- Stable internet connection (100 Mbps+ recommended)
+- Ability to access HuggingFace and GitHub repositories
 
 ### Additional Notes ℹ️
-- Some models (especially larger LLMs) may require more VRAM. Check the model-specific requirements in the detailed setup sections. 📊
-- Ensure your system is up-to-date with the latest NVIDIA GPU drivers. 🔄
-- Stable Diffusion models need at least 8-10GB VRAM, while LLMs can require 16GB to 40GB+ depending on the model size. 📈
+- Some models (especially larger LLMs) may require more VRAM. Check the model-specific requirements in the detailed setup sections.
+- Ensure your system is up-to-date with the latest NVIDIA GPU drivers.
+- Stable Diffusion models need at least 8-10GB VRAM, while LLMs can require 16GB to 40GB+ depending on the model size.
 
 ## Quick Start Guide
 
-### Docker Setup (current version only supports flux image generation model)
+### Local Setup
+
+For experienced users, here's a quick overview to get you mining:
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/heurist-network/miner-release.git
+cd miner-release
+```
+2. **Set Up Environment**
+- Install Miniconda (if not already installed)
+- Create and activate a new conda environment:
+```bash
+conda create --name heurist-miner python=3.11
+conda activate heurist-miner
+```
+3. **Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
+4. **Configure Miner ID**
+- Create a `.env` file in the root directory
+- Add your Ethereum wallet address:
+```bash
+MINER_ID_0=0xYourWalletAddressHere
+```
+
+Follow "Multiple GPU Configuration" section if you have multiple GPUs.
+
+5. **Choose Your Miner**
+- For Stable Diffusion:
+```bash
+python sd-miner.py
+```
+- For LLM:
+```bash
+./llm-miner-starter.sh <model_id>
+```
+For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
+
+### Docker Setup (current version only supports Flux model)
 
 For users who prefer using Docker, follow these steps:
 
@@ -108,47 +148,6 @@ This command:
 - Uses the image we just built (`heurist-miner:latest`)
 
 Note: Ensure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed for GPU support in Docker.
-
-### Local Setup
-
-For experienced users, here's a quick overview to get you mining:
-
-1. **Clone the Repository**
-```bash
-git clone https://github.com/heurist-network/miner-release.git
-cd miner-release
-```
-2. **Set Up Environment**
-- Install Miniconda (if not already installed)
-- Create and activate a new conda environment:
-```bash
-conda create --name heurist-miner python=3.11
-conda activate heurist-miner
-```
-3. **Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
-4. **Configure Miner ID**
-- Create a `.env` file in the root directory
-- Add your Ethereum wallet address:
-```bash
-MINER_ID_0=0xYourWalletAddressHere
-```
-
-Follow "Multiple GPU Configuration" section if you have multiple GPUs.
-
-5. **Choose Your Miner**
-- For Stable Diffusion:
-```bash
-python sd-miner.py
-```
-- For LLM:
-```bash
-./llm-miner-starter.sh <model_id>
-```
-For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
-
 
 ## Detailed Setup Instructions
 

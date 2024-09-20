@@ -198,7 +198,7 @@ fetchModelDetails() {
     local heurist_model_id="$1"
     log_info "Fetching model details for $heurist_model_id..."
 
-    local models_json=$(curl -s https://raw.githubusercontent.com/heurist-network/heurist-models/main/models.json)
+    local models_json=$(curl -s https://raw.githubusercontent.com/heurist-network/heurist-models/main/models-new.json)
     if [ -z "$models_json" ]; then
         log_error "Failed to fetch model details from $models_json_url"
         exit 1
@@ -284,9 +284,11 @@ validateVram() {
         local gpu_memory_util=$(echo "scale=2; (40000-1000)/$available_mb" | bc)
     elif [[ "$heurist_model_id" == *"70b"* ]] && [ "$available_mb" -gt 44000 ]; then
         local gpu_memory_util=$(echo "scale=2; (44000-1000)/$available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$available_mb" -gt 18500 ]; then
-        local gpu_memory_util=$(echo "scale=2; (18500-1000)/$available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$available_mb" -gt 19500 ]; then
+        local gpu_memory_util=$(echo "scale=2; (19500-1000)/$available_mb" | bc)
     elif [[ "$heurist_model_id" == *"pro-mistral-7b"* ]] && [ "$available_mb" -gt 18000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (18000-1000)/$available_mb" | bc)
+    elif [[ "$heurist_model_id" =~ Qwen2\.5-7B-Instruct ]]; then
         local gpu_memory_util=$(echo "scale=2; (18000-1000)/$available_mb" | bc)
     else
         local gpu_memory_util=$(echo "scale=2; (12000-1000)/$available_mb" | bc) # Default value or handle other cases as needed

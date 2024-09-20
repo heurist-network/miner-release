@@ -22,11 +22,14 @@ from llm_mining_core.utils import (
 
 import json
 
+# Test model_id 
+TEST_MODEL_ID = "openhermes-2-pro-llama-3-8b"
+
 def create_test_job():
     prompt = json.dumps([{"role": "user", "content": "Classify this sentiment (give short answer): vLLM is wonderful!"}])
     return {
         'job_id': f'test-{int(time.time())}',
-        'model_id': 'dolphin-2.9.4-llama3.1-8b',
+        'model_id': TEST_MODEL_ID,
         'model_input': {
             'LLM': {
                 'prompt': prompt,
@@ -38,7 +41,56 @@ def create_test_job():
         }
     }
 
-def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
+def create_test_job_with_function_calling():
+    tools = [{
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {
+                        "type": "string",
+                        "description": "The city to find the weather for, e.g. 'San Francisco'"
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "The two-letter abbreviation for the state that the city is in, e.g. 'CA' for California"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "description": "The unit to fetch the temperature in",
+                        "enum": ["celsius", "fahrenheit"]
+                    }
+                },
+                "required": ["city", "state", "unit"]
+            }
+        }
+    }]
+
+    messages = [
+        {"role": "user", "content": "What's the weather like in Dallas, Texas? Please provide the temperature in Fahrenheit."}
+    ]
+
+    prompt = json.dumps(messages)
+
+    return {
+        'job_id': f'test-function-{int(time.time())}',
+        'model_id': TEST_MODEL_ID,
+        'model_input': {
+            'LLM': {
+                'prompt': prompt,
+                'temperature': 0.01,
+                'max_tokens': 200,
+                'seed': random.randint(1, 1000),
+                'use_stream': False,
+                'tools': tools,
+            }
+        }
+    }
+
+def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency, tools=None):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
 
     client = server_config.initialize_client()
@@ -140,17 +192,39 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
             logging.info("Non-streaming mode")
             # Non-streaming logic
             start_time = time.time()
-            response = client.chat.completions.create(
-                messages=decoded_prompt,
-                model=model_id,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stop=stop,
-                seed=seed
-            )
+            
+            # Create a dictionary of parameters for the API call
+            params = {
+                "messages": decoded_prompt,
+                "model": model_id,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stop": stop,
+                "seed": seed,
+            }
+            
+            # Only add tools and tool_choice if tools are provided
+            if tools:
+                print("tools: ", tools)
+                params["tools"] = tools
+                params["tool_choice"] = "auto"
+                print("params: ", params)
+        
+            response = client.chat.completions.create(**params)
+            
             end_time = time.time()
             inference_latency = end_time - start_time
-            res = response.choices[0].message.content
+            
+            # Handle function calling response
+            if tools:
+                print("tool calls: ", response.choices[0].message)
+                # print("response.choices[0].message: ", response.choices[0].message)
+                if response.choices[0].message.tool_calls:
+                    res = json.dumps(response.choices[0].message.tool_calls[0])
+                    print("function call response: ", res)
+            else:
+                res = response.choices[0].message.content
+                print("regular response: ", res)
             print("res: ", res)
             total_tokens = response.usage.total_tokens
             logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
@@ -188,6 +262,7 @@ def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
     last_job_time = 0
+    use_function_calling = False  # Toggle to switch between regular and function calling jobs!!!
 
     while True:
         if not check_vllm_server_status():
@@ -203,8 +278,13 @@ def worker(miner_id):
                 continue
 
             current_time = time.time()
-            if current_time - last_job_time >= 45:  # Create a new job every 60 seconds
-                job = create_test_job()
+            if current_time - last_job_time >= 5:  # Create a new job every 45 seconds
+                if use_function_calling:
+                    job = create_test_job_with_function_calling()
+                else:
+                    job = create_test_job()
+                use_function_calling = not use_function_calling  # Toggle for next iteration
+                
                 request_latency = 0  # Set to 0 for test jobs
                 last_job_time = current_time
 
@@ -215,8 +295,10 @@ def worker(miner_id):
                 max_tokens = job['model_input']['LLM']['max_tokens']
                 seed = job['model_input']['LLM']['seed']
                 use_stream = job['model_input']['LLM']['use_stream']
+                tools = job['model_input']['LLM'].get('tools', None)  # Get tools if present
+                print("tools: ", tools)
                 stop = base_config.stop_words
-                generate(base_config, server_config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
+                generate(base_config, server_config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency, tools)
                 job_end_time = time.time()
                 total_processing_time = job_end_time - job_start_time
                 if total_processing_time > base_config.llm_timeout_seconds:

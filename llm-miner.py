@@ -12,13 +12,31 @@ from multiprocessing import Process, set_start_method
 
 from llm_mining_core.utils import (
     load_config, load_miner_ids,
-    decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
     send_miner_request,
     configure_logging,
     get_metric_value,
     check_vllm_server_status,
-    send_model_info_signal
+    send_model_info_signal,
+    decode_prompt_json
 )
+
+import json
+
+def create_test_job():
+    prompt = json.dumps([{"role": "user", "content": "Classify this sentiment (give short answer): vLLM is wonderful!"}])
+    return {
+        'job_id': f'test-{int(time.time())}',
+        'model_id': 'dolphin-2.9.4-llama3.1-8b',
+        'model_input': {
+            'LLM': {
+                'prompt': prompt,
+                'temperature': 0.01,
+                'max_tokens': 100,
+                'seed': random.randint(1, 1000),
+                'use_stream': False
+            }
+        }
+    }
 
 def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
@@ -28,16 +46,12 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
         logging.error(f"Failed to initialize API client for model {model_id}.")
         return
     
-    decoded_prompt = None
-    if "openhermes" in model_id or "dolphin" in model_id:
-        decoded_prompt = decode_prompt_chatml(prompt)
-    elif "llama" in model_id:
-        decoded_prompt = decode_prompt_llama(prompt)
-    elif "mistral" in model_id:
-        decoded_prompt = decode_prompt_mistral(prompt)
-    else:
-        logging.error(f"Model {model_id} not supported.")
+    decoded_prompt = decode_prompt_json(prompt)
+    print("decoded_prompt: ", decoded_prompt)
+    if decoded_prompt is None:
+        logging.error(f"Failed to decode prompt for model {model_id}. Exiting.")
         return
+
     try:
         if use_stream_flag:
             logging.info("Streaming mode enabled")
@@ -137,6 +151,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
             end_time = time.time()
             inference_latency = end_time - start_time
             res = response.choices[0].message.content
+            print("res: ", res)
             total_tokens = response.usage.total_tokens
             logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
             # if the words is in stop_words, truncate the result
@@ -172,6 +187,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
 def worker(miner_id):
     base_config, server_config = load_config()
     configure_logging(base_config, miner_id)
+    last_job_time = 0
 
     while True:
         if not check_vllm_server_status():
@@ -183,30 +199,30 @@ def worker(miner_id):
             if num_requests is None:
                 num_requests = 0  # Set to 0 if None
             if num_requests >= base_config.concurrency_soft_limit:
-                # Pass silently if too many requests are running
-                # print("Too many requests running, waiting for a while")
                 time.sleep(base_config.sleep_duration)
-                pass
-            
-            job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
-            if job is not None:
+                continue
+
+            current_time = time.time()
+            if current_time - last_job_time >= 45:  # Create a new job every 60 seconds
+                job = create_test_job()
+                request_latency = 0  # Set to 0 for test jobs
+                last_job_time = current_time
+
                 job_start_time = time.time()
-                model_id = job['model_id'] # Extract model_id from the job
+                model_id = job['model_id']
                 prompt = job['model_input']['LLM']['prompt']
                 temperature = job['model_input']['LLM']['temperature']
                 max_tokens = job['model_input']['LLM']['max_tokens']
                 seed = job['model_input']['LLM']['seed']
                 use_stream = job['model_input']['LLM']['use_stream']
-                if seed == -1: # Handling for seed if specified as -1
-                    seed = None
-                stop = base_config.stop_words # Assuming stop_words are defined earlier in the script
+                stop = base_config.stop_words
                 generate(base_config, server_config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
-                job_end_time = time.time()  # Record the end time
+                job_end_time = time.time()
                 total_processing_time = job_end_time - job_start_time
                 if total_processing_time > base_config.llm_timeout_seconds:
                     print("Warning: the previous request timed out. You will not earn points. Please check miner configuration or network connection.")
             else:
-                pass
+                time.sleep(1)  # Sleep for 1 second if it's not time for a new job yet
         except Exception as e:
             logging.error(f"Error occurred for miner {miner_id}: {e}")
             import traceback

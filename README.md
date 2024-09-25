@@ -1,4 +1,7 @@
 # ⚙️ Heurist Miner Setup Guide
+
+![miner](https://github.com/user-attachments/assets/efd35068-13a6-454c-b16a-6392d51e2557)
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [System Requirements](#system-requirements)

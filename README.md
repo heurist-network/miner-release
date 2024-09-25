@@ -107,7 +107,8 @@ python sd-miner.py
 ```
 For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
 
-### Docker Setup (current version only supports Flux model)
+### Docker Setup
+(current version only supports Flux model)
 
 For users who prefer using Docker, follow these steps:
 

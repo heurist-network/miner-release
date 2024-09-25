@@ -428,7 +428,7 @@ Got questions? We've got answers!
 
 ### Discord Channel
 Join our lively community on Discord - it's where all the cool miners hang out!
-🔗 [Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
+🔗 [Heurist Discord #dev-chat channel](https://discord.gg/heuristai)
 
 ### Reporting Issues
 1. 📚 Check our Troubleshooting guide and FAQ - you might find a quick fix!

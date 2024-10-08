@@ -285,16 +285,12 @@ validateVram() {
     fi
 
     # Determine GPU memory utilization based on model name and available VRAM
-    if [[ "$heurist_model_id" == *"mixtral-8x7b-gptq"* ]] && [ "$total_available_mb" -gt 32000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (32000-1000)/$total_available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"yi-34b-gptq"* ]] && [ "$total_available_mb" -gt 40000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (40000-1000)/$total_available_mb" | bc)
+    if [[ "$heurist_model_id" == *"mixtral-8x7b-gptq"* ]] && [ "$total_available_mb" -gt 35000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (35000-1000)/$total_available_mb" | bc)
     elif [[ "$heurist_model_id" == *"70b"* ]] && [ "$total_available_mb" -gt 44000 ]; then
         local gpu_memory_util=$(echo "scale=2; (44000-1000)/$total_available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$total_available_mb" -gt 18500 ]; then
-        local gpu_memory_util=$(echo "scale=2; (18500-1000)/$total_available_mb" | bc)
-    elif [[ "$heurist_model_id" == *"pro-mistral-7b"* ]] && [ "$total_available_mb" -gt 18000 ]; then
-        local gpu_memory_util=$(echo "scale=2; (18000-1000)/$total_available_mb" | bc)
+    elif [[ "$heurist_model_id" == *"8b"* ]] && [ "$total_available_mb" -gt 21000 ]; then
+        local gpu_memory_util=$(echo "scale=2; (21000-1000)/$total_available_mb" | bc)
     else
         local gpu_memory_util=$(echo "scale=2; (12000-1000)/$total_available_mb" | bc) # Default value or handle other cases as needed
     fi

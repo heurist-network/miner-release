@@ -349,6 +349,11 @@ For LLM miner, use the following CLI options to customize its behavior:
      ./llm-miner-starter.sh dolphin-2.9-llama3-8b --miner-id-index 1 --port 8001 --gpu-ids 1
      ```
 
+   - Advanced usage: To deploy large models using multiple GPUs on the same machine.
+      ```bash
+      ./llm-miner-starter.sh openhermes-mixtral-8x7b-gptq --miner-id-index 0 --port 8000 --gpu-ids 0,1
+      ```
+
 ### Multiple GPU Configuration
 
 To utilize multiple GPUs:

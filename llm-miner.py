@@ -19,6 +19,7 @@ from llm_mining_core.utils import (
     check_vllm_server_status,
     send_model_info_signal
 )
+from llm_mining_core.config.server import LLMServerConfig
 
 def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
@@ -27,6 +28,10 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
     if client is None:
         logging.error(f"Failed to initialize API client for model {model_id}.")
         return
+
+    max_model_len = LLMServerConfig.MAX_MODEL_LEN
+    if max_tokens > max_model_len:
+        max_tokens = max_model_len
     
     decoded_prompt = None
     if "openhermes" in model_id or "dolphin" in model_id:

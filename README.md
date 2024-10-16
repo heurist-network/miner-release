@@ -278,7 +278,7 @@ Note: 8x7b, 34b, and 70b models may take up to an hour to load on some devices.
 
 #### Stable Diffusion Miner
 
-When running the SD miner, you can use various CLI options to customize its behavior:
+When running the SD miner, you can use various CLI options to customize its behavior. You can combine multiple flags.
 
 1. **Log Level**
    - Set the verbosity of log messages:
@@ -305,11 +305,20 @@ When running the SD miner, you can use various CLI options to customize its beha
      ```bash
      python3 sd-miner.py --model-id <model_id>
      ```
+   - For example, run FLUX.1-dev model with:
+     ```bash
+     python3 sd-miner.py --model-id FLUX.1-dev --skip-checksum
+     ```
 
 5. **CUDA Device ID**
    - Specify which GPU to use:
      ```bash
      python3 sd-miner.py --cuda-device-id 0
+     ```
+6. **Skip checksum to speed up miner start-up time**
+   - This skips checking the validity of model files. However, if incompleted files are present on the disk, the miner process will crash without this check.
+     ```bash
+     python3 sd-miner.py --skip-checksum
      ```
 
 #### Large Language Model Miner

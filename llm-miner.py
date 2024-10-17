@@ -7,21 +7,24 @@ import random
 import logging
 import requests
 import threading
+import json
 from auth.generator import WalletGenerator
 from multiprocessing import Process, set_start_method
+from openai.types.chat import ChatCompletion
 
 from llm_mining_core.utils import (
     load_config, load_miner_ids,
-    decode_prompt_llama, decode_prompt_mistral, decode_prompt_chatml,
     send_miner_request,
     configure_logging,
     get_metric_value,
     check_vllm_server_status,
-    send_model_info_signal
+    send_model_info_signal,
+    decode_prompt_json
 )
+
 from llm_mining_core.config.server import LLMServerConfig
 
-def generate(base_config, server_config, miner_id, job_id, prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency):
+def generate(base_config, server_config, miner_id, job_id, decoded_prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency, decoded_tools=None, extra_body=None):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
 
     client = server_config.initialize_client()
@@ -32,17 +35,8 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
     max_model_len = LLMServerConfig.MAX_MODEL_LEN
     if max_tokens > max_model_len:
         max_tokens = max_model_len
-    
-    decoded_prompt = None
-    if "openhermes" in model_id or "dolphin" in model_id:
-        decoded_prompt = decode_prompt_chatml(prompt)
-    elif "llama" in model_id:
-        decoded_prompt = decode_prompt_llama(prompt)
-    elif "mistral" in model_id:
-        decoded_prompt = decode_prompt_mistral(prompt)
-    else:
-        logging.error(f"Model {model_id} not supported.")
-        return
+
+
     try:
         if use_stream_flag:
             logging.info("Streaming mode enabled")
@@ -131,30 +125,47 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
             logging.info("Non-streaming mode")
             # Non-streaming logic
             start_time = time.time()
-            response = client.chat.completions.create(
-                messages=decoded_prompt,
-                model=model_id,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stop=stop,
-                seed=seed
-            )
+            
+            # Create a dictionary of parameters for the API call
+            params = {
+                "messages": decoded_prompt,
+                "model": model_id,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stop": stop,
+                "seed": seed,
+            }
+            
+            # Add extra_body parameters if provided
+            if extra_body:
+                params["extra_body"] = extra_body
+            
+            # Only add tools and tool_choice if tools are provided
+            if decoded_tools:
+                params["tools"] = decoded_tools
+                params["tool_choice"] = "auto"
+            
+        
+            response = client.chat.completions.create(**params)
+
+            # Convert the response to a ChatCompletion object
+            chat_completion = ChatCompletion(**response.model_dump())
+            
+            # Extract the choices array
+            result_choices = chat_completion.choices
+
             end_time = time.time()
             inference_latency = end_time - start_time
-            res = response.choices[0].message.content
+            
+
             total_tokens = response.usage.total_tokens
             logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
-            # if the words is in stop_words, truncate the result
-            for word in stop:
-                if word in res:
-                    res = res[:res.index(word)]
-                    break
-            
+
             url = base_config.base_url + "/miner_submit"
             result = {
                 "miner_id": miner_id.lower(),
                 "job_id": job_id,
-                "result": {"Text": res},
+                "result": {"Text": json.dumps([choice.model_dump() for choice in result_choices])},
                 "request_latency": request_latency,
                 "inference_latency": inference_latency
             }
@@ -166,9 +177,7 @@ def generate(base_config, server_config, miner_id, job_id, prompt, temperature, 
 
             if(res.status_code == 200):
                 logging.info(f"Result submitted successfully for job_id: {job_id}")
-                print(f"Result submitted successfully for job_id: {job_id}")
             else:
-                #print(f"Failed to submit result for job_id: {job_id} with status code: {res.status_code}")
                 logging.error(f"Failed to submit result for job_id: {job_id} with status code: {res.status_code}")
     except Exception as e:
         logging.error(f"Error during text generation request: {str(e)}")
@@ -180,7 +189,9 @@ def worker(miner_id):
 
     while True:
         if not check_vllm_server_status():
-            logging.error(f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program.")
+            logging.error(
+                f"vLLM server process for model {server_config.served_model_name} is not running. Exiting the llm miner program."
+            )
             sys.exit(1)
         try:
             # Check if the number of running requests exceeds the maximum concurrent requests
@@ -188,35 +199,62 @@ def worker(miner_id):
             if num_requests is None:
                 num_requests = 0  # Set to 0 if None
             if num_requests >= base_config.concurrency_soft_limit:
-                # Pass silently if too many requests are running
-                # print("Too many requests running, waiting for a while")
                 time.sleep(base_config.sleep_duration)
-                pass
-            
-            job, request_latency = send_miner_request(base_config, miner_id, base_config.served_model_name)
+                continue
+
+            # **Add job fetching and processing here**
+            job, request_latency = send_miner_request(
+                base_config, miner_id, base_config.served_model_name
+            )
             if job is not None:
                 job_start_time = time.time()
-                model_id = job['model_id'] # Extract model_id from the job
+                # Extract job parameters
+                model_id = job['model_id']
                 prompt = job['model_input']['LLM']['prompt']
                 temperature = job['model_input']['LLM']['temperature']
                 max_tokens = job['model_input']['LLM']['max_tokens']
                 seed = job['model_input']['LLM']['seed']
                 use_stream = job['model_input']['LLM']['use_stream']
-                if seed == -1: # Handling for seed if specified as -1
+                if seed == -1:
                     seed = None
-                stop = base_config.stop_words # Assuming stop_words are defined earlier in the script
-                generate(base_config, server_config, miner_id, job['job_id'], prompt, temperature, max_tokens, seed, stop, use_stream, model_id, request_latency)
-                job_end_time = time.time()  # Record the end time
+                stop = base_config.stop_words
+                # If function calling is enabled, pass tools to generate()
+                decoded_prompt = decode_prompt_json(prompt)
+                if decoded_prompt is None:
+                    logging.error(f"Failed to decode prompt for model {model_id}. Exiting.")
+                    return
+                
+                tools = None
+                decoded_tools = None
+                extra_body = None 
+
+                if job['model_input']['LLM'].get('tools', None):
+                    tools = job['model_input']['LLM']['tools']
+                    decoded_tools = decode_prompt_json(tools)
+
+                # Call the generate function
+                extra_body = job['model_input']['LLM'].get('extra_body', None)
+                if extra_body:
+                    extra_body = json.loads(extra_body)
+                generate(
+                    base_config, server_config, miner_id, job['job_id'], decoded_prompt,
+                    temperature, max_tokens, seed, stop, use_stream, model_id,
+                    request_latency, decoded_tools, extra_body
+                )
+                job_end_time = time.time()
                 total_processing_time = job_end_time - job_start_time
                 if total_processing_time > base_config.llm_timeout_seconds:
-                    print("Warning: the previous request timed out. You will not earn points. Please check miner configuration or network connection.")
+                    print(
+                        "Warning: the previous request timed out. You will not earn points. Please check miner configuration or network connection."
+                    )
             else:
                 pass
+
         except Exception as e:
             logging.error(f"Error occurred for miner {miner_id}: {e}")
             import traceback
             traceback.print_exc()
-        
+
         time.sleep(base_config.sleep_duration)
 
 def periodic_send_model_info_signal(base_config, miner_id, last_signal_time):

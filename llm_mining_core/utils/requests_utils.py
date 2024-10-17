@@ -42,8 +42,7 @@ def send_miner_request(config, miner_id, model_id):
     request_data = {
         "miner_id": miner_id,
         "model_id": model_id,
-        "min_deadline": 1,
-        "accept_stream": True
+        "min_deadline": 1
     }
 
     # Check and update the last heartbeat time for the specific miner_id

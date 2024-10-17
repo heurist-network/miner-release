@@ -22,6 +22,8 @@ from llm_mining_core.utils import (
     decode_prompt_json
 )
 
+from llm_mining_core.config.server import LLMServerConfig
+
 def generate(base_config, server_config, miner_id, job_id, decoded_prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency, decoded_tools=None, extra_body=None):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")
 
@@ -29,6 +31,10 @@ def generate(base_config, server_config, miner_id, job_id, decoded_prompt, tempe
     if client is None:
         logging.error(f"Failed to initialize API client for model {model_id}.")
         return
+
+    max_model_len = LLMServerConfig.MAX_MODEL_LEN
+    if max_tokens > max_model_len:
+        max_tokens = max_model_len
 
 
     try:
@@ -136,11 +142,9 @@ def generate(base_config, server_config, miner_id, job_id, decoded_prompt, tempe
             
             # Only add tools and tool_choice if tools are provided
             if decoded_tools:
-                print("tools: ", decoded_tools)
                 params["tools"] = decoded_tools
                 params["tool_choice"] = "auto"
             
-            print("params: ", params)
         
             response = client.chat.completions.create(**params)
 
@@ -154,7 +158,6 @@ def generate(base_config, server_config, miner_id, job_id, decoded_prompt, tempe
             inference_latency = end_time - start_time
             
 
-            print("response: ", response)
             total_tokens = response.usage.total_tokens
             logging.info(f"Completed processing {total_tokens} tokens. Time: {inference_latency}s. Tokens/s: {total_tokens / inference_latency}")
 
@@ -174,7 +177,6 @@ def generate(base_config, server_config, miner_id, job_id, decoded_prompt, tempe
 
             if(res.status_code == 200):
                 logging.info(f"Result submitted successfully for job_id: {job_id}")
-                print(f"Result submitted successfully for job_id: {job_id}")
             else:
                 logging.error(f"Failed to submit result for job_id: {job_id} with status code: {res.status_code}")
     except Exception as e:
@@ -206,7 +208,6 @@ def worker(miner_id):
             )
             if job is not None:
                 job_start_time = time.time()
-                print("job: ", job)
                 # Extract job parameters
                 model_id = job['model_id']
                 prompt = job['model_input']['LLM']['prompt']

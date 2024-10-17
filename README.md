@@ -1,4 +1,7 @@
 # ⚙️ Heurist Miner Setup Guide
+
+![miner](https://github.com/user-attachments/assets/efd35068-13a6-454c-b16a-6392d51e2557)
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [System Requirements](#system-requirements)
@@ -104,7 +107,8 @@ python sd-miner.py
 ```
 For detailed instructions, troubleshooting, and advanced configuration, please refer to the sections below.
 
-### Docker Setup (current version only supports Flux model)
+### Docker Setup
+(current version only supports Flux model)
 
 For users who prefer using Docker, follow these steps:
 
@@ -345,6 +349,11 @@ For LLM miner, use the following CLI options to customize its behavior:
      ./llm-miner-starter.sh dolphin-2.9-llama3-8b --miner-id-index 1 --port 8001 --gpu-ids 1
      ```
 
+   - Advanced usage: To deploy large models using multiple GPUs on the same machine.
+      ```bash
+      ./llm-miner-starter.sh openhermes-mixtral-8x7b-gptq --miner-id-index 0 --port 8000 --gpu-ids 0,1
+      ```
+
 ### Multiple GPU Configuration
 
 To utilize multiple GPUs:
@@ -424,7 +433,7 @@ Got questions? We've got answers!
 
 ### Discord Channel
 Join our lively community on Discord - it's where all the cool miners hang out!
-🔗 [Heurist Discord #miner-chat channel](https://discord.com/channels/1183784452674039919/1203508038246600744)
+🔗 [Heurist Discord #dev-chat channel](https://discord.gg/heuristai)
 
 ### Reporting Issues
 1. 📚 Check our Troubleshooting guide and FAQ - you might find a quick fix!

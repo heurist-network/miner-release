@@ -102,54 +102,12 @@ setup_venv_environment() {
     log_info "Virtual environment activated."
 }
 
-setup_conda_environment() {
-    log_info "Updating package lists..."
-    sudo apt-get update -qq >/dev/null 2>&1
-
-    if [ -d "$HOME/miniconda" ]; then
-        log_info "Miniconda already installed at $HOME/miniconda. Proceed to create a conda environment."
-    else
-        log_info "Installing Miniconda..."
-        wget --quiet --show-progress --progress=bar:force:noscroll https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-        bash ~/miniconda.sh -b -p $HOME/miniconda
-        export PATH="$HOME/miniconda/bin:$PATH"
-        rm ~/miniconda.sh
-    fi
-
-    # Ensure Conda is correctly initialized
-    source ~/miniconda/bin/activate
-    ~/miniconda/bin/conda init bash >/dev/null 2>&1
-
-    # Source .bashrc to update the path for conda, if it exists
-    if [ -f "$HOME/.bashrc" ]; then
-        log_info "Sourcing .bashrc to update the path for conda"
-        source "$HOME/.bashrc"
-    elif [ -f "$HOME/.bash_profile" ]; then
-        # Fallback for systems that use .bash_profile instead of .bashrc
-        log_info "Sourcing .bash_profile to update the path for conda"
-        source "$HOME/.bash_profile"
-    else
-        log_error "Could not find a .bashrc or .bash_profile file to source."
-    fi
-
-    # Check if the Conda environment already exists
-    if conda info --envs | grep 'llm-venv' > /dev/null; then
-        log_info "Conda environment 'llm-venv' already exists. Skipping creation."
-    else
-        log_info "Creating a virtual environment with Miniconda..."
-        # Suppressing the output completely, consider logging at least errors
-        conda create -n llm-venv python=3.11 -y --quiet >/dev/null 2>&1
-        log_info "Conda virtual environment 'llm-venv' created."
-    fi
-
-    conda activate llm-venv
-    log_info "Conda virtual environment 'llm-venv' activated."
-}
-
 install_with_spinner() {
     local dep=$1
+    local log_file="/tmp/pip_install_log.txt"
+
     (
-        pip install "$dep" > /dev/null 2>&1
+        pip install "$dep" > "$log_file" 2>&1
         echo $? > /tmp/install_exit_status.tmp
     ) &
 
@@ -174,14 +132,86 @@ install_with_spinner() {
         printf "\b Done.\n"
     else
         printf "\b Failed.\n"
+        echo "Installation of $dep failed. Error details:"
+        cat "$log_file"
+        rm "$log_file"
         return 1
     fi
+
+    rm "$log_file"
 }
 
-# Example usage for your dependency installation function
+setup_conda_environment() {
+    log_info "Updating package lists..."
+    sudo apt-get update -qq >/dev/null 2>&1
+
+    if [ -d "$HOME/miniconda" ]; then
+        log_info "Miniconda already installed at $HOME/miniconda. Proceeding to create/update conda environment."
+    else
+        log_info "Installing Miniconda..."
+        wget --quiet --show-progress --progress=bar:force:noscroll https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+        bash ~/miniconda.sh -b -p $HOME/miniconda
+        export PATH="$HOME/miniconda/bin:$PATH"
+        rm ~/miniconda.sh
+    fi
+
+    # Ensure Conda is correctly initialized
+    source ~/miniconda/bin/activate
+    ~/miniconda/bin/conda init bash >/dev/null 2>&1
+
+    # Source .bashrc to update the path for conda, if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+        log_info "Sourcing .bashrc to update the path for conda"
+        source "$HOME/.bashrc"
+    elif [ -f "$HOME/.bash_profile" ]; then
+        log_info "Sourcing .bash_profile to update the path for conda"
+        source "$HOME/.bash_profile"
+    else
+        log_error "Could not find a .bashrc or .bash_profile file to source."
+    fi
+
+    # Check if the Conda environment already exists and is valid
+    if conda env list | grep -q "/home/zillion/miniconda/envs/llm-venv"; then
+        if [ -f "/home/zillion/miniconda/envs/llm-venv/conda-meta/history" ]; then
+            log_info "Conda environment 'llm-venv' exists and appears to be valid. Activating..."
+            conda activate llm-venv
+        else
+            log_warning "Conda environment 'llm-venv' exists but may be corrupt. Removing and recreating..."
+            conda env remove -n llm-venv -y
+            conda create -n llm-venv python=3.11 -y --quiet
+        fi
+    else
+        log_info "Creating a new conda environment 'llm-venv'..."
+        conda create -n llm-venv python=3.11 -y --quiet
+    fi
+
+    conda activate llm-venv
+    log_info "Conda virtual environment 'llm-venv' activated."
+}
+
 install_dependencies() {
     log_info "Installing Python dependencies..."
-    local dependencies=("vllm" "python-dotenv" "toml" "openai >= 1.40.0" "triton" "wheel" "packaging" "psutil" "web3" "mnemonic" "prettytable" "ray")
+    local dependencies=("vllm >= 0.6.3" "python-dotenv" "toml" "openai >= 1.40.0" "triton" "wheel" "packaging" "psutil" "web3" "mnemonic" "prettytable" "ray")
+
+    # Ensure Conda environment is activated
+    if [ -z "$CONDA_PREFIX" ]; then
+        log_error "Conda environment is not activated. Attempting to activate..."
+        conda activate llm-venv
+        if [ $? -ne 0 ]; then
+            log_error "Failed to activate Conda environment. Please check your Conda installation."
+            exit 1
+        fi
+    fi
+
+    # Verify pip is available
+    if ! command -v pip &> /dev/null; then
+        log_error "pip command not found. Attempting to install pip..."
+        conda install pip -y
+        if [ $? -ne 0 ]; then
+            log_error "Failed to install pip. Please check your Conda installation."
+            exit 1
+        fi
+    fi
 
     for dep in "${dependencies[@]}"; do
         if ! install_with_spinner "$dep"; then

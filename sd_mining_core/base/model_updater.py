@@ -33,29 +33,46 @@ class ModelUpdater:
             raise ValueError(f"Heurist cache directory does not exist: {heurist_cache_dir}")
 
         remote_checksums = {model_info['name']: model_info.get('checksum') for model_info in self.fetch_remote_model_list()}
-        local_files = [file_name for file_name in os.listdir(heurist_cache_dir) if file_name.endswith(".safetensors")]
 
-        print("Checksum validation in progress(might take a few minutes)...")
+        if self.config['specified_model_id'] is not None:
+            local_files = [f"{self.config['specified_model_id']}.safetensors"]
+            print(f"Validating checksum for specified model: {self.config['specified_model_id']}")
+        else:
+            local_files = [file_name for file_name in os.listdir(heurist_cache_dir) if file_name.endswith(".safetensors")]
+            print("Checksum validation in progress (might take a few minutes)...")
+
         successful_count = 0
+        valid_models_count = 0
+
         for index, file_name in enumerate(local_files, start=1):
-            model_name = file_name[:-len(".safetensors")]  # Remove the file extension to get the model name
+            model_name = file_name[:-len(".safetensors")]
             model_path = os.path.join(heurist_cache_dir, file_name)
-            local_checksum = self.calculate_model_checksum(model_path)
 
-            if model_name in remote_checksums:
-                remote_checksum = remote_checksums[model_name]
-                if remote_checksum:
-                    if local_checksum.lower() == remote_checksum.lower():
-                        successful_count += 1
-                        print(f"{index}/{len(local_files)} Successful checksum match for {model_name}... \033[92m✓\033[0m")
-                    else:
-                        logging.warning(f"Checksum mismatch for model: {model_name}")
-                else:
-                    logging.warning(f"No checksum found in remote model list for model: {model_name}")
-            else:
+            if not os.path.exists(model_path):
+                logging.warning(f"Model file not found: {file_name}")
+                continue
+
+            if model_name not in remote_checksums:
                 logging.warning(f"Model not found in remote model list: {model_name}")
+                continue
 
-        print(f"Checksum validation completed. {successful_count}/{len(local_files)} models validated successfully.")
+            valid_models_count += 1
+            local_checksum = self.calculate_model_checksum(model_path)
+            remote_checksum = remote_checksums[model_name]
+
+            if not remote_checksum:
+                logging.warning(f"No checksum found in remote model list for model: {model_name}")
+            elif local_checksum.lower() == remote_checksum.lower():
+                successful_count += 1
+                print(f"{index}/{len(local_files)} Successful checksum match for {model_name}... \033[92m✓\033[0m")
+            else:
+                logging.warning(f"Checksum mismatch for model: {model_name}")
+
+        if self.config['specified_model_id'] is None:
+            print(f"Checksum validation completed. {successful_count}/{valid_models_count} models validated successfully.")
+        elif valid_models_count == 0:
+            print("Specified model not found or not in the remote model list.")
+        # Note: For a single specified model, the success message is already printed in the loop
 
     def fetch_remote_model_list(self):
         """Fetch the combined list of models and VAEs from the configured URLs."""

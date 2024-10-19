@@ -11,7 +11,7 @@ llm_log_filename = "llm-miner.log"
 
 [versions]
 sd_version = "sd-v1.4.0"
-llm_version = "llm-v1.1.1"
+llm_version = "llm-v1.2.0"
 
 [storage]
 s3_bucket = 'heurist-images'
@@ -65,7 +65,7 @@ reload_interval = 600
 signal_interval = 600
 
 [processing_limits]
-max_iterations = 50
+max_iterations = 35
 max_width = 2048
 max_height = 2048
 # Limit on the concurrent requests for LLM miner. Actual running requests may go over. Higher concurrency results in higher throughput but longer latency

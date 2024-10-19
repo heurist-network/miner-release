@@ -7,7 +7,6 @@ from openai import OpenAI
 
 class LLMServerConfig:
     MAX_MODEL_LEN = 8192
-    CHAT_TEMPLATE = "{% for message in messages %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
 
     def __init__(self, base_config):
         self.base_config = base_config
@@ -33,13 +32,14 @@ class LLMServerConfig:
             "--model", self.model_id,
             "--served-model-name", self.served_model_name,
             "--max-model-len", str(self.MAX_MODEL_LEN),
-            "--chat-template", self.CHAT_TEMPLATE,
             "--uvicorn-log-level", "warning",
             "--disable-log-requests",
             "--dtype", "half",
             "--port", str(self.base_config.port),
             "--tensor-parallel-size",str(self.num_gpus),
-            "--gpu-memory-utilization", self.gpu_memory_util
+            "--gpu-memory-utilization", self.gpu_memory_util,
+            "--tool-call-parser", "hermes",
+            "--enable-auto-tool-choice",
         ]
 
         if self.model_revision:

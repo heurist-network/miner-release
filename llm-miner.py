@@ -18,11 +18,17 @@ from llm_mining_core.utils import (
     configure_logging,
     get_metric_value,
     check_vllm_server_status,
-    send_model_info_signal,
-    decode_prompt_json
+    send_model_info_signal
 )
 
 from llm_mining_core.config.server import LLMServerConfig
+
+def decode_prompt_json(prompt_json):
+    try:
+        return json.loads(prompt_json)
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to decode prompt JSON: {e}")
+        return None
 
 def generate(base_config, server_config, miner_id, job_id, decoded_prompt, temperature, max_tokens, seed, stop, use_stream_flag, model_id, request_latency, decoded_tools=None, extra_body=None):
     logging.info(f"Processing Request ID: {job_id}. Model ID: {model_id}. Miner ID: {miner_id}")

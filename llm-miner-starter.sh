@@ -104,17 +104,17 @@ setup_venv_environment() {
 
 install_with_spinner() {
     local dep=$1
-    local log_file="/tmp/pip_install_log.txt"
+    local log_file="/tmp/pip_install_log_${dep// /_}.txt"
+    local status_file="/tmp/install_exit_status_${dep// /_}.tmp"
 
     (
         pip install "$dep" > "$log_file" 2>&1
-        echo $? > /tmp/install_exit_status.tmp
+        echo $? > "$status_file"
     ) &
 
     pid=$! # PID of the pip install process
     spinner="/-\|"
 
-    # Use printf for consistent formatting
     printf "Installing %-20s" "$dep..."
 
     while kill -0 $pid 2> /dev/null; do
@@ -125,20 +125,27 @@ install_with_spinner() {
     done
 
     wait $pid
-    exit_status=$(cat /tmp/install_exit_status.tmp)
-    rm /tmp/install_exit_status.tmp
 
-    if [ $exit_status -eq 0 ]; then
+    if [ -f "$status_file" ]; then
+        exit_status=$(cat "$status_file")
+        rm -f "$status_file"
+    else
+        exit_status=1
+        echo "Warning: Status file not found. Assuming installation failed."
+    fi
+
+    if [ "$exit_status" -eq 0 ]; then
         printf "\b Done.\n"
     else
         printf "\b Failed.\n"
         echo "Installation of $dep failed. Error details:"
-        cat "$log_file"
-        rm "$log_file"
-        return 1
+        [ -f "$log_file" ] && cat "$log_file"
     fi
 
-    rm "$log_file"
+    # Remove log file if it exists
+    [ -f "$log_file" ] && rm -f "$log_file"
+
+    return "$exit_status"
 }
 
 setup_conda_environment() {

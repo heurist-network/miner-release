@@ -32,10 +32,8 @@ def generate(base_config, server_config, miner_id, job_id, decoded_prompt, tempe
         logging.error(f"Failed to initialize API client for model {model_id}.")
         return
 
-    max_model_len = LLMServerConfig.MAX_MODEL_LEN
-    if max_tokens > max_model_len:
-        max_tokens = max_model_len
-
+    if max_tokens > 4096:
+        max_tokens = 4096
 
     try:
         if use_stream_flag:

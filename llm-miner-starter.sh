@@ -156,8 +156,8 @@ setup_conda_environment() {
     fi
 
     # Ensure Conda is correctly initialized
-    source ~/miniconda/bin/activate
-    ~/miniconda/bin/conda init bash >/dev/null 2>&1
+    source $HOME/miniconda/bin/activate
+    $HOME/miniconda/bin/conda init bash >/dev/null 2>&1
 
     # Source .bashrc to update the path for conda, if it exists
     if [ -f "$HOME/.bashrc" ]; then
@@ -170,13 +170,13 @@ setup_conda_environment() {
         log_error "Could not find a .bashrc or .bash_profile file to source."
     fi
 
-    # Check if the Conda environment already exists and is valid
-    if conda env list | grep -q "/home/zillion/miniconda/envs/llm-venv"; then
-        if [ -f "/home/zillion/miniconda/envs/llm-venv/conda-meta/history" ]; then
-            log_info "Conda environment 'llm-venv' exists and appears to be valid. Activating..."
-            conda activate llm-venv
+    # Check if the Conda environment already exists
+    if conda env list | grep -q "$HOME/miniconda/envs/llm-venv"; then
+        log_info "Conda environment 'llm-venv' exists. Checking if it's valid..."
+        if conda run -n llm-venv python --version >/dev/null 2>&1; then
+            log_info "Conda environment 'llm-venv' is valid. Activating..."
         else
-            log_warning "Conda environment 'llm-venv' exists but may be corrupt. Removing and recreating..."
+            log_warning "Conda environment 'llm-venv' exists but appears to be invalid. Removing and recreating..."
             conda env remove -n llm-venv -y
             conda create -n llm-venv python=3.11 -y --quiet
         fi
@@ -185,8 +185,23 @@ setup_conda_environment() {
         conda create -n llm-venv python=3.11 -y --quiet
     fi
 
+    # Activate the environment
     conda activate llm-venv
+    if [ $? -ne 0 ]; then
+        log_error "Failed to activate Conda environment. Please check your Conda installation."
+        exit 1
+    fi
     log_info "Conda virtual environment 'llm-venv' activated."
+
+    # Ensure pip is installed in the environment
+    if ! command -v pip &> /dev/null; then
+        log_info "Installing pip in the Conda environment..."
+        conda install pip -y
+        if [ $? -ne 0 ]; then
+            log_error "Failed to install pip. Please check your Conda installation."
+            exit 1
+        fi
+    fi
 }
 
 install_dependencies() {
@@ -199,16 +214,6 @@ install_dependencies() {
         conda activate llm-venv
         if [ $? -ne 0 ]; then
             log_error "Failed to activate Conda environment. Please check your Conda installation."
-            exit 1
-        fi
-    fi
-
-    # Verify pip is available
-    if ! command -v pip &> /dev/null; then
-        log_error "pip command not found. Attempting to install pip..."
-        conda install pip -y
-        if [ $? -ne 0 ]; then
-            log_error "Failed to install pip. Please check your Conda installation."
             exit 1
         fi
     fi
@@ -245,10 +250,11 @@ fetchModelDetails() {
     local quantization=$(echo "$model_found" | jq -r '.type' | grep -q '16b' && echo "None" || echo "gptq")
     local hf_model_id=$(echo "$model_found" | jq -r '.hf_id')
     local revision=$(echo "$model_found" | jq -r '.hf_branch // "None"')
+    local tool_call_parser=$(echo "$model_found" | jq -r '.tool_call_parser // "None"')
 
-    log_info "Model details: HF_ID=$hf_model_id, Size_GB=$size_gb, Quantization=$quantization, Revision=$revision"
+    log_info "Model details: HF_ID=$hf_model_id, Size_GB=$size_gb, Quantization=$quantization, Revision=$revision, Tool Call Parser=$tool_call_parser"
     # Echoing the details for capture by the caller
-    echo "$size_gb $quantization $hf_model_id $revision"
+    echo "$size_gb $quantization $hf_model_id $revision $tool_call_parser"
 }
 
 validateMinerId() {
@@ -357,7 +363,7 @@ main() {
 
     # Fetch model details including the model ID, required VRAM size, quantization method, and model name
     heurist_model_id=$(getModelId "$1") || exit 1
-    read -r size_gb quantization hf_model_id revision < <(fetchModelDetails "$heurist_model_id")
+    read -r size_gb quantization hf_model_id revision tool_call_parser < <(fetchModelDetails "$heurist_model_id")
 
     shift 1
     # Parse additional arguments
@@ -403,10 +409,10 @@ main() {
     log_info "GPU Memory Utilization ratio for vllm: $gpu_memory_util"
 
     # Assuming all validations passed, proceed to execute the Python script with the model details
-    log_info "Executing Python script with Heurist model ID: $heurist_model_id, Quantization: $quantization, HuggingFace model ID: $hf_model_id, Revision: $revision, Miner ID Index: $miner_id_index, Port: $port, GPU IDs: $gpu_ids"
+    log_info "Executing Python script with Heurist model ID: $heurist_model_id, Quantization: $quantization, HuggingFace model ID: $hf_model_id, Revision: $revision, Tool Call Parser: $tool_call_parser, Miner ID Index: $miner_id_index, Port: $port, GPU IDs: $gpu_ids"
     local python_script=$(ls llm-miner.py | head -n 1)
     if [[ -n "$python_script" ]]; then
-        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids" "$skip_signature"
+        python "$python_script" "$hf_model_id" "$quantization" "$heurist_model_id" $gpu_memory_util "$revision" "$miner_id_index" "$port" "$gpu_ids" "$skip_signature" "$tool_call_parser"
         log_info "Python script executed successfully."
     else
         log_error "No Python script matching 'llm-miner.py' found."

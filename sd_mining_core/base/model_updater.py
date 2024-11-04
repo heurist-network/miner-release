@@ -102,7 +102,7 @@ class ModelUpdater:
         remote_model_names = {
             model_info['name'] for model_info in remote_model_list
             if (('type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']))
-             or 'lora' in model_info['type'])
+             or 'lora' == model_info['type'])
             and (not self.config['exclude_sdxl'] or not model_info['type'].startswith('sdxl'))
         }
         # Determine if there are any models that are in the remote list but not locally

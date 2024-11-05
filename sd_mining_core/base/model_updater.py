@@ -118,7 +118,7 @@ class ModelUpdater:
         """Download new models from the remote list that are not present in the local directory."""
         for model_info in remote_model_list:
             if not (('type' in model_info and ('sd' in model_info['type'] or 'vae' in model_info['type']))
-                    or 'lora' in model_info['type']):
+                    or 'lora' == model_info['type']):
                 continue
             # Using 'name' and 'file_url' keys to identify and download models
             model_name = model_info['name']
@@ -144,7 +144,7 @@ class ModelUpdater:
                 if model_name not in self.config['vae_configs']:
                     self.config['vae_configs'][model_name] = model_info
                     # Assuming 'base_type' presence indicates a LoRa configuration
-            elif 'lora' in model_info['type']:
+            elif 'lora' == model_info['type']:
                 # It's a LoRa configuration, update lora_configs
                 if model_name not in self.config['lora_configs']:
                     self.config['lora_configs'][model_name] = model_info

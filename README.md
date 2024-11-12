@@ -25,7 +25,7 @@
 
 ## Introduction
 
-Welcome to the Heurist Miner, the entrance to decentralized generative AI. Whether you have a high-end gaming PC with NVIDIA GPU or you're a datacenter owner ready to explor the world of AI and cryptocurrency, this guide will help you get started on an exciting journey!
+Welcome to the Heurist Miner, the entrance to decentralized generative AI. Whether you have a high-end gaming PC with NVIDIA GPU or you're a datacenter owner ready to explore the world of AI and cryptocurrency, this guide will help you get started on an exciting journey!
 
 ### What is Heurist Miner? 
 
@@ -36,7 +36,7 @@ Heurist Miner allows you to contribute your GPU to perform AI inference tasks on
 - 🖼️ **Dual Mining Capabilities**: Support for both image generation models and Large Language Models.
 - 🖥️ **Flexible Setup**: Run on Windows or Linux, with support for multiple GPUs.
 - 🔐 **Secure Rewards**: Utilizes a dual-wallet system for enhanced security.
-- 🌐 **Open Source**: The code is fully open and transparant. Download and run with ease.
+- 🌐 **Open Source**: The code is fully open and transparent. Download and run with ease.
 
 ## System Requirements
 
@@ -128,7 +128,7 @@ sudo docker run -d --gpus all \
   heurist-miner:latest
 ```
 
-Replace `0xYourtWalletAddressHere` with your wallet address to receive rewards.
+Replace `0xYourWalletAddressHere` with your wallet address to receive rewards.
 
 Multiple GPUs:
 

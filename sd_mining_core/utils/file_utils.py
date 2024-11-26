@@ -118,7 +118,7 @@ def fetch_and_download_config_files(config):
                 if 'type' in model and (
                     'sd' in model['type'] or 
                     model['type'].startswith('composite')
-                ) and (not config.exclude_sdxl or not model['type'].startswith('sdxl'))
+                ) and (not config.exclude_sdxl or 'xl' not in model_info['type'])
             }
             config.lora_configs = { 
                 lora['name']: lora for lora in loras 

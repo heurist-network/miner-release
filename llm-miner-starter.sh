@@ -21,21 +21,25 @@ check_prerequisites() {
     # Base prerequisites without considering Python venv yet
     local prerequisites=("jq" "wget" "bc")
 
-    # Determine the default Python version
-    local python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')
-
-    # Decide whether to check for python3-venv or python3.8-venv based on Python version
-    if [[ "$python_version" =~ ^3\.(8|9|10|11)$ ]]; then
-        prerequisites+=("python3-venv")
-    else
-        prerequisites+=("python3.8-venv")
+    # Check if running in a Conda environment
+    if [[ -z "${CONDA_DEFAULT_ENV}" ]]; then
+        # Only check for python venv if not in Conda environment
+        local python_version=$(python3 --version 2>&1 | grep -oP 'Python \K[0-9]+\.[0-9]+')
+        if [[ "$python_version" =~ ^3\.(8|9|10|11)$ ]]; then
+            prerequisites+=("python3-venv")
+        else
+            prerequisites+=("python3.8-venv")
+        fi
     fi
 
     for prerequisite in "${prerequisites[@]}"; do
-        # Handle Python venv packages separately
         if [[ "$prerequisite" == "python3-venv" || "$prerequisite" == "python3.8-venv" ]]; then
-            if ! dpkg -l | grep -q "$prerequisite"; then
-                missing_prerequisites+=("$prerequisite")
+            if [[ -z "${CONDA_DEFAULT_ENV}" ]]; then
+                if ! dpkg -l | grep -q "$prerequisite"; then
+                    missing_prerequisites+=("$prerequisite")
+                fi
+            else
+                log_warning "$prerequisite check skipped in Conda environment."
             fi
         # Check for the presence of other executable commands
         elif ! command -v "$prerequisite" &> /dev/null; then

@@ -7,11 +7,14 @@ import logging
 import signal
 import threading
 import subprocess
+import json
+import asyncio
 from pathlib import Path
 from itertools import cycle
 from dotenv import load_dotenv
 from multiprocessing import Process, set_start_method
 from auth.generator import WalletGenerator
+from sd_mining_core.stats import SDMinerStats
 
 from sd_mining_core.base import BaseConfig, ModelUpdater
 from sd_mining_core.utils import (
@@ -31,6 +34,7 @@ class MinerConfig(BaseConfig):
         
         miner_ids = self._load_and_validate_miner_ids()
         self.miner_id = self._assign_miner_id(miner_ids, cuda_device_id)
+        self.stats_manager = SDMinerStats()
 
     def _load_and_validate_miner_ids(self):
         miner_ids = [os.getenv(f'MINER_ID_{i}') for i in range(self.num_cuda_devices)]
@@ -158,6 +162,15 @@ def check_and_reload_model(config, last_signal_time):
     # Return the updated or unchanged last_signal_time
     return last_signal_time if current_time - last_signal_time < config.reload_interval else current_time
 
+
+async def update_job_stats(config, model_id, success=True):
+    """Update the job statistics for the given model ID."""
+    try:
+        await config.stats_manager.update_model_stats(model_id, successful=success)
+        logging.debug(f"Updated stats for model {model_id}: {'successful' if success else 'failed'} job")
+    except Exception as e:
+        logging.error(f"Failed to update job statistics: {e}")
+
 def process_jobs(config):
     current_model_id = next(iter(config.loaded_models), None)
     current_lora_id = next(iter(config.loaded_loras), None)
@@ -174,7 +187,15 @@ def process_jobs(config):
 
     job_start_time = time.time()
     logging.info(f"Processing Request ID: {job['job_id']}. Model ID: {job['model_id']}.")
-    submit_job_result(config, config.miner_id, job, job['temp_credentials'], job_start_time, request_latency)
+    
+    success = True
+    try:
+        submit_job_result(config, config.miner_id, job, job['temp_credentials'], job_start_time, request_latency)
+    except Exception as e:
+        logging.error(f"Error processing job: {e}")
+        success = False
+    asyncio.run(update_job_stats(config, job['model_id'], success))
+    
     return True
 
 def main(cuda_device_id):
